@@ -11,6 +11,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // Speech recognition (STT)
 // -----------------------------------------------------------------------------
 
+function detectPlatform() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    return { isMobile: false, isIOS: false, isSecure: true };
+  }
+  const ua = navigator.userAgent || "";
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    // iPadOS 13+ reports as Mac
+    (ua.includes("Macintosh") && (navigator as any).maxTouchPoints > 1);
+  const isMobile = isIOS || /Android|Mobile|webOS|Opera Mini/i.test(ua);
+  const isSecure =
+    window.isSecureContext ||
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  return { isMobile, isIOS, isSecure };
+}
+
 export function useSTT(opts: { lang?: string } = {}) {
   const lang = opts.lang ?? "id-ID";
   const [supported, setSupported] = useState(false);
@@ -18,10 +35,18 @@ export function useSTT(opts: { lang?: string } = {}) {
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [platform, setPlatform] = useState(() => detectPlatform());
   const recRef = useRef<any>(null);
+  // tracks whether stop() was user-initiated; lets us auto-restart on mobile
+  // where `continuous` is unreliable and the engine ends after each utterance.
+  const intentionalStopRef = useRef(false);
+  const wantListeningRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const p = detectPlatform();
+    setPlatform(p);
+
     const SR =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
@@ -29,9 +54,17 @@ export function useSTT(opts: { lang?: string } = {}) {
       setSupported(false);
       return;
     }
+    if (!p.isSecure) {
+      // STT requires a secure context — flag as unsupported with a specific error
+      setSupported(false);
+      setError("insecure-context");
+      return;
+    }
     setSupported(true);
     const rec = new SR();
-    rec.continuous = true;
+    // On mobile, `continuous = true` is flaky (Chrome Android ends recognition
+    // after the first utterance). Use single-shot mode + auto-restart.
+    rec.continuous = !p.isMobile;
     rec.interimResults = true;
     rec.lang = lang;
     rec.onresult = (e: any) => {
@@ -45,13 +78,34 @@ export function useSTT(opts: { lang?: string } = {}) {
       if (finalT) setTranscript((prev) => (prev + " " + finalT).trim());
       setInterim(interT);
     };
-    rec.onend = () => setListening(false);
+    rec.onend = () => {
+      // If we're on mobile and the user hasn't explicitly stopped, restart
+      // so the session feels continuous.
+      if (p.isMobile && wantListeningRef.current && !intentionalStopRef.current) {
+        try {
+          rec.start();
+          return;
+        } catch {
+          // fall through to actually stop if restart fails
+        }
+      }
+      wantListeningRef.current = false;
+      setListening(false);
+    };
     rec.onerror = (e: any) => {
-      setError(e?.error ?? "unknown");
+      const code = e?.error ?? "unknown";
+      setError(code);
+      // `no-speech` on mobile is normal between utterances — let onend retry
+      if (code === "no-speech" && p.isMobile && wantListeningRef.current) {
+        return;
+      }
+      wantListeningRef.current = false;
       setListening(false);
     };
     recRef.current = rec;
     return () => {
+      wantListeningRef.current = false;
+      intentionalStopRef.current = true;
       try {
         rec.stop();
       } catch {}
@@ -63,16 +117,21 @@ export function useSTT(opts: { lang?: string } = {}) {
     setError(null);
     setTranscript("");
     setInterim("");
+    intentionalStopRef.current = false;
+    wantListeningRef.current = true;
     try {
       recRef.current.start();
       setListening(true);
     } catch (e: any) {
-      setError(e?.message ?? "start failed");
+      wantListeningRef.current = false;
+      setError(e?.message ?? "start-failed");
     }
   }, []);
 
   const stop = useCallback(() => {
     if (!recRef.current) return;
+    intentionalStopRef.current = true;
+    wantListeningRef.current = false;
     try {
       recRef.current.stop();
     } catch {}
@@ -85,7 +144,19 @@ export function useSTT(opts: { lang?: string } = {}) {
     setError(null);
   }, []);
 
-  return { supported, listening, transcript, interim, error, start, stop, reset };
+  return {
+    supported,
+    listening,
+    transcript,
+    interim,
+    error,
+    start,
+    stop,
+    reset,
+    isMobile: platform.isMobile,
+    isIOS: platform.isIOS,
+    isSecure: platform.isSecure,
+  };
 }
 
 // -----------------------------------------------------------------------------

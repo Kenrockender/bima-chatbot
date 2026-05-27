@@ -42,6 +42,18 @@ export const t = {
     mute: "Mute",
     unmute: "Unmute",
     voiceUnsupported: "Voice not supported. Use Chrome or Edge.",
+    voiceUnsupportedIOS:
+      "Voice input isn't supported on iOS Safari/Chrome. Open this page in Chrome on Android or a desktop browser.",
+    voiceErrNotAllowed:
+      "Microphone permission denied. Enable mic access in your browser settings.",
+    voiceErrInsecure:
+      "Microphone needs a secure connection. Open this page via https:// or localhost.",
+    voiceErrNoSpeech: "Didn't catch that — try speaking a bit louder.",
+    voiceErrAudio: "Can't access the microphone. Check your device input.",
+    voiceErrNetwork:
+      "Speech recognition needs internet — check your connection.",
+    voiceErrGeneric: "Voice input failed. Try again.",
+    voiceErrDismiss: "Dismiss",
     sendVoice: "Send",
     voicePicker: "Voice",
     voicePickerHint: "Pick a voice that sounds natural",
@@ -155,6 +167,18 @@ export const t = {
     mute: "Bisukan",
     unmute: "Bunyikan",
     voiceUnsupported: "Suara belum didukung browser. Pakai Chrome/Edge.",
+    voiceUnsupportedIOS:
+      "Mic belum didukung di iOS Safari/Chrome. Buka halaman ini di Chrome Android atau browser desktop.",
+    voiceErrNotAllowed:
+      "Izin mikrofon ditolak. Aktifkan akses mic di setting browser.",
+    voiceErrInsecure:
+      "Mikrofon butuh koneksi aman. Buka via https:// atau localhost.",
+    voiceErrNoSpeech: "Suara tidak terdengar — coba bicara lebih jelas.",
+    voiceErrAudio: "Tidak bisa akses mikrofon. Cek input device kamu.",
+    voiceErrNetwork:
+      "Speech recognition butuh internet — cek koneksi kamu.",
+    voiceErrGeneric: "Gagal merekam suara. Coba lagi.",
+    voiceErrDismiss: "Tutup",
     sendVoice: "Kirim",
     voicePicker: "Suara",
     voicePickerHint: "Pilih suara yang paling natural",

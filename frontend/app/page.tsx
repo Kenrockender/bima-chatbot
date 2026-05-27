@@ -209,6 +209,31 @@ export default function Home() {
   const placeholder =
     voiceMode && stt.supported ? tr.tapToSpeak : tr.placeholder;
 
+  const sttErrorMessage = (() => {
+    if (!stt.error) return null;
+    switch (stt.error) {
+      case "not-allowed":
+      case "permission-denied":
+        return tr.voiceErrNotAllowed;
+      case "service-not-allowed":
+      case "insecure-context":
+        return tr.voiceErrInsecure;
+      case "no-speech":
+        // benign on mobile (we auto-restart); hide unless we've actually stopped
+        return stt.listening ? null : tr.voiceErrNoSpeech;
+      case "audio-capture":
+        return tr.voiceErrAudio;
+      case "network":
+        return tr.voiceErrNetwork;
+      default:
+        return tr.voiceErrGeneric;
+    }
+  })();
+
+  const unsupportedMessage = stt.isIOS
+    ? tr.voiceUnsupportedIOS
+    : tr.voiceUnsupported;
+
   return (
     <main className="min-h-screen bg-shell flex items-stretch justify-center px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
       <div className="bg-window w-full max-w-[1180px] flex flex-col overflow-hidden">
@@ -426,6 +451,42 @@ export default function Home() {
               {/* Footer input bar */}
               {(stage === "chat" || stage === "pick") && (
                 <div className="border-t border-black/5 px-3 sm:px-4 py-3 bg-white/30 backdrop-blur-sm">
+                  {/* Voice error banner */}
+                  {(sttErrorMessage || (voiceMode && !stt.supported)) && (
+                    <div
+                      role="alert"
+                      className="mb-2 flex items-start gap-2 rounded-lg border border-red-300/60 bg-red-50/90 px-3 py-2 text-[12px] text-red-800"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="mt-0.5 shrink-0"
+                        aria-hidden
+                      >
+                        <path
+                          d="M12 2L1 21h22L12 2zm0 6v6m0 3v.5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <span className="flex-1 leading-snug">
+                        {sttErrorMessage ?? unsupportedMessage}
+                      </span>
+                      {sttErrorMessage && (
+                        <button
+                          onClick={() => stt.reset()}
+                          className="shrink-0 text-red-700/70 hover:text-red-900 text-[11px] uppercase tracking-wide font-semibold"
+                        >
+                          {tr.voiceErrDismiss}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {/* Voice controls row */}
                   <div className="flex items-center gap-2 mb-2.5 flex-wrap">
                     <button
@@ -440,7 +501,7 @@ export default function Home() {
                       disabled={!stt.supported && !tts.supported}
                       title={
                         !stt.supported && !tts.supported
-                          ? tr.voiceUnsupported
+                          ? unsupportedMessage
                           : tr.voiceMode
                       }
                       className={`inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.14em] font-bold px-3 py-1.5 rounded-full border transition disabled:opacity-40 disabled:cursor-not-allowed ${
@@ -515,7 +576,7 @@ export default function Home() {
                           {voiceMode && stt.supported
                             ? tr.tapToSpeak
                             : !stt.supported && voiceMode
-                            ? tr.voiceUnsupported
+                            ? unsupportedMessage
                             : tr.enterHint.split("·")[0].trim()}
                         </span>
                       )}
