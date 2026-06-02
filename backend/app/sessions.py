@@ -24,13 +24,20 @@ def _gc():
         _sessions.pop(sid, None)
 
 
-def create(persona_id: str, opening_message: str) -> str:
+def create(
+    persona_id: str,
+    opening_message: str,
+    drill_id: Optional[str] = None,
+    focus_dimension: Optional[str] = None,
+) -> str:
     sid = uuid.uuid4().hex
     with _lock:
         _gc()
         _sessions[sid] = {
             "id": sid,
             "persona_id": persona_id,
+            "drill_id": drill_id,
+            "focus_dimension": focus_dimension,
             "started_at": _now(),
             "touched_at": _now(),
             "history": [

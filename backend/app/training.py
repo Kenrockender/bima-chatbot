@@ -11,11 +11,12 @@ prompt as a stable prefix so DeepSeek's prompt cache covers it across turns.
 import json
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from . import personas, rag, sessions
+from . import drills, personas, progress, rag, sessions
 
 
 log = logging.getLogger("bima.training")
@@ -71,9 +72,17 @@ def _loaded_product_refs() -> List[Dict[str, Optional[int]]]:
     return [{"name": d["name"], "page": None} for d in rag.list_documents()]
 
 
-def start_session(persona_id: str) -> Dict:
+def start_session(persona_id: str, drill_id: Optional[str] = None) -> Dict:
+    drill = drills.get_drill_safe(drill_id)
+    if drill:
+        persona_id = drill["persona_id"]
     persona = personas.get_persona(persona_id)
-    sid = sessions.create(persona_id, persona["opening"])
+    focus_dimension = drill["dimension"] if drill else None
+    sid = sessions.create(
+        persona_id, persona["opening"],
+        drill_id=drill["id"] if drill else None,
+        focus_dimension=focus_dimension,
+    )
     return {
         "session_id": sid,
         "persona": {
@@ -85,6 +94,12 @@ def start_session(persona_id: str) -> Dict:
             "accent": persona["accent"],
         },
         "opening_message": persona["opening"],
+        "drill": {
+            "id": drill["id"],
+            "title": drill["title"],
+            "dimension": drill["dimension"],
+            "summary": drill["summary"],
+        } if drill else None,
     }
 
 
@@ -95,6 +110,7 @@ def reply(session_id: str, fa_message: str) -> Dict:
 
     persona = personas.get_persona(session["persona_id"])
     history = session["history"]
+    focus = session.get("focus_dimension")
 
     system = persona["persona_prompt"] + _CUSTOMER_RULES_FOOTER.format(
         product_facts=_product_facts_block(),
@@ -108,12 +124,21 @@ def reply(session_id: str, fa_message: str) -> Dict:
             msgs.append(AIMessage(content=h["content"]))
     msgs.append(HumanMessage(content=fa_message))
 
-    try:
-        out = rag.get_llm().invoke(msgs)
-        text = _clean_reply((out.content or "").strip())
-    except Exception as e:
-        log.exception("customer reply failed: %s", e)
-        text = "Maaf, ada gangguan koneksi sebentar. Bisa diulang?"
+    # The customer reply and the live coach run independently, so fire them in
+    # parallel — total latency is max(reply, coach), not the sum.
+    def _customer() -> str:
+        try:
+            out = rag.get_llm().invoke(msgs)
+            return _clean_reply((out.content or "").strip())
+        except Exception as e:
+            log.exception("customer reply failed: %s", e)
+            return "Maaf, ada gangguan koneksi sebentar. Bisa diulang?"
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        fut_text = pool.submit(_customer)
+        fut_coach = pool.submit(_coach_turn, history, fa_message, persona, focus)
+        text = fut_text.result()
+        coach = fut_coach.result()
 
     sessions.append(session_id, "user", fa_message)
     sessions.append(session_id, "assistant", text)
@@ -121,7 +146,70 @@ def reply(session_id: str, fa_message: str) -> Dict:
     return {
         "reply": text,
         "facts_referenced": _loaded_product_refs(),
+        "coach": coach,
     }
+
+
+# -----------------------------------------------------------------------------
+# Live per-turn coaching
+# -----------------------------------------------------------------------------
+
+_COACH_SYSTEM = """Kamu sales coach BCA Life yang memantau latihan FA secara live.
+Kamu dikasih giliran terakhir percakapan dan satu pesan FA untuk dinilai cepat.
+
+Tugas: kasih SATU micro-feedback singkat (maksimal 12 kata) atas pesan FA itu.
+
+Output WAJIB JSON valid persis:
+{"verdict": "good|watch|tip", "dimension": "rapport|discovery|product_knowledge|objection_handling|closing", "note": "<feedback super singkat, Bahasa Indonesia>"}
+
+Aturan:
+- "good" = FA melakukan sesuatu dengan baik. "watch" = ada yang kurang/keliru. "tip" = saran perbaikan cepat.
+- note HARUS singkat, spesifik, actionable. Bukan kalimat panjang.
+- Kalau pesan FA cuma basa-basi/sapaan, verdict "tip" dengan dorongan ringan.
+- JANGAN output apa pun di luar JSON."""
+
+
+def _coach_turn(
+    history: List[Dict],
+    fa_message: str,
+    persona: Dict,
+    focus: Optional[str],
+) -> Optional[Dict]:
+    """Best-effort live coaching on the FA's latest message. Returns None on
+    any failure so it can never break the conversation."""
+    try:
+        last_customer = ""
+        for h in reversed(history):
+            if h["role"] == "assistant":
+                last_customer = h["content"]
+                break
+        focus_line = (
+            f"\nFOKUS DRILL: utamakan dimensi '{focus}'." if focus else ""
+        )
+        user = (
+            f"Persona nasabah: {persona['name']} — {persona['summary']}{focus_line}\n\n"
+            f"Nasabah barusan bilang: \"{last_customer}\"\n"
+            f"FA menjawab: \"{fa_message}\"\n\n"
+            "Nilai pesan FA itu. Output JSON."
+        )
+        out = rag.get_strict_llm().invoke([
+            SystemMessage(content=_COACH_SYSTEM),
+            HumanMessage(content=user),
+        ])
+        data = _extract_json((out.content or "").strip())
+        if not data or "note" not in data:
+            return None
+        verdict = data.get("verdict", "tip")
+        if verdict not in ("good", "watch", "tip"):
+            verdict = "tip"
+        return {
+            "verdict": verdict,
+            "dimension": data.get("dimension"),
+            "note": str(data.get("note", "")).strip()[:120],
+        }
+    except Exception as e:
+        log.warning("coach turn failed: %s", e)
+        return None
 
 
 # -----------------------------------------------------------------------------
@@ -178,13 +266,15 @@ def _extract_json(text: str) -> Optional[Dict]:
         return None
 
 
-def end_session(session_id: str) -> Dict:
+def end_session(session_id: str, fa_id: Optional[str] = None) -> Dict:
     session = sessions.get(session_id)
     if not session:
         raise KeyError("session not found or expired")
 
     persona = personas.get_persona(session["persona_id"])
     history = session["history"]
+    drill_id = session.get("drill_id")
+    focus_dimension = session.get("focus_dimension")
 
     if len(history) < 2:
         sessions.end(session_id)
@@ -236,6 +326,19 @@ Kasih evaluasi JSON sesuai format yang diminta."""
         "accent": persona["accent"],
     }
     report["turn_count"] = sum(1 for h in history if h["role"] == "user")
+    report["drill_id"] = drill_id
+    report["focus_dimension"] = focus_dimension
+
+    # Persist for progress tracking + gamification, then attach the deltas
+    # (XP earned, streak, new badges) so the UI can celebrate them.
+    if fa_id:
+        try:
+            transcript = [
+                {"role": h["role"], "content": h["content"]} for h in history
+            ]
+            report["progress"] = progress.save_attempt(fa_id, report, transcript)
+        except Exception as e:
+            log.exception("failed to persist attempt: %s", e)
 
     sessions.end(session_id)
     return report

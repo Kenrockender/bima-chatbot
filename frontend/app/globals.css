@@ -455,6 +455,103 @@ body {
 }
 
 /* ── Selection ── */
+/* ── Voice-primary stage ── */
+.voice-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 20px;
+  padding: 24px 16px;
+}
+
+.mic-large {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 999px;
+  background: radial-gradient(120% 120% at 30% 25%, #FFE07A 0%, #F5C518 55%, #E5B100 100%);
+  color: #0B2451;
+  box-shadow:
+    0 8px 24px -6px rgba(245, 197, 24, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform 160ms ease, filter 160ms ease, background 300ms ease;
+  position: relative;
+  cursor: pointer;
+}
+.mic-large:hover { transform: translateY(-2px); filter: brightness(1.05); }
+.mic-large:active { transform: translateY(0); }
+.mic-large:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.mic-large.is-idle {
+  animation: micBreathe 2.8s ease-in-out infinite;
+}
+.mic-large.is-recording {
+  background: radial-gradient(120% 120% at 30% 25%, #FF6B6B 0%, #E53E3E 55%, #C53030 100%);
+  color: #ffffff;
+  box-shadow:
+    0 8px 24px -6px rgba(229, 62, 62, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  animation: none;
+}
+.mic-large.is-recording::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid rgba(229, 62, 62, 0.6);
+  animation: micPulse 1.6s ease-out infinite;
+}
+.mic-large.is-processing {
+  opacity: 0.6;
+  cursor: not-allowed;
+  animation: none;
+  background-size: 200% 100%;
+  background-image: linear-gradient(90deg, #FFE07A 0%, #F5C518 25%, #FFE07A 50%, #F5C518 75%, #FFE07A 100%);
+  animation: shimmer 4s linear infinite;
+}
+
+.subtitle-area {
+  text-align: center;
+  min-height: 60px;
+  max-width: 520px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.subtitle-ai {
+  font-family: "Playfair Display", serif;
+  font-size: 18px;
+  line-height: 1.55;
+  color: #1A2540;
+  background: rgba(241, 235, 223, 0.85);
+  border-radius: 14px;
+  padding: 10px 18px;
+  animation: subtitleFadeIn 350ms ease-out both;
+}
+.subtitle-user {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgba(26, 37, 64, 0.65);
+  animation: subtitleFadeIn 350ms ease-out both;
+}
+.subtitle-status {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(26, 37, 64, 0.4);
+  animation: subtitleFadeIn 350ms ease-out both;
+}
+
 ::selection {
   background: rgba(200, 148, 30, 0.3);
   color: var(--bca-ink);

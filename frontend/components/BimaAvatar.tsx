@@ -5,53 +5,94 @@ export function BimaAvatar({
   size?: number;
   withPulse?: boolean;
 }) {
-  const inner = size;
   return (
     <div
       style={{ width: size, height: size }}
-      className="relative inline-flex items-center justify-center rounded-full shrink-0"
+      className="relative inline-flex items-center justify-center shrink-0"
       aria-label="BIMA avatar"
     >
       {withPulse && (
         <span
           aria-hidden
-          className="absolute inset-0 rounded-full bg-bca-yellow/40 animate-pulseRing"
+          className="absolute inset-0 rounded-[28%] bg-bca-yellow/40 animate-pulseRing"
         />
       )}
-      {/* Navy disc with subtle inner highlight */}
-      <div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background:
-            "radial-gradient(120% 120% at 30% 25%, #0066B3 0%, #003D7A 55%, #002854 100%)",
-          boxShadow:
-            "inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -6px 12px rgba(0,0,0,0.22), 0 4px 10px -4px rgba(0,61,122,0.45)",
-        }}
-      />
-      {/* Letter B */}
-      <span
-        className="relative z-10 text-white font-extrabold"
-        style={{
-          fontSize: inner * 0.46,
-          letterSpacing: "-0.02em",
-          lineHeight: 1,
-        }}
+      <svg
+        viewBox="0 0 200 200"
+        width={size}
+        height={size}
+        className="relative z-10 drop-shadow-sm"
+        aria-hidden
       >
-        B
-      </span>
-      {/* BCA Life signature yellow dot */}
-      <span
-        className="absolute rounded-full"
-        style={{
-          width: Math.max(5, size * 0.22),
-          height: Math.max(5, size * 0.22),
-          bottom: 0,
-          right: 0,
-          background:
-            "radial-gradient(circle at 30% 30%, #FFE680 0%, #FFD200 55%, #E5B800 100%)",
-          boxShadow: "0 0 0 2px #FFFFFF, 0 2px 4px rgba(229,184,0,0.5)",
-        }}
-      />
+        <defs>
+          <linearGradient id="bimaAvTeal" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#9FE3DE" />
+            <stop offset="55%" stopColor="#5FC5C0" />
+            <stop offset="100%" stopColor="#3FAFAA" />
+          </linearGradient>
+          <radialGradient id="bimaAvShine" cx="35%" cy="25%" r="70%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
+            <stop offset="60%" stopColor="#ffffff" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* Rounded teal tile */}
+        <rect x="0" y="0" width="200" height="200" rx="40" ry="40" fill="url(#bimaAvTeal)" />
+        <rect x="0" y="0" width="200" height="200" rx="40" ry="40" fill="url(#bimaAvShine)" />
+        <rect
+          x="0"
+          y="0"
+          width="200"
+          height="200"
+          rx="40"
+          ry="40"
+          fill="none"
+          stroke="#1B3F7A"
+          strokeWidth="2.5"
+          strokeOpacity="0.18"
+        />
+
+        {/* Antenna */}
+        <line x1="100" y1="38" x2="100" y2="26" stroke="#1B3F7A" strokeWidth="3.5" strokeLinecap="round" />
+        <circle cx="100" cy="22" r="5" fill="#1B3F7A" />
+
+        {/* Headphones */}
+        <ellipse cx="40" cy="90" rx="14" ry="17" fill="#1B3F7A" />
+        <ellipse cx="40" cy="90" rx="7" ry="10" fill="#3FAFAA" />
+        <ellipse cx="160" cy="90" rx="14" ry="17" fill="#1B3F7A" />
+        <ellipse cx="160" cy="90" rx="7" ry="10" fill="#3FAFAA" />
+
+        {/* Headband */}
+        <path d="M40 78 Q100 40 160 78" fill="none" stroke="#1B3F7A" strokeWidth="4" strokeLinecap="round" />
+
+        {/* Head */}
+        <rect x="42" y="50" width="116" height="92" rx="34" ry="34" fill="#ffffff" stroke="#1B3F7A" strokeWidth="3" />
+
+        {/* Eyes */}
+        <path d="M72 94 q9 -12 18 0" fill="none" stroke="#1B3F7A" strokeWidth="5" strokeLinecap="round" />
+        <path d="M110 94 q9 -12 18 0" fill="none" stroke="#1B3F7A" strokeWidth="5" strokeLinecap="round" />
+
+        {/* Blush */}
+        <circle cx="64" cy="110" r="5" fill="#F8B4B4" opacity="0.75" />
+        <circle cx="136" cy="110" r="5" fill="#F8B4B4" opacity="0.75" />
+
+        {/* Smile */}
+        <path d="M84 118 q16 14 32 0" fill="none" stroke="#1B3F7A" strokeWidth="4" strokeLinecap="round" />
+
+        {/* Body bubbles */}
+        <path
+          d="M55 155 q0 -14 14 -14 h28 q14 0 14 14 v18 q0 14 -14 14 h-6 l-10 10 v-10 h-12 q-14 0 -14 -14 z"
+          fill="#ffffff"
+          stroke="#1B3F7A"
+          strokeWidth="3"
+        />
+        <path
+          d="M98 165 q0 -14 14 -14 h22 q14 0 14 14 v14 q0 14 -14 14 h-22 q-14 0 -14 -14 z"
+          fill="#ffffff"
+          stroke="#1B3F7A"
+          strokeWidth="3"
+        />
+      </svg>
     </div>
   );
 }

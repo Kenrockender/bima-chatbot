@@ -2,17 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { BimaAvatar } from "@/components/BimaAvatar";
 import { ChatBubble } from "@/components/ChatBubble";
 import { EscalationCard } from "@/components/EscalationCard";
 import { PersonaCard, type Persona } from "@/components/PersonaCard";
 import { FeedbackReport, type Report } from "@/components/FeedbackReport";
+import { CoachChip, type Coach } from "@/components/CoachChip";
+import { VoiceStage } from "@/components/VoiceStage";
 import { useSTT, useTTS } from "@/hooks/useSpeech";
+import { faHeaders } from "@/lib/faId";
+import { recommendedPersona } from "@/lib/coaching";
 import { t, type Lang } from "@/lib/i18n";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
   facts?: { name?: string; page?: number | null }[];
+  coach?: Coach | null;
   escalation?: boolean;
   timestamp?: Date;
 };
@@ -31,12 +37,17 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [starting, setStarting] = useState(false);
   const [report, setReport] = useState<Report | null>(null);
-  const [voiceMode, setVoiceMode] = useState(false);
+  const [inputMode, setInputMode] = useState<"voice" | "text">("text");
   const [muted, setMuted] = useState(false);
   const [listenStart, setListenStart] = useState<number | null>(null);
   const [listenSeconds, setListenSeconds] = useState(0);
+  const [aiSubtitle, setAiSubtitle] = useState("");
+  const [lastCoach, setLastCoach] = useState<Coach | null>(null);
+  const [lastFacts, setLastFacts] = useState<{ name?: string; page?: number | null }[] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const voiceInitRef = useRef(false);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tr = t[lang];
 
   const speechLang = lang === "id" ? "id-ID" : "en-US";
@@ -68,6 +79,52 @@ export default function Home() {
       .catch(() => setPersonas([]));
   }, []);
 
+  // Deep-link auto-start: the progress dashboard links here with ?persona=…
+  // or ?drill=… to jump straight into a recommended session.
+  useEffect(() => {
+    if (typeof window === "undefined" || personas.length === 0) return;
+    if (stage !== "pick" || sessionId) return;
+    const params = new URLSearchParams(window.location.search);
+    const drill = params.get("drill");
+    const personaId = params.get("persona");
+    if (drill) {
+      startSession(null, drill);
+      window.history.replaceState(null, "", window.location.pathname);
+    } else if (personaId) {
+      const p = personas.find((x) => x.id === personaId);
+      if (p) startSession(p);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personas]);
+
+  useEffect(() => {
+    if (!voiceInitRef.current && stt.supported && !stt.isIOS) {
+      voiceInitRef.current = true;
+      setInputMode("voice");
+    }
+  }, [stt.supported, stt.isIOS]);
+
+  // Auto-send on silence: while listening, a ~1.6s pause with captured speech
+  // ends the turn and sends it — so practice feels hands-free, like a real call.
+  useEffect(() => {
+    if (!stt.listening) {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      return;
+    }
+    const captured = (stt.transcript + " " + stt.interim).trim();
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (captured) {
+      silenceTimerRef.current = setTimeout(() => {
+        if (stt.listening) toggleMic();
+      }, 1600);
+    }
+    return () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stt.transcript, stt.interim, stt.listening]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -75,19 +132,23 @@ export default function Home() {
     });
   }, [messages, busy]);
 
-  async function startSession(persona: Persona) {
+  async function startSession(persona: Persona | null, drillId?: string) {
     if (starting) return;
     setStarting(true);
     try {
       const res = await fetch("/api/training/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ persona_id: persona.id }),
+        body: JSON.stringify({
+          persona_id: persona?.id ?? "",
+          drill_id: drillId ?? null,
+        }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setSessionId(data.session_id);
       setActivePersona(data.persona);
+      setSelectedId(data.persona.id);
       setMessages([
         {
           role: "assistant",
@@ -96,7 +157,10 @@ export default function Home() {
         },
       ]);
       setStage("chat");
-      if (voiceMode && !muted && tts.supported) {
+      setAiSubtitle(data.opening_message);
+      setLastCoach(null);
+      setLastFacts(null);
+      if (inputMode === "voice" && !muted && tts.supported) {
         setTimeout(() => tts.speak(data.opening_message), 250);
       }
     } catch {
@@ -123,16 +187,22 @@ export default function Home() {
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
+      const coachData = data.coach ?? null;
+      const factsData = data.facts_referenced ?? null;
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content: data.reply,
-          facts: data.facts_referenced,
+          facts: factsData,
+          coach: coachData,
           timestamp: new Date(),
         },
       ]);
-      if (voiceMode && !muted && tts.supported) tts.speak(data.reply);
+      setAiSubtitle(data.reply);
+      setLastCoach(coachData);
+      setLastFacts(factsData);
+      if (inputMode === "voice" && !muted && tts.supported) tts.speak(data.reply);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -158,7 +228,7 @@ export default function Home() {
     try {
       const res = await fetch("/api/training/end", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: faHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ session_id: sessionId }),
       });
       if (!res.ok) throw new Error();
@@ -206,6 +276,15 @@ export default function Home() {
     }
   }
 
+  const voiceMode = inputMode === "voice";
+  const voiceState = stt.listening
+    ? "recording" as const
+    : busy
+      ? "processing" as const
+      : tts.speaking
+        ? "speaking" as const
+        : "idle" as const;
+
   const placeholder =
     voiceMode && stt.supported ? tr.tapToSpeak : tr.placeholder;
 
@@ -239,47 +318,24 @@ export default function Home() {
       <div className="bg-window w-full max-w-[1180px] flex flex-col overflow-hidden">
         {/* ─── HEADER ─── */}
         <header className="flex items-center gap-4 px-5 sm:px-8 py-4 border-b border-white/5">
-          {/* BCA Life lockup */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div
-              className="w-8 h-8 rounded-md flex items-center justify-center"
-              style={{
-                background:
-                  "linear-gradient(160deg, #1F4684 0%, #0F3C86 60%, #061B45 100%)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
-              aria-hidden
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 3c-2 4-5 5-9 6 4 1 7 2 9 6 2-4 5-5 9-6-4-1-7-2-9-6Z"
-                  fill="#F5C518"
-                />
-              </svg>
-            </div>
+          {/* BIMA mascot lockup */}
+          <div className="flex items-center gap-3 shrink-0">
+            <BimaAvatar size={44} />
             <div className="leading-none">
-              <div className="text-white font-bold tracking-tight text-[15px]">
-                BCA<span className="text-bca-accentGold">life</span>
+              <div
+                className="text-white font-extrabold tracking-tight"
+                style={{ fontSize: 22, letterSpacing: "0.04em" }}
+              >
+                BIMA
               </div>
-              <div className="text-[9.5px] uppercase tracking-[0.18em] text-white/40 mt-0.5">
-                Senantiasa melindungi anda
+              <div className="hidden sm:block text-[9.5px] uppercase tracking-[0.14em] text-white/55 mt-1">
+                BCA Life Intelligent Mobile Assistant
               </div>
             </div>
           </div>
 
-          {/* BIMA wordmark */}
+          {/* Sub-context */}
           <div className="hidden sm:flex items-baseline gap-3 ml-2 pl-4 border-l border-white/10">
-            <span
-              className="font-serif italic text-bca-accentGold"
-              style={{
-                fontSize: 30,
-                lineHeight: 1,
-                letterSpacing: "0.02em",
-                textShadow: "0 2px 8px rgba(245,197,24,0.25)",
-              }}
-            >
-              BIMA
-            </span>
             <div className="leading-tight">
               <div className="text-white text-[13.5px] font-semibold">
                 Persona Chat
@@ -304,6 +360,12 @@ export default function Home() {
           )}
 
           <Link
+            href="/progress"
+            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
+          >
+            {tr.navProgress}
+          </Link>
+          <Link
             href="/recommend"
             className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
           >
@@ -316,7 +378,7 @@ export default function Home() {
             {tr.admin}
           </Link>
 
-          <div className="lang-switch">
+          <div className="lang-switch shrink-0">
             {(["en", "id"] as const).map((l) => (
               <button
                 key={l}
@@ -391,6 +453,11 @@ export default function Home() {
                   <FeedbackReport
                     report={report}
                     onTryAgain={resetToPicker}
+                    recommendedPersonaId={recommendedPersona(report.scores)}
+                    onPractice={(pid) => {
+                      const p = personas.find((x) => x.id === pid);
+                      if (p) startSession(p);
+                    }}
                     labels={{
                       eyebrow: tr.reportEyebrow,
                       title: tr.reportTitle,
@@ -406,14 +473,64 @@ export default function Home() {
                       product_knowledge: tr.product_knowledge,
                       objection_handling: tr.objection_handling,
                       closing: tr.closing,
+                      xpEarned: tr.xpEarned,
+                      streak: tr.streakLabel,
+                      newBadge: tr.newBadgeLabel,
+                      level: tr.levelLabel,
+                      practiceWeakest: tr.practiceWeakest,
+                      saved: tr.savedToProgress,
                     }}
                   />
                 )}
 
-                {stage === "chat" && activePersona && (
+                {stage === "chat" && activePersona && voiceMode && (
+                  <VoiceStage
+                    voiceState={voiceState}
+                    personaName={activePersona.name}
+                    personaDifficulty={tr.challengeLabel}
+                    aiSubtitle={aiSubtitle}
+                    userCaption={(stt.transcript + " " + stt.interim).trim()}
+                    userInterim={!!stt.interim}
+                    coach={lastCoach}
+                    facts={lastFacts}
+                    onMicClick={toggleMic}
+                    onSwitchToText={() => {
+                      setInputMode("text");
+                      if (stt.listening) stt.stop();
+                      if (tts.speaking) tts.cancel();
+                    }}
+                    onMuteToggle={() => {
+                      if (!muted && tts.speaking) tts.cancel();
+                      setMuted((m) => !m);
+                    }}
+                    onEndSession={endSession}
+                    muted={muted}
+                    sttError={stt.error}
+                    sttErrorMessage={sttErrorMessage}
+                    labels={{
+                      switchToText: tr.switchToText,
+                      readyToListen: tr.readyToListen,
+                      recording: tr.recording,
+                      processingVoice: tr.processingVoice,
+                      aiSpeaking: tr.aiSpeaking,
+                      tapToInterrupt: tr.tapToInterrupt,
+                      mute: tr.mute,
+                      unmute: tr.unmute,
+                      endSession: tr.endSession,
+                      coachLabel: tr.coachLabel,
+                      factsTag: tr.factsTag,
+                      voiceErrDismiss: tr.voiceErrDismiss,
+                    }}
+                  />
+                )}
+
+                {stage === "chat" && activePersona && !voiceMode && (
                   <>
                     {messages.map((m, i) => (
                       <div key={i}>
+                        {m.role === "assistant" && m.coach && (
+                          <CoachChip coach={m.coach} label={tr.coachLabel} />
+                        )}
                         <ChatBubble
                           role={m.role}
                           content={m.content}
@@ -448,8 +565,8 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Footer input bar */}
-              {(stage === "chat" || stage === "pick") && (
+              {/* Footer input bar — hidden in voice mode during chat */}
+              {((stage === "chat" && !voiceMode) || stage === "pick") && (
                 <div className="border-t border-black/5 px-3 sm:px-4 py-3 bg-white/30 backdrop-blur-sm">
                   {/* Voice error banner */}
                   {(sttErrorMessage || (voiceMode && !stt.supported)) && (
@@ -491,9 +608,9 @@ export default function Home() {
                   <div className="flex items-center gap-2 mb-2.5 flex-wrap">
                     <button
                       onClick={() => {
-                        const next = !voiceMode;
-                        setVoiceMode(next);
-                        if (!next) {
+                        const next = inputMode === "voice" ? "text" : "voice";
+                        setInputMode(next);
+                        if (next === "text") {
                           if (stt.listening) stt.stop();
                           if (tts.speaking) tts.cancel();
                         }
@@ -605,11 +722,10 @@ export default function Home() {
                         onClick={() => {
                           if (stage !== "chat") return;
                           if (!stt.supported) {
-                            // toggle voice mode as a hint
-                            setVoiceMode((v) => !v);
+                            setInputMode(inputMode === "voice" ? "text" : "voice");
                             return;
                           }
-                          if (!voiceMode) setVoiceMode(true);
+                          if (inputMode !== "voice") setInputMode("voice");
                           toggleMic();
                         }}
                         disabled={stage !== "chat" || busy}

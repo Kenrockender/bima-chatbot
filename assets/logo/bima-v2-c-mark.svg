@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" role="img" aria-label="BIMA wordmark with abstract mark">
+  <!-- Wordmark with restrained abstract mark on the left:
+       two concentric arcs = guidance / conversation, navy + gold pairing -->
+  <g transform="translate(20,20)">
+    <!-- outer arc -->
+    <path d="M40 0 A40 40 0 1 1 0 40" fill="none" stroke="#0A2A52" stroke-width="4" stroke-linecap="round"/>
+    <!-- inner arc, gold, suggests reply / second voice -->
+    <path d="M22 64 A22 22 0 1 0 64 22" fill="none" stroke="#B98A3F" stroke-width="3" stroke-linecap="round"/>
+    <!-- center dot -->
+    <circle cx="40" cy="40" r="3" fill="#0A2A52"/>
+  </g>
+
+  <!-- divider -->
+  <line x1="118" y1="22" x2="118" y2="98" stroke="#D4DAE6" stroke-width="1"/>
+
+  <!-- Wordmark + tagline -->
+  <g fill="#0A2A52" font-family="'Inter','Helvetica Neue',Arial,sans-serif">
+    <text x="138" y="62" font-size="48" font-weight="600" letter-spacing="6">BIMA</text>
+    <text x="140" y="86" font-size="9.5" font-weight="500" letter-spacing="4.5" fill="#6A788E">
+      BCA  LIFE  ·  INTELLIGENT  ONBOARDING  ASSISTANT
+    </text>
+  </g>
+</svg>

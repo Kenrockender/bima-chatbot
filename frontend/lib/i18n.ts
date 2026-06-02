@@ -61,6 +61,17 @@ export const t = {
     voiceTestSample: "Hello, I'm BIMA. Nice to meet you.",
     voiceAuto: "Auto (best available)",
 
+    // Voice-primary UI
+    switchToVoice: "Switch to voice",
+    switchToText: "Switch to text",
+    readyToListen: "Tap to speak",
+    recording: "Listening…",
+    processingVoice: "Customer is thinking…",
+    aiSpeaking: "Speaking…",
+    tapToInterrupt: "Tap to interrupt",
+    voiceFallbackHint: "Voice not available — using text input",
+    micPermissionNeeded: "Mic permission needed",
+
     // Report
     reportEyebrow: "Coaching Report",
     reportTitle: "Here's how the session went.",
@@ -76,6 +87,46 @@ export const t = {
     objection_handling: "Objection handling",
     closing: "Closing",
     tryAgain: "Try another roleplay",
+
+    // Live coach
+    coachLabel: "Coach",
+
+    // Gamification / report extras
+    xpEarned: "XP earned",
+    streakLabel: "Day streak",
+    newBadgeLabel: "New badge unlocked",
+    levelLabel: "Level",
+    practiceWeakest: "Practice this now",
+    savedToProgress: "Saved to your progress",
+
+    // Progress dashboard
+    navProgress: "Progress",
+    progressTitle: "Your progress",
+    progressSubtitle:
+      "Every roleplay is scored and tracked. Keep your streak alive and sharpen your weakest skill.",
+    statLevel: "Level",
+    statXp: "Total XP",
+    statStreak: "Streak",
+    statSessions: "Sessions",
+    daysUnit: "days",
+    dailyGoalTitle: "Today's goal",
+    dailyGoalDone: "Done for today — nice work.",
+    dailyGoalTodo: "Complete 1 roleplay to keep your streak.",
+    skillBreakdown: "Skill breakdown",
+    strongestLabel: "Strongest",
+    weakestLabel: "Needs work",
+    badgesTitle: "Badges",
+    noBadges: "No badges yet — finish a roleplay to start earning.",
+    historyTitle: "Recent sessions",
+    noHistory: "No sessions yet. Start your first roleplay.",
+    recommendedNext: "Recommended next",
+    practiceNow: "Practice now",
+    drillsTitle: "Focus drills",
+    drillsSubtitle: "Short, targeted reps for one skill at a time.",
+    startDrill: "Start drill",
+    backToTraining: "Back to roleplay",
+    emptyProgressCta: "Start a roleplay",
+    avgLabel: "avg",
 
     navTrain: "Roleplay Training",
     navRecommend: "Product Recommender",
@@ -186,6 +237,17 @@ export const t = {
     voiceTestSample: "Halo, saya BIMA. Senang berkenalan dengan Anda.",
     voiceAuto: "Otomatis (terbaik tersedia)",
 
+    // Voice-primary UI
+    switchToVoice: "Beralih ke suara",
+    switchToText: "Beralih ke teks",
+    readyToListen: "Ketuk untuk bicara",
+    recording: "Mendengarkan…",
+    processingVoice: "Pelanggan sedang berpikir…",
+    aiSpeaking: "Berbicara…",
+    tapToInterrupt: "Ketuk untuk interupsi",
+    voiceFallbackHint: "Suara tidak tersedia — menggunakan teks",
+    micPermissionNeeded: "Izin mikrofon diperlukan",
+
     reportEyebrow: "Coaching Report",
     reportTitle: "Begini hasil sesi tadi.",
     reportOverall: "Total",
@@ -200,6 +262,46 @@ export const t = {
     objection_handling: "Menangani keberatan",
     closing: "Closing",
     tryAgain: "Coba roleplay lain",
+
+    // Live coach
+    coachLabel: "Coach",
+
+    // Gamification / report extras
+    xpEarned: "XP didapat",
+    streakLabel: "Hari beruntun",
+    newBadgeLabel: "Badge baru terbuka",
+    levelLabel: "Level",
+    practiceWeakest: "Latih ini sekarang",
+    savedToProgress: "Tersimpan ke progresmu",
+
+    // Progress dashboard
+    navProgress: "Progres",
+    progressTitle: "Progres kamu",
+    progressSubtitle:
+      "Setiap roleplay dinilai dan dilacak. Jaga streak-mu dan asah skill terlemahmu.",
+    statLevel: "Level",
+    statXp: "Total XP",
+    statStreak: "Streak",
+    statSessions: "Sesi",
+    daysUnit: "hari",
+    dailyGoalTitle: "Target hari ini",
+    dailyGoalDone: "Selesai untuk hari ini — kerja bagus.",
+    dailyGoalTodo: "Selesaikan 1 roleplay untuk menjaga streak.",
+    skillBreakdown: "Rincian skill",
+    strongestLabel: "Terkuat",
+    weakestLabel: "Perlu diasah",
+    badgesTitle: "Badge",
+    noBadges: "Belum ada badge — selesaikan roleplay untuk mulai mengumpulkan.",
+    historyTitle: "Sesi terbaru",
+    noHistory: "Belum ada sesi. Mulai roleplay pertamamu.",
+    recommendedNext: "Rekomendasi berikutnya",
+    practiceNow: "Latih sekarang",
+    drillsTitle: "Drill fokus",
+    drillsSubtitle: "Latihan singkat dan terarah untuk satu skill.",
+    startDrill: "Mulai drill",
+    backToTraining: "Kembali ke roleplay",
+    emptyProgressCta: "Mulai roleplay",
+    avgLabel: "rata-rata",
 
     // Recommender nav
     navTrain: "Latihan Roleplay",

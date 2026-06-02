@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="BIMA app icon - chat bubble with B">
+  <defs>
+    <linearGradient id="bg-c" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E3A78"/>
+      <stop offset="1" stop-color="#062048"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" rx="224" fill="url(#bg-c)"/>
+
+  <!-- Chat bubble silhouette in white, with the letter B carved out via mask -->
+  <mask id="cut">
+    <rect width="1024" height="1024" fill="#fff"/>
+    <!-- knock out the B from the bubble -->
+    <g transform="translate(372,308)" fill="#000">
+      <rect x="0" y="0" width="58" height="408" rx="4"/>
+      <path fill-rule="evenodd" d="
+        M58 0 H190 a116 102 0 0 1 0 204 H58 Z
+        M58 58 H184 a58 44 0 0 1 0 88 H58 Z"/>
+      <path fill-rule="evenodd" d="
+        M58 204 H202 a122 102 0 0 1 0 204 H58 Z
+        M58 262 H196 a64 44 0 0 1 0 88 H58 Z"/>
+    </g>
+  </mask>
+
+  <!-- Bubble shape: rounded square with a tail at bottom-left -->
+  <g mask="url(#cut)">
+    <path d="M 232 200
+             H 792
+             a 80 80 0 0 1 80 80
+             V 700
+             a 80 80 0 0 1 -80 80
+             H 410
+             L 310 880
+             L 332 780
+             H 232
+             a 80 80 0 0 1 -80 -80
+             V 280
+             a 80 80 0 0 1 80 -80 Z" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Gold dot suggesting "typing/active" indicator -->
+  <circle cx="792" cy="280" r="36" fill="#D4A24A"/>
+</svg>

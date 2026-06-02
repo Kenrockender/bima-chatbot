@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 100" role="img" aria-label="BIMA wordmark logo">
+  <!-- Minimal formal wordmark with geometric chat-bubble mark -->
+  <g transform="translate(12,14)">
+    <!-- Square mark: rounded square + speech-bubble notch + I-beam suggesting 'B' bar -->
+    <rect x="0" y="0" width="72" height="72" rx="6" fill="#062E5C"/>
+    <!-- Tall serif initial -->
+    <text x="36" y="54" text-anchor="middle"
+          font-family="Georgia, 'Times New Roman', serif"
+          font-size="56" font-weight="700" fill="#FFFFFF">B</text>
+    <!-- Gold corner accent (formal/institutional) -->
+    <path d="M0 6 V0 H6 Z" fill="#D4A24A"/>
+    <path d="M72 66 V72 H66 Z" fill="#D4A24A"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(100,0)" fill="#062E5C">
+    <text x="0" y="58"
+          font-family="Georgia, 'Times New Roman', serif"
+          font-size="50" font-weight="400" letter-spacing="8">BIMA</text>
+    <text x="2" y="82"
+          font-family="'Segoe UI', Arial, sans-serif"
+          font-size="9.5" font-weight="500" letter-spacing="4.2" fill="#5B6A82">
+      BCA  LIFE  ·  ONBOARDING  ASSISTANT
+    </text>
+  </g>
+</svg>

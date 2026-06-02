@@ -8,6 +8,16 @@ export type Scores = {
   closing: number;
 };
 
+export type Badge = { id: string; name: string; description: string };
+
+export type Progress = {
+  xp_earned: number;
+  streak: number;
+  level: number;
+  total_sessions: number;
+  new_badges: Badge[];
+};
+
 export type Report = {
   persona: Persona;
   scores: Scores;
@@ -16,16 +26,21 @@ export type Report = {
   improvements: string[];
   next_focus: string;
   turn_count: number;
+  progress?: Progress;
   raw?: string;
 };
 
 export function FeedbackReport({
   report,
   onTryAgain,
+  recommendedPersonaId,
+  onPractice,
   labels,
 }: {
   report: Report;
   onTryAgain: () => void;
+  recommendedPersonaId?: string;
+  onPractice?: (personaId: string) => void;
   labels: {
     eyebrow: string;
     title: string;
@@ -41,8 +56,15 @@ export function FeedbackReport({
     product_knowledge: string;
     objection_handling: string;
     closing: string;
+    xpEarned: string;
+    streak: string;
+    newBadge: string;
+    level: string;
+    practiceWeakest: string;
+    saved: string;
   };
 }) {
+  const prog = report.progress;
   const dims: { key: keyof Scores; label: string }[] = [
     { key: "rapport", label: labels.rapport },
     { key: "discovery", label: labels.discovery },
@@ -63,6 +85,55 @@ export function FeedbackReport({
       >
         {labels.title}
       </h2>
+
+      {/* Gamification deltas — XP / streak / level earned this session */}
+      {prog && (
+        <div className="flex flex-wrap items-center gap-2.5 animate-fadeIn">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-bca-navy text-bca-cream px-3.5 py-1.5 text-[12.5px] font-semibold shadow-soft">
+            <span className="w-1.5 h-1.5 rounded-full bg-bca-gold" />
+            +{prog.xp_earned} {labels.xpEarned}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full surface-paper shadow-paper px-3.5 py-1.5 text-[12.5px] text-bca-ink/85 font-medium">
+            🔥 {prog.streak} {labels.streak}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full surface-paper shadow-paper px-3.5 py-1.5 text-[12.5px] text-bca-ink/85 font-medium">
+            {labels.level} {prog.level}
+          </span>
+          <span className="text-[11.5px] text-bca-mute italic ml-auto">
+            {labels.saved}
+          </span>
+        </div>
+      )}
+
+      {/* Newly unlocked badges */}
+      {prog && prog.new_badges.length > 0 && (
+        <div className="flex flex-wrap gap-2.5 animate-fadeIn">
+          {prog.new_badges.map((b) => (
+            <div
+              key={b.id}
+              className="flex items-center gap-2.5 rounded-[14px] p-3 pr-4 shadow-paper"
+              style={{
+                background: "linear-gradient(150deg, #FDFBF6 0%, #F4ECDA 100%)",
+                border: "1px solid #E6DFD0",
+              }}
+            >
+              <span
+                className="flex items-center justify-center rounded-full text-[16px] shrink-0"
+                style={{ width: 34, height: 34, background: "#C8941E" }}
+              >
+                🏅
+              </span>
+              <div className="leading-tight">
+                <div className="smallcaps text-bca-gold text-[9.5px]">
+                  {labels.newBadge}
+                </div>
+                <div className="font-serif text-bca-ink text-[15px]">{b.name}</div>
+                <div className="text-[11px] text-bca-mute">{b.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Overall + persona reminder */}
       <div className="grid sm:grid-cols-[1fr_auto] gap-6 items-stretch">
@@ -189,16 +260,27 @@ export function FeedbackReport({
         </div>
       )}
 
-      <button
-        onClick={onTryAgain}
-        className="inline-flex items-center gap-2 bg-bca-navy hover:bg-bca-ink transition text-bca-cream text-[14px] font-medium rounded-full px-6 py-3 shadow-soft group"
-      >
-        <span
-          className="inline-block w-1.5 h-1.5 rounded-full"
-          style={{ background: "#C8941E" }}
-        />
-        {labels.tryAgain}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        {recommendedPersonaId && onPractice && (
+          <button
+            onClick={() => onPractice(recommendedPersonaId)}
+            className="inline-flex items-center gap-2 bg-bca-gold hover:brightness-95 transition text-bca-ink text-[14px] font-semibold rounded-full px-6 py-3 shadow-soft"
+          >
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-bca-ink/70" />
+            {labels.practiceWeakest}
+          </button>
+        )}
+        <button
+          onClick={onTryAgain}
+          className="inline-flex items-center gap-2 bg-bca-navy hover:bg-bca-ink transition text-bca-cream text-[14px] font-medium rounded-full px-6 py-3 shadow-soft group"
+        >
+          <span
+            className="inline-block w-1.5 h-1.5 rounded-full"
+            style={{ background: "#C8941E" }}
+          />
+          {labels.tryAgain}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" role="img" aria-label="BIMA elegant serif wordmark">
+  <!-- Pure typographic logo: elegant serif, generous letterspacing, thin gold rule -->
+  <g fill="#0A2A52" font-family="'Cormorant Garamond','EB Garamond',Georgia,'Times New Roman',serif">
+    <text x="210" y="62"
+          text-anchor="middle"
+          font-size="64"
+          font-weight="500"
+          letter-spacing="14">BIMA</text>
+
+    <!-- thin gold rule with center dot, classic emblem device -->
+    <line x1="120" y1="80" x2="195" y2="80" stroke="#B98A3F" stroke-width="0.9"/>
+    <line x1="225" y1="80" x2="300" y2="80" stroke="#B98A3F" stroke-width="0.9"/>
+    <circle cx="210" cy="80" r="2.2" fill="#B98A3F"/>
+
+    <text x="210" y="100"
+          text-anchor="middle"
+          font-family="'Inter','Segoe UI',Arial,sans-serif"
+          font-size="9.5"
+          font-weight="500"
+          letter-spacing="5.5"
+          fill="#5C6B82">BCA  LIFE   ·   ONBOARDING  ASSISTANT</text>
+  </g>
+</svg>

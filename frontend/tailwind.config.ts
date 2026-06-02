@@ -95,6 +95,18 @@ const config: Config = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        micPulse: {
+          "0%": { transform: "scale(1)", opacity: "0.6" },
+          "100%": { transform: "scale(2)", opacity: "0" },
+        },
+        micBreathe: {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.04)" },
+        },
+        subtitleFadeIn: {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         riseIn: "riseIn 500ms cubic-bezier(0.16, 1, 0.3, 1) both",
@@ -103,6 +115,9 @@ const config: Config = {
         bounceDot: "bounceDot 1.2s ease-in-out infinite",
         pulseRing: "pulseRing 1.8s ease-out infinite",
         shimmer: "shimmer 4s linear infinite",
+        micPulse: "micPulse 1.6s ease-out infinite",
+        micBreathe: "micBreathe 2.8s ease-in-out infinite",
+        subtitleFadeIn: "subtitleFadeIn 350ms ease-out both",
       },
     },
   },
