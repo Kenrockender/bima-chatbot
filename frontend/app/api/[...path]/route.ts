@@ -18,7 +18,7 @@ async function proxy(req: NextRequest, ctx: { params: { path: string[] } }) {
     headers,
     redirect: "manual",
   };
-  if (req.method !== "GET" && req.method !== "HEAD") {
+  if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
     init.body = req.body as any;
     (init as any).duplex = "half";
   }
