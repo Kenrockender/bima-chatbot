@@ -21,7 +21,7 @@ export function BimaAvatar({
         viewBox="0 0 200 200"
         width={size}
         height={size}
-        className="relative z-10 drop-shadow-sm"
+        className="relative z-10 drop-shadow-xs"
         aria-hidden
       >
         <defs>
