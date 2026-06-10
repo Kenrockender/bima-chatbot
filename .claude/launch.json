@@ -7,6 +7,16 @@
       "runtimeArgs": ["run", "dev", "--prefix", "frontend"],
       "port": 3010,
       "autoPort": true
+    },
+    {
+      "name": "frontend-railway",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-Command",
+        "$env:BACKEND_URL='https://bima-chatbot-production.up.railway.app'; npm run dev --prefix frontend"
+      ],
+      "port": 3010,
+      "autoPort": true
     }
   ]
 }
