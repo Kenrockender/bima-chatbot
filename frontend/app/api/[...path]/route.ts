@@ -9,9 +9,13 @@ async function proxy(req: NextRequest, ctx: { params: { path: string[] } }) {
   const path = ctx.params.path.join("/");
   const url = `${BACKEND}/api/${path}${req.nextUrl.search}`;
 
-  const headers = new Headers(req.headers);
-  headers.delete("host");
-  headers.delete("content-length");
+  // Forward only the headers the backend needs — copying everything brings
+  // along hop-by-hop/platform headers that break upstream fetch on Vercel.
+  const headers = new Headers();
+  for (const name of ["content-type", "accept", "x-admin-password", "x-fa-id"]) {
+    const v = req.headers.get(name);
+    if (v) headers.set(name, v);
+  }
 
   const init: RequestInit = {
     method: req.method,
@@ -23,7 +27,13 @@ async function proxy(req: NextRequest, ctx: { params: { path: string[] } }) {
     if (body.byteLength > 0) init.body = body;
   }
 
-  const upstream = await fetch(url, init);
+  let upstream: Response;
+  try {
+    upstream = await fetch(url, init);
+  } catch (e: any) {
+    console.error("proxy fetch failed", req.method, url, e?.cause ?? e);
+    return Response.json({ detail: "Backend unreachable" }, { status: 502 });
+  }
   const respHeaders = new Headers(upstream.headers);
   respHeaders.delete("content-encoding");
   respHeaders.delete("content-length");
