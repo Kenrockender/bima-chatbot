@@ -18,9 +18,9 @@ async function proxy(req: NextRequest, ctx: { params: { path: string[] } }) {
     headers,
     redirect: "manual",
   };
-  if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
-    init.body = req.body as any;
-    (init as any).duplex = "half";
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    const body = await req.arrayBuffer();
+    if (body.byteLength > 0) init.body = body;
   }
 
   const upstream = await fetch(url, init);
