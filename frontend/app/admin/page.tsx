@@ -214,6 +214,12 @@ export default function AdminPage() {
             </div>
             <div className="flex items-center gap-2.5">
               <Link
+                href="/manager"
+                className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy transition px-2 py-1"
+              >
+                Dashboard
+              </Link>
+              <Link
                 href="/"
                 className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy transition px-2 py-1"
               >

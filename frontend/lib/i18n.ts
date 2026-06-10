@@ -101,6 +101,7 @@ export const t = {
 
     // Progress dashboard
     navProgress: "Progress",
+    navLeaderboard: "Leaderboard",
     progressTitle: "Your progress",
     progressSubtitle:
       "Every roleplay is scored and tracked. Keep your streak alive and sharpen your weakest skill.",
@@ -276,6 +277,7 @@ export const t = {
 
     // Progress dashboard
     navProgress: "Progres",
+    navLeaderboard: "Peringkat",
     progressTitle: "Progres kamu",
     progressSubtitle:
       "Setiap roleplay dinilai dan dilacak. Jaga streak-mu dan asah skill terlemahmu.",

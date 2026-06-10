@@ -366,6 +366,12 @@ export default function Home() {
             {tr.navProgress}
           </Link>
           <Link
+            href="/leaderboard"
+            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
+          >
+            {tr.navLeaderboard}
+          </Link>
+          <Link
             href="/recommend"
             className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
           >

@@ -114,7 +114,7 @@ def chat(req: ChatRequest):
 @router.post("/end", response_model=EndResponse)
 def end(req: EndRequest, user: dict = Depends(get_current_user)):
     try:
-        return training.end_session(req.session_id, user["uid"])
+        return training.end_session(req.session_id, user["uid"], user)
     except KeyError:
         raise HTTPException(status_code=404, detail="Session not found or expired")
 
@@ -137,3 +137,8 @@ def get_history(user: dict = Depends(get_current_user)):
 def get_next(user: dict = Depends(get_current_user)):
     rec = progress.recommend_next(user["uid"])
     return rec or {}
+
+
+@router.get("/leaderboard")
+def get_leaderboard(user: dict = Depends(get_current_user)):
+    return progress.leaderboard(user["uid"])

@@ -266,7 +266,11 @@ def _extract_json(text: str) -> Optional[Dict]:
         return None
 
 
-def end_session(session_id: str, fa_id: Optional[str] = None) -> Dict:
+def end_session(
+    session_id: str,
+    fa_id: Optional[str] = None,
+    profile: Optional[Dict] = None,
+) -> Dict:
     session = sessions.get(session_id)
     if not session:
         raise KeyError("session not found or expired")
@@ -336,7 +340,7 @@ Kasih evaluasi JSON sesuai format yang diminta."""
             transcript = [
                 {"role": h["role"], "content": h["content"]} for h in history
             ]
-            report["progress"] = progress.save_attempt(fa_id, report, transcript)
+            report["progress"] = progress.save_attempt(fa_id, report, transcript, profile)
         except Exception as e:
             log.exception("failed to persist attempt: %s", e)
 

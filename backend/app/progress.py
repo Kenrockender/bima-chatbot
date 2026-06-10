@@ -53,7 +53,40 @@ def _attempts_col(fa_id: str):
     return fs().collection("users").document(fa_id).collection("attempts")
 
 
-def save_attempt(fa_id: str, report: Dict, transcript: List[Dict]) -> Dict:
+def _user_doc(fa_id: str):
+    return fs().collection("users").document(fa_id)
+
+
+def _update_summary(fa_id: str, profile: Optional[Dict], stats: Dict) -> None:
+    """Maintain a denormalized users/{uid} summary so the leaderboard and the
+    manager dashboard can read one collection instead of scanning every
+    attempt. Refreshed after each finished session."""
+    data = {
+        "uid": fa_id,
+        "total_sessions": stats["total_sessions"],
+        "total_xp": stats["total_xp"],
+        "level": stats["level"],
+        "averages": stats["averages"],
+        "last_overall": stats["last_overall"],
+        "weakest_dimension": stats["weakest_dimension"],
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if profile:
+        if profile.get("name"):
+            data["name"] = profile["name"]
+        if profile.get("email"):
+            data["email"] = profile["email"]
+        if profile.get("picture"):
+            data["picture"] = profile["picture"]
+    _user_doc(fa_id).set(data, merge=True)
+
+
+def save_attempt(
+    fa_id: str,
+    report: Dict,
+    transcript: List[Dict],
+    profile: Optional[Dict] = None,
+) -> Dict:
     """Persist a finished session. Returns gamification deltas the UI can
     celebrate: xp earned, new streak, and any freshly unlocked badges."""
     scores = report.get("scores", {}) or {}
@@ -87,6 +120,10 @@ def save_attempt(fa_id: str, report: Dict, transcript: List[Dict]) -> Dict:
     badges_after = _earned_badges(fa_id)
     new_badges = [b for b in badges_after if b["id"] not in badges_before]
     stats = get_stats(fa_id)
+    try:
+        _update_summary(fa_id, profile, stats)
+    except Exception as e:
+        log.warning("failed to update user summary for %s: %s", fa_id, e)
 
     return {
         "xp_earned": xp,
@@ -242,4 +279,88 @@ def recommend_next(fa_id: str) -> Optional[Dict]:
         "dimension": dim,
         "persona_id": persona_id,
         "average": stats["averages"].get(dim, 0),
+    }
+
+
+# -----------------------------------------------------------------------------
+# Team views (leaderboard + manager dashboard) — read the users summary
+# collection maintained by _update_summary, so no per-attempt scanning.
+# -----------------------------------------------------------------------------
+
+def _users_summaries() -> List[Dict]:
+    docs = fs().collection("users").stream()
+    out = []
+    for doc in docs:
+        d = doc.to_dict() or {}
+        d.setdefault("uid", doc.id)
+        out.append(d)
+    return out
+
+
+def _display_name(s: Dict) -> str:
+    return s.get("name") or (s.get("email") or "").split("@")[0] or "FA"
+
+
+def leaderboard(current_uid: str, limit: int = 20) -> Dict:
+    """Top FAs by total XP. Flags the caller's own row so the UI can highlight it."""
+    summaries = [s for s in _users_summaries() if int(s.get("total_sessions", 0) or 0) > 0]
+    summaries.sort(key=lambda s: int(s.get("total_xp", 0) or 0), reverse=True)
+
+    entries = []
+    me = None
+    for i, s in enumerate(summaries):
+        row = {
+            "rank": i + 1,
+            "uid": s.get("uid"),
+            "name": _display_name(s),
+            "picture": s.get("picture", ""),
+            "total_xp": int(s.get("total_xp", 0) or 0),
+            "level": int(s.get("level", 1) or 1),
+            "total_sessions": int(s.get("total_sessions", 0) or 0),
+            "is_me": s.get("uid") == current_uid,
+        }
+        if row["is_me"]:
+            me = row
+        entries.append(row)
+
+    return {"entries": entries[:limit], "me": me, "total_players": len(summaries)}
+
+
+def team_overview() -> Dict:
+    """Aggregate progress across all FAs for the manager dashboard."""
+    summaries = [s for s in _users_summaries() if int(s.get("total_sessions", 0) or 0) > 0]
+    members = []
+    dim_totals = {d: 0.0 for d in DIMENSIONS}
+    sessions_total = 0
+
+    for s in summaries:
+        avgs = s.get("averages", {}) or {}
+        members.append({
+            "uid": s.get("uid"),
+            "name": _display_name(s),
+            "email": s.get("email", ""),
+            "picture": s.get("picture", ""),
+            "total_sessions": int(s.get("total_sessions", 0) or 0),
+            "level": int(s.get("level", 1) or 1),
+            "total_xp": int(s.get("total_xp", 0) or 0),
+            "averages": {d: round(float(avgs.get(d, 0) or 0), 1) for d in DIMENSIONS},
+            "weakest_dimension": s.get("weakest_dimension"),
+            "last_overall": int(s.get("last_overall", 0) or 0),
+            "updated_at": s.get("updated_at", ""),
+        })
+        sessions_total += int(s.get("total_sessions", 0) or 0)
+        for d in DIMENSIONS:
+            dim_totals[d] += float(avgs.get(d, 0) or 0)
+
+    n = len(members)
+    team_avg = {d: round(dim_totals[d] / n, 1) if n else 0.0 for d in DIMENSIONS}
+    members.sort(key=lambda m: m["total_xp"], reverse=True)
+    weakest = min(DIMENSIONS, key=lambda d: team_avg[d]) if n else None
+
+    return {
+        "member_count": n,
+        "sessions_total": sessions_total,
+        "team_averages": team_avg,
+        "team_weakest_dimension": weakest,
+        "members": members,
     }

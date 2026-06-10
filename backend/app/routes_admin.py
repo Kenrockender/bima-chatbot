@@ -5,7 +5,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks
 
-from . import rag, db
+from . import rag, db, progress
 from .auth import require_admin
 from .config import settings
 from .schemas import SourceOut, UrlIngestRequest
@@ -17,6 +17,12 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 @router.post("/verify")
 def verify(_=Depends(require_admin)):
     return {"ok": True}
+
+
+@router.get("/overview")
+def overview(_=Depends(require_admin)):
+    """Aggregate team progress for the manager dashboard."""
+    return progress.team_overview()
 
 
 @router.get("/sources", response_model=List[SourceOut])
