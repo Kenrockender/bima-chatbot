@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { BimaAvatar } from "@/components/BimaAvatar";
+import { authedFetch } from "@/lib/api";
+import { useAuth } from "@/components/AuthProvider";
 
 type Source = {
   id: string;
@@ -19,9 +21,9 @@ type Source = {
 type Toast = { id: number; kind: "ok" | "err"; text: string };
 
 export default function AdminPage() {
-  const [password, setPassword] = useState("");
+  const { user, signOut } = useAuth();
   const [authed, setAuthed] = useState(false);
-  const [authErr, setAuthErr] = useState("");
+  const [checking, setChecking] = useState(true);
   const [sources, setSources] = useState<Source[]>([]);
   const [url, setUrl] = useState("");
   const [urlName, setUrlName] = useState("");
@@ -30,13 +32,19 @@ export default function AdminPage() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
 
+  // Verify admin rights via the bearer token. Re-runs when the signed-in user
+  // changes (e.g. after the auth state resolves on first load).
   useEffect(() => {
-    const saved = sessionStorage.getItem("bima_admin_pw");
-    if (saved) {
-      setPassword(saved);
-      verify(saved).then((ok) => ok && setAuthed(true));
-    }
-  }, []);
+    let alive = true;
+    setChecking(true);
+    authedFetch("/api/admin/verify", { method: "POST" })
+      .then((res) => alive && setAuthed(res.ok))
+      .catch(() => alive && setAuthed(false))
+      .finally(() => alive && setChecking(false));
+    return () => {
+      alive = false;
+    };
+  }, [user]);
 
   function toast(kind: "ok" | "err", text: string) {
     const id = Date.now() + Math.random();
@@ -44,37 +52,10 @@ export default function AdminPage() {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
   }
 
-  async function verify(pw: string) {
-    try {
-      const res = await fetch("/api/admin/verify", {
-        method: "POST",
-        headers: { "X-Admin-Password": pw },
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  async function doLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setAuthErr("");
-    const ok = await verify(password);
-    if (ok) {
-      sessionStorage.setItem("bima_admin_pw", password);
-      setAuthed(true);
-    } else {
-      setAuthErr("Incorrect password");
-    }
-  }
-
   const loadSources = useCallback(async () => {
-    if (!password) return;
-    const res = await fetch("/api/admin/sources", {
-      headers: { "X-Admin-Password": password },
-    });
+    const res = await authedFetch("/api/admin/sources");
     if (res.ok) setSources(await res.json());
-  }, [password]);
+  }, []);
 
   useEffect(() => {
     if (!authed) return;
@@ -95,9 +76,8 @@ export default function AdminPage() {
     const fd = new FormData();
     pdfs.forEach((f) => fd.append("files", f));
     try {
-      const res = await fetch("/api/admin/sources/pdf", {
+      const res = await authedFetch("/api/admin/sources/pdf", {
         method: "POST",
-        headers: { "X-Admin-Password": password },
         body: fd,
       });
       if (!res.ok) throw new Error("Upload failed");
@@ -114,12 +94,9 @@ export default function AdminPage() {
     e.preventDefault();
     if (!url.trim()) return;
     try {
-      const res = await fetch("/api/admin/sources/url", {
+      const res = await authedFetch("/api/admin/sources/url", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Admin-Password": password,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url, name: urlName || undefined }),
       });
       if (!res.ok) throw new Error();
@@ -134,9 +111,8 @@ export default function AdminPage() {
 
   async function deleteSource(id: string) {
     if (!confirm("Delete this source from the knowledge base?")) return;
-    const res = await fetch(`/api/admin/sources/${id}`, {
+    const res = await authedFetch(`/api/admin/sources/${id}`, {
       method: "DELETE",
-      headers: { "X-Admin-Password": password },
     });
     if (res.ok) {
       toast("ok", "Source deleted");
@@ -147,9 +123,8 @@ export default function AdminPage() {
   }
 
   async function reindex(id: string) {
-    const res = await fetch(`/api/admin/sources/${id}/reindex`, {
+    const res = await authedFetch(`/api/admin/sources/${id}/reindex`, {
       method: "POST",
-      headers: { "X-Admin-Password": password },
     });
     if (res.ok) {
       toast("ok", "Re-indexing started");
@@ -159,74 +134,54 @@ export default function AdminPage() {
     }
   }
 
-  // ─────────────────────────── LOGIN ───────────────────────────
+  // ─────────────────────────── ACCESS GATE ───────────────────────────
+  if (checking) {
+    return (
+      <main className="min-h-screen grid place-items-center bg-canvas">
+        <div className="h-8 w-8 rounded-full border-2 border-bca-gold border-t-transparent animate-spin" />
+      </main>
+    );
+  }
+
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-canvas relative overflow-hidden px-4">
         <span className="watermark-b">B</span>
-        <form
-          onSubmit={doLogin}
-          className="relative z-10 w-full max-w-md surface-paper rounded-[18px] shadow-paper p-8 animate-riseIn"
-        >
-          {/* gold corner mark */}
+        <div className="relative z-10 w-full max-w-md surface-paper rounded-[18px] shadow-paper p-8 animate-riseIn text-center">
           <span
             aria-hidden
             className="absolute top-0 left-0 h-1 w-16 rounded-tl-[18px]"
             style={{ background: "#C8941E" }}
           />
-          <div className="flex items-center gap-3.5 mb-2">
+          <div className="flex items-center justify-center gap-3.5 mb-3">
             <BimaAvatar size={44} />
-            <div className="leading-tight">
-              <div className="flex items-baseline gap-2">
-                <h1
-                  className="font-serif text-bca-ink text-[24px]"
-                  style={{ fontWeight: 500, letterSpacing: "-0.02em" }}
-                >
-                  BIMA
-                </h1>
-                <span className="smallcaps text-bca-gold">Console</span>
-              </div>
-              <p className="text-[12.5px] text-bca-mute mt-1">
-                Knowledge base management
-              </p>
-            </div>
+            <span className="smallcaps text-bca-gold">Console</span>
           </div>
-
-          <div className="gold-rule my-6" />
-
-          <label className="smallcaps text-bca-mute block mb-2">
-            Admin password
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoFocus
-            placeholder="••••••••"
-            className="w-full rounded-[12px] border border-bca-rule bg-bca-paper px-4 py-2.5 text-[14px] focus-gold transition"
-          />
-          {authErr && (
-            <p className="text-[12.5px] text-red-700 mt-2 pl-1">{authErr}</p>
-          )}
-
-          <button
-            type="submit"
-            className="mt-5 w-full inline-flex items-center justify-center gap-2 bg-bca-navy hover:bg-bca-ink transition text-bca-cream text-[14px] font-medium rounded-full py-2.5 shadow-soft group"
-          >
-            <span
-              className="inline-block w-1.5 h-1.5 rounded-full"
-              style={{ background: "#C8941E" }}
-            />
-            Sign in
-          </button>
-
-          <Link
-            href="/"
-            className="mt-5 block text-center text-[11.5px] smallcaps text-bca-mute hover:text-bca-navy transition"
-          >
-            ← Back to chat
-          </Link>
-        </form>
+          <h1 className="font-serif text-bca-ink text-[22px]" style={{ fontWeight: 500 }}>
+            Akses ditolak
+          </h1>
+          <p className="text-[13px] text-bca-mute mt-2">
+            {user
+              ? `Akun ${user.email ?? ""} tidak punya akses admin.`
+              : "Kamu perlu masuk dengan akun admin."}
+          </p>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <Link
+              href="/"
+              className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy transition"
+            >
+              ← Kembali ke chat
+            </Link>
+            {user && (
+              <button
+                onClick={() => signOut()}
+                className="text-[12px] font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-full px-3 py-1.5 transition"
+              >
+                Ganti akun
+              </button>
+            )}
+          </div>
+        </div>
       </main>
     );
   }
@@ -265,11 +220,7 @@ export default function AdminPage() {
                 ← Chat
               </Link>
               <button
-                onClick={() => {
-                  sessionStorage.removeItem("bima_admin_pw");
-                  setAuthed(false);
-                  setPassword("");
-                }}
+                onClick={() => signOut()}
                 className="inline-flex items-center gap-1.5 text-[12px] text-bca-ink/75 hover:text-bca-navy px-3.5 py-2 rounded-full border border-bca-rule bg-bca-paper hover:border-bca-gold transition group"
               >
                 <span className="w-1 h-1 rounded-full bg-bca-gold" />

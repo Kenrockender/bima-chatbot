@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
 from . import personas, training, drills, progress
+from .auth import get_current_user
 
 
 router = APIRouter(prefix="/api/training", tags=["training"])
@@ -111,9 +112,9 @@ def chat(req: ChatRequest):
 
 
 @router.post("/end", response_model=EndResponse)
-def end(req: EndRequest, x_fa_id: Optional[str] = Header(default=None)):
+def end(req: EndRequest, user: dict = Depends(get_current_user)):
     try:
-        return training.end_session(req.session_id, x_fa_id)
+        return training.end_session(req.session_id, user["uid"])
     except KeyError:
         raise HTTPException(status_code=404, detail="Session not found or expired")
 
@@ -123,22 +124,16 @@ def end(req: EndRequest, x_fa_id: Optional[str] = Header(default=None)):
 # -----------------------------------------------------------------------------
 
 @router.get("/progress")
-def get_progress(x_fa_id: Optional[str] = Header(default=None)):
-    if not x_fa_id:
-        raise HTTPException(status_code=400, detail="Missing X-FA-Id header")
-    return progress.get_stats(x_fa_id)
+def get_progress(user: dict = Depends(get_current_user)):
+    return progress.get_stats(user["uid"])
 
 
 @router.get("/history")
-def get_history(x_fa_id: Optional[str] = Header(default=None)):
-    if not x_fa_id:
-        raise HTTPException(status_code=400, detail="Missing X-FA-Id header")
-    return progress.get_history(x_fa_id)
+def get_history(user: dict = Depends(get_current_user)):
+    return progress.get_history(user["uid"])
 
 
 @router.get("/next")
-def get_next(x_fa_id: Optional[str] = Header(default=None)):
-    if not x_fa_id:
-        raise HTTPException(status_code=400, detail="Missing X-FA-Id header")
-    rec = progress.recommend_next(x_fa_id)
+def get_next(user: dict = Depends(get_current_user)):
+    rec = progress.recommend_next(user["uid"])
     return rec or {}

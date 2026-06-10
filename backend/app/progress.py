@@ -7,13 +7,12 @@ denormalized state to keep in sync.
 FAs are identified by an anonymous per-device id (sent as the X-FA-Id header),
 so no login is required — progress simply follows the browser.
 """
-import json
 import logging
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
-from .db import get_conn
+from .firebase import fs
 
 log = logging.getLogger("bima.progress")
 
@@ -50,6 +49,10 @@ def _xp_for(report: Dict) -> int:
     return overall * 10 + min(turns, 10) * 2
 
 
+def _attempts_col(fa_id: str):
+    return fs().collection("users").document(fa_id).collection("attempts")
+
+
 def save_attempt(fa_id: str, report: Dict, transcript: List[Dict]) -> Dict:
     """Persist a finished session. Returns gamification deltas the UI can
     celebrate: xp earned, new streak, and any freshly unlocked badges."""
@@ -59,35 +62,27 @@ def save_attempt(fa_id: str, report: Dict, transcript: List[Dict]) -> Dict:
 
     badges_before = {b["id"] for b in _earned_badges(fa_id)}
 
-    with get_conn() as conn:
-        conn.execute(
-            """INSERT INTO attempts
-               (id, fa_id, persona_id, persona_name, drill_id, focus_dimension,
-                rapport, discovery, product_knowledge, objection_handling, closing,
-                overall_score, strengths, improvements, next_focus, transcript,
-                turn_count, xp_earned)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (
-                aid,
-                fa_id,
-                report.get("persona", {}).get("id", "unknown"),
-                report.get("persona", {}).get("name", "—"),
-                report.get("drill_id"),
-                report.get("focus_dimension"),
-                int(scores.get("rapport", 0) or 0),
-                int(scores.get("discovery", 0) or 0),
-                int(scores.get("product_knowledge", 0) or 0),
-                int(scores.get("objection_handling", 0) or 0),
-                int(scores.get("closing", 0) or 0),
-                int(report.get("overall_score", 0) or 0),
-                json.dumps(report.get("strengths", []), ensure_ascii=False),
-                json.dumps(report.get("improvements", []), ensure_ascii=False),
-                report.get("next_focus", "") or "",
-                json.dumps(transcript, ensure_ascii=False),
-                int(report.get("turn_count", 0) or 0),
-                xp,
-            ),
-        )
+    _attempts_col(fa_id).document(aid).set({
+        "id": aid,
+        "persona_id": report.get("persona", {}).get("id", "unknown"),
+        "persona_name": report.get("persona", {}).get("name", "—"),
+        "drill_id": report.get("drill_id"),
+        "focus_dimension": report.get("focus_dimension"),
+        "rapport": int(scores.get("rapport", 0) or 0),
+        "discovery": int(scores.get("discovery", 0) or 0),
+        "product_knowledge": int(scores.get("product_knowledge", 0) or 0),
+        "objection_handling": int(scores.get("objection_handling", 0) or 0),
+        "closing": int(scores.get("closing", 0) or 0),
+        "overall_score": int(report.get("overall_score", 0) or 0),
+        "strengths": report.get("strengths", []) or [],
+        "improvements": report.get("improvements", []) or [],
+        "next_focus": report.get("next_focus", "") or "",
+        "transcript": transcript,
+        "turn_count": int(report.get("turn_count", 0) or 0),
+        "xp_earned": xp,
+        # ISO 8601 UTC string keeps date parsing and lexical ordering simple.
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
 
     badges_after = _earned_badges(fa_id)
     new_badges = [b for b in badges_after if b["id"] not in badges_before]
@@ -107,12 +102,13 @@ def save_attempt(fa_id: str, report: Dict, transcript: List[Dict]) -> Dict:
 # -----------------------------------------------------------------------------
 
 def _rows(fa_id: str) -> List[Dict]:
-    with get_conn() as conn:
-        rows = conn.execute(
-            "SELECT * FROM attempts WHERE fa_id=? ORDER BY created_at",
-            (fa_id,),
-        ).fetchall()
-    return [dict(r) for r in rows]
+    docs = _attempts_col(fa_id).order_by("created_at").stream()
+    out = []
+    for doc in docs:
+        d = doc.to_dict() or {}
+        d.setdefault("id", doc.id)
+        out.append(d)
+    return out
 
 
 def _attempt_dates(rows: List[Dict]) -> List[date]:

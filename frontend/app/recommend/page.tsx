@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BimaAvatar } from "@/components/BimaAvatar";
+import { authedFetch } from "@/lib/api";
 import { t, type Lang } from "@/lib/i18n";
 
 type Profile = {
@@ -75,7 +76,7 @@ export default function RecommendPage() {
           delete payload[k];
         }
       });
-      const res = await fetch("/api/recommender/recommend", {
+      const res = await authedFetch("/api/recommender/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

@@ -178,24 +178,11 @@ def extract_url_text(url: str) -> str:
     return soup.get_text(separator="\n", strip=True)
 
 
-def ingest_pdf(source_id: str, source_name: str, file_path: str) -> int:
-    """Returns page count (stored in sources.chunk_count for UI display)."""
-    text, page_count = extract_pdf_text(file_path)
-    if not text.strip():
-        return 0
-    _store(source_id, source_name, "pdf", text)
-    log.info("ingested pdf %s (%d pages, %d chars)", source_name, page_count, len(text))
-    return page_count
-
-
-def ingest_url(source_id: str, source_name: str, url: str) -> int:
-    """Returns 1 on success (URLs don't have pages)."""
-    text = extract_url_text(url)
-    if not text.strip():
-        return 0
-    _store(source_id, source_name, "url", text)
-    log.info("ingested url %s (%d chars)", source_name, len(text))
-    return 1
+def register_source(source_id: str, source_name: str, source_type: str, text: str) -> None:
+    """Load already-extracted text into the in-memory prompt cache. Persistence
+    to Firestore is the caller's responsibility — this only updates the cache."""
+    _store(source_id, source_name, source_type, text)
+    log.info("cached source %s (%s, %d chars)", source_name, source_type, len(text))
 
 
 # -----------------------------------------------------------------------------

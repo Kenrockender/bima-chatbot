@@ -13,7 +13,7 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
   // Forward only the headers the backend needs — copying everything brings
   // along hop-by-hop/platform headers that break upstream fetch on Vercel.
   const headers = new Headers();
-  for (const name of ["content-type", "accept", "x-admin-password", "x-fa-id"]) {
+  for (const name of ["content-type", "accept", "authorization"]) {
     const v = req.headers.get(name);
     if (v) headers.set(name, v);
   }

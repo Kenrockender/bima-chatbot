@@ -10,7 +10,7 @@ import { FeedbackReport, type Report } from "@/components/FeedbackReport";
 import { CoachChip, type Coach } from "@/components/CoachChip";
 import { VoiceStage } from "@/components/VoiceStage";
 import { useSTT, useTTS } from "@/hooks/useSpeech";
-import { faHeaders } from "@/lib/faId";
+import { authedFetch } from "@/lib/api";
 import { recommendedPersona } from "@/lib/coaching";
 import { t, type Lang } from "@/lib/i18n";
 
@@ -73,7 +73,7 @@ export default function Home() {
   }, [stt.listening]);
 
   useEffect(() => {
-    fetch("/api/training/personas")
+    authedFetch("/api/training/personas")
       .then((r) => r.json())
       .then(setPersonas)
       .catch(() => setPersonas([]));
@@ -136,7 +136,7 @@ export default function Home() {
     if (starting) return;
     setStarting(true);
     try {
-      const res = await fetch("/api/training/start", {
+      const res = await authedFetch("/api/training/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -180,7 +180,7 @@ export default function Home() {
     setInput("");
     setBusy(true);
     try {
-      const res = await fetch("/api/training/chat", {
+      const res = await authedFetch("/api/training/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: sessionId, message: text }),
@@ -226,9 +226,9 @@ export default function Home() {
     if (!confirm(tr.endSessionConfirm)) return;
     setStage("ending");
     try {
-      const res = await fetch("/api/training/end", {
+      const res = await authedFetch("/api/training/end", {
         method: "POST",
-        headers: faHeaders({ "Content-Type": "application/json" }),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: sessionId }),
       });
       if (!res.ok) throw new Error();

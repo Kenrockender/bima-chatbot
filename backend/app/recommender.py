@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from . import rag
-from .db import get_conn
+from . import db
 
 
 log = logging.getLogger("bima.recommender")
@@ -23,11 +23,7 @@ log = logging.getLogger("bima.recommender")
 # -----------------------------------------------------------------------------
 
 def list_ready_products() -> List[Dict]:
-    with get_conn() as conn:
-        rows = conn.execute(
-            "SELECT id, name FROM sources WHERE status='ready' ORDER BY created_at"
-        ).fetchall()
-    return [{"id": r["id"], "name": r["name"]} for r in rows]
+    return [{"id": s["id"], "name": s.get("name", "")} for s in db.list_ready_sources()]
 
 
 # -----------------------------------------------------------------------------

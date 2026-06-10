@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BimaAvatar } from "@/components/BimaAvatar";
-import { faHeaders } from "@/lib/faId";
+import { authedFetch } from "@/lib/api";
 import { t, type Lang } from "@/lib/i18n";
 
 type Badge = { id: string; name: string; description: string };
@@ -62,16 +62,15 @@ export default function ProgressPage() {
   const dimLabel = (d: string) => (tr as Record<string, string>)[d] ?? d;
 
   useEffect(() => {
-    const h = faHeaders();
     Promise.all([
-      fetch("/api/training/progress", { headers: h }).then((r) =>
+      authedFetch("/api/training/progress").then((r) =>
         r.ok ? r.json() : null,
       ),
-      fetch("/api/training/history", { headers: h }).then((r) =>
+      authedFetch("/api/training/history").then((r) =>
         r.ok ? r.json() : [],
       ),
-      fetch("/api/training/drills").then((r) => (r.ok ? r.json() : [])),
-      fetch("/api/training/next", { headers: h }).then((r) =>
+      authedFetch("/api/training/drills").then((r) => (r.ok ? r.json() : [])),
+      authedFetch("/api/training/next").then((r) =>
         r.ok ? r.json() : null,
       ),
     ])
