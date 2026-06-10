@@ -5,8 +5,9 @@ export const runtime = "nodejs";
 
 const BACKEND = process.env.BACKEND_URL || "http://localhost:8000";
 
-async function proxy(req: NextRequest, ctx: { params: { path: string[] } }) {
-  const path = ctx.params.path.join("/");
+async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+  const { path: segments } = await ctx.params;
+  const path = segments.join("/");
   const url = `${BACKEND}/api/${path}${req.nextUrl.search}`;
 
   // Forward only the headers the backend needs — copying everything brings
