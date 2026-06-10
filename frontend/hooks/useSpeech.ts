@@ -165,6 +165,49 @@ export function useSTT(opts: { lang?: string } = {}) {
 
 const VOICE_PREF_KEY = "bima.tts.voice";
 
+/**
+ * Strip Markdown so the synthesizer reads clean prose instead of literally
+ * voicing "asterisk asterisk", citation tags, table pipes, etc.
+ */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ") // fenced code
+    .replace(/`([^`]+)`/g, "$1") // inline code
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ") // images
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1") // links -> text
+    .replace(/\[[^\]]*,\s*(?:p|hal)\.?\s*\d+\]/gi, "") // citation tags [Name, p.3]
+    .replace(/^#{1,6}\s+/gm, "") // headings
+    .replace(/(\*\*|__)(.*?)\1/g, "$2") // bold
+    .replace(/(\*|_)([^*_]+)\1/g, "$2") // italic
+    .replace(/^\s*>\s?/gm, "") // blockquote
+    .replace(/^\s*[-*+]\s+/gm, "") // bullet markers
+    .replace(/^\s*\d+[.)]\s+/gm, "") // numbered list markers
+    .replace(/\|/g, " ") // table pipes
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Break text into sentence-sized chunks. Chrome's speechSynthesis silently
+ * cuts off a single long utterance (~15s); feeding it shorter chunks back to
+ * back keeps the whole answer from being truncated.
+ */
+function chunkForSpeech(text: string, maxLen = 180): string[] {
+  const sentences = text.match(/[^.!?。！？\n]+[.!?。！？]*\s*/g) || [text];
+  const chunks: string[] = [];
+  let buf = "";
+  for (const s of sentences) {
+    if ((buf + s).length > maxLen && buf) {
+      chunks.push(buf.trim());
+      buf = s;
+    } else {
+      buf += s;
+    }
+  }
+  if (buf.trim()) chunks.push(buf.trim());
+  return chunks;
+}
+
 export function useTTS(opts: { lang?: string } = {}) {
   const lang = opts.lang ?? "id-ID";
   const [supported, setSupported] = useState(false);
@@ -172,6 +215,8 @@ export function useTTS(opts: { lang?: string } = {}) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voiceName, setVoiceName] = useState<string | null>(null); // null = auto
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const queueRef = useRef<string[]>([]);
+  const keepAliveRef = useRef<number | null>(null);
 
   const scoreVoice = (v: SpeechSynthesisVoice, lng: string) => {
     const n = v.name.toLowerCase();
@@ -229,30 +274,62 @@ export function useTTS(opts: { lang?: string } = {}) {
     } catch {}
   }, []);
 
+  const stopKeepAlive = useCallback(() => {
+    if (keepAliveRef.current !== null) {
+      window.clearInterval(keepAliveRef.current);
+      keepAliveRef.current = null;
+    }
+  }, []);
+
+  // Speak the next queued chunk; chains via onend until the queue drains.
+  const speakNext = useCallback(() => {
+    const synth = window.speechSynthesis;
+    const next = queueRef.current.shift();
+    if (!next) {
+      setSpeaking(false);
+      stopKeepAlive();
+      return;
+    }
+    const utter = new SpeechSynthesisUtterance(next);
+    if (voiceRef.current) utter.voice = voiceRef.current;
+    utter.lang = lang;
+    utter.rate = 1.15;
+    utter.pitch = 1.05;
+    utter.volume = 1.0;
+    utter.onend = () => speakNext();
+    utter.onerror = () => speakNext();
+    synth.speak(utter);
+  }, [lang, stopKeepAlive]);
+
   const speak = useCallback(
     (text: string) => {
       if (typeof window === "undefined" || !window.speechSynthesis) return;
-      if (!text || !text.trim()) return;
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      if (voiceRef.current) utter.voice = voiceRef.current;
-      utter.lang = lang;
-      utter.rate = 1.15;
-      utter.pitch = 1.05;
-      utter.volume = 1.0;
-      utter.onstart = () => setSpeaking(true);
-      utter.onend = () => setSpeaking(false);
-      utter.onerror = () => setSpeaking(false);
-      window.speechSynthesis.speak(utter);
+      const clean = stripMarkdown(text || "");
+      if (!clean) return;
+      const synth = window.speechSynthesis;
+      synth.cancel();
+      queueRef.current = chunkForSpeech(clean);
+      setSpeaking(true);
+      // Chrome keep-alive: pausing + resuming every 10s stops the engine from
+      // silently dying mid-answer on longer replies.
+      stopKeepAlive();
+      keepAliveRef.current = window.setInterval(() => {
+        if (!synth.speaking) return;
+        synth.pause();
+        synth.resume();
+      }, 10000);
+      speakNext();
     },
-    [lang],
+    [speakNext, stopKeepAlive],
   );
 
   const cancel = useCallback(() => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
+    queueRef.current = [];
+    stopKeepAlive();
     window.speechSynthesis.cancel();
     setSpeaking(false);
-  }, []);
+  }, [stopKeepAlive]);
 
   return {
     supported,
