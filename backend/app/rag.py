@@ -44,7 +44,7 @@ def _build_chat(temperature: float, json_mode: bool = False) -> ChatOpenAI:
     if not settings.openrouter_api_key:
         raise RuntimeError(
             "OPENROUTER_API_KEY is not set. This app requires OpenRouter "
-            "(DeepSeek) for chat — see .env.example."
+            "for chat — see .env.example."
         )
     kwargs = {
         "model": settings.openrouter_chat_model,
@@ -52,7 +52,7 @@ def _build_chat(temperature: float, json_mode: bool = False) -> ChatOpenAI:
         "base_url": settings.openrouter_base_url,
         "temperature": temperature,
     }
-    if json_mode:
+    if json_mode and "deepseek" in settings.openrouter_chat_model.lower():
         kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
     return ChatOpenAI(**kwargs)
 
