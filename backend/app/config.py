@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # is stable, which is the whole point of this app's "stuff all PDFs" mode.
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    openrouter_chat_model: str = "anthropic/claude-3.5-haiku"
+    openrouter_chat_model: str = "google/gemini-2.5-flash"
 
     # Firebase / Firestore. The service account is the secret that lets the
     # backend verify ID tokens and own all Firestore reads/writes. Provide it
