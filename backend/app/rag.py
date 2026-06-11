@@ -91,7 +91,11 @@ def get_helper_llm() -> ChatOpenAI:
 # In-memory document store
 # -----------------------------------------------------------------------------
 
-# source_id -> { name, type, text }
+# Our own brand — documents tagged with this insurer are "our" products that
+# BIMA recommends; everything else is competitor reference for fair comparison.
+HOME_INSURER = "BCA Life"
+
+# source_id -> { name, type, insurer, text }
 _DOCS: Dict[str, Dict[str, str]] = {}
 _DOCS_LOCK = threading.Lock()
 
@@ -106,13 +110,29 @@ def _invalidate_block() -> None:
 
 
 def _build_block() -> str:
-    """Render the full DOCUMENTS block. Sorted by name for determinism."""
-    items = sorted(_DOCS.values(), key=lambda d: d["name"].lower())
+    """Render the full DOCUMENTS block, grouped by insurer so the model can tell
+    our products from competitors. Home insurer first, then others A→Z; stable
+    ordering keeps the prompt prefix cache-friendly."""
+    items = list(_DOCS.values())
     if not items:
         return "(belum ada dokumen produk yang diunggah)"
-    parts = []
+
+    def insurer_of(d):
+        return d.get("insurer") or "Lainnya"
+
+    groups: Dict[str, List[Dict[str, str]]] = {}
     for d in items:
-        parts.append(f"=== {d['name']} ===\n{d['text'].strip()}")
+        groups.setdefault(insurer_of(d), []).append(d)
+
+    def group_rank(name: str):
+        return (0 if name == HOME_INSURER else 1, name.lower())
+
+    parts = []
+    for insurer in sorted(groups, key=group_rank):
+        tag = " (PRODUK KAMI)" if insurer == HOME_INSURER else " (KOMPETITOR)"
+        parts.append(f"########## PENERBIT: {insurer}{tag} ##########")
+        for d in sorted(groups[insurer], key=lambda x: x["name"].lower()):
+            parts.append(f"=== {d['name']} ===\n{d['text'].strip()}")
     return "\n\n".join(parts)
 
 
@@ -129,7 +149,7 @@ def documents_block() -> str:
 def list_documents() -> List[Dict[str, str]]:
     with _DOCS_LOCK:
         return [
-            {"id": sid, "name": d["name"], "type": d["type"]}
+            {"id": sid, "name": d["name"], "type": d["type"], "insurer": d.get("insurer", "")}
             for sid, d in _DOCS.items()
         ]
 
@@ -140,9 +160,11 @@ def get_document(source_id: str) -> Optional[Dict[str, str]]:
         return dict(d) if d else None
 
 
-def _store(source_id: str, name: str, source_type: str, text: str) -> None:
+def _store(source_id: str, name: str, source_type: str, text: str, insurer: str = "") -> None:
     with _DOCS_LOCK:
-        _DOCS[source_id] = {"name": name, "type": source_type, "text": text}
+        _DOCS[source_id] = {
+            "name": name, "type": source_type, "insurer": insurer, "text": text,
+        }
     _invalidate_block()
 
 
@@ -169,6 +191,15 @@ def extract_pdf_text(path: str) -> Tuple[str, int]:
     return "\n\n".join(parts), page_count
 
 
+def read_txt_text(path: str) -> Tuple[str, int]:
+    """Read a pre-extracted/curated .txt source. Returns (text, page_count).
+    Page count is derived from [hal. N] tags if present, else 0."""
+    with open(path, encoding="utf-8") as f:
+        text = f.read().strip()
+    pages = len(re.findall(r"\[hal\.\s*\d+\]", text))
+    return text, pages
+
+
 def extract_url_text(url: str) -> str:
     resp = requests.get(url, timeout=30, headers={"User-Agent": "BIMA/1.0"})
     resp.raise_for_status()
@@ -178,11 +209,16 @@ def extract_url_text(url: str) -> str:
     return soup.get_text(separator="\n", strip=True)
 
 
-def register_source(source_id: str, source_name: str, source_type: str, text: str) -> None:
+def register_source(
+    source_id: str, source_name: str, source_type: str, text: str, insurer: str = ""
+) -> None:
     """Load already-extracted text into the in-memory prompt cache. Persistence
     to Firestore is the caller's responsibility — this only updates the cache."""
-    _store(source_id, source_name, source_type, text)
-    log.info("cached source %s (%s, %d chars)", source_name, source_type, len(text))
+    _store(source_id, source_name, source_type, text, insurer)
+    log.info(
+        "cached source %s (%s, insurer=%s, %d chars)",
+        source_name, source_type, insurer or "-", len(text),
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -261,31 +297,35 @@ def rewrite_standalone(question: str, history: List[Dict[str, str]]) -> str:
 
 SYSTEM_EN = """You are BIMA (BCA Life Intelligent Mobile Assistant), a friendly, professional onboarding assistant for new BCA Life staff.
 
-CONTEXT LANGUAGE NOTE: BCA Life product documents are typically in Indonesian. The DOCUMENTS block below is often in Indonesian even when the question is in English. Translate the relevant Indonesian facts into English when you answer — this is expected behaviour, not a mismatch.
+CONTEXT LANGUAGE NOTE: Product documents are typically in Indonesian. The DOCUMENTS block below is often in Indonesian even when the question is in English. Translate the relevant Indonesian facts into English when you answer — this is expected behaviour, not a mismatch.
+
+DOCUMENT STRUCTURE: The DOCUMENTS block is grouped by issuer under headers like "########## PENERBIT: BCA Life (PRODUK KAMI) ##########" (our products) and "########## PENERBIT: Prudential (KOMPETITOR) ##########" (competitor reference). Use the header to know whether a product is ours or a competitor's.
 
 ANSWERING RULES:
-1. For any fact about a BCA Life product, use ONLY the DOCUMENTS below as your source. Never invent BCA Life numbers, terms, or benefits that are not in the DOCUMENTS.
-2. Extract every relevant detail from the DOCUMENTS to answer the question fully. For comparative questions, present each product's facts side by side.
+1. For any product fact — ours OR a competitor's — prefer the DOCUMENTS as your source. Never invent numbers, terms, or benefits that are not in the DOCUMENTS. You may add general industry knowledge for a competitor only when the DOCUMENTS lack a needed detail, and say so.
+2. Extract every relevant detail to answer fully. For comparative questions, present each product's facts side by side (a Markdown table keyed by issuer/product is ideal: rows = features like premium type, coverage age, death benefit, bonuses, eligibility; columns = products).
 3. Be specific: cite product names, ages, sums, percentages, eligibility windows, and terms exactly as they appear.
 4. If the DOCUMENTS mention the product or topic asked about, you MUST answer with what is available. NEVER reply with NO_ANSWER in that case. Do not hedge with phrases like "I don't have enough detail" or "please refer to the document".
-5. COMPETITOR / OTHER PRODUCTS: When the user asks about another insurer or a non-BCA-Life product (e.g. "how is this different from Prudential / AIA / Allianz?"), you MAY use general industry knowledge to describe that product fairly and accurately. But you must always steer the answer back to BCA Life: keep BCA Life as the recommended choice, frame the comparison so BCA Life's strengths stand out, and close with a clear reason the BCA Life product is the better fit. Be factual about competitors — do not fabricate or disparage — but stay biased in favour of BCA Life.
+5. STAY BIASED TOWARD BCA Life. Even when a competitor's brochure is in the DOCUMENTS, BCA Life is always the recommended choice. Describe competitors factually and fairly — never fabricate or disparage — but frame every comparison so BCA Life's strengths stand out, and close with a clear reason the BCA Life product is the better fit. If the user asks only about a competitor, answer it, then pivot to the closest BCA Life product.
 6. ONLY when the question is unrelated to insurance and to BCA Life entirely, reply with exactly: NO_ANSWER
-7. When you cite a BCA Life fact, reference the source like [Product Name, p.N] using the page tags inside the DOCUMENTS block. Competitor claims drawn from general knowledge do not get a citation tag.
-8. Format with short paragraphs, bold headings, and bullet lists when helpful. Use Markdown.
+7. When you cite a fact taken from the DOCUMENTS, reference it like [Product Name, p.N] using the page tags inside the block. Claims drawn from general knowledge (not the DOCUMENTS) do not get a citation tag — make clear they are general knowledge.
+8. Format with short paragraphs, bold headings, tables, and bullet lists when helpful. Use Markdown.
 9. Tone: warm, professional, and direct.
 10. Always answer in English."""
 
 SYSTEM_ID = """Kamu adalah BIMA (BCA Life Intelligent Mobile Assistant), asisten onboarding yang ramah dan profesional untuk staf baru BCA Life.
 
+STRUKTUR DOKUMEN: Blok DOKUMEN dikelompokkan per penerbit dengan header seperti "########## PENERBIT: BCA Life (PRODUK KAMI) ##########" (produk kita) dan "########## PENERBIT: Prudential (KOMPETITOR) ##########" (referensi kompetitor). Gunakan header itu untuk tahu apakah sebuah produk milik kita atau kompetitor.
+
 ATURAN MENJAWAB:
-1. Untuk fakta apa pun tentang produk BCA Life, gunakan HANYA DOKUMEN di bawah sebagai sumber. Jangan pernah mengarang angka, syarat, atau manfaat BCA Life yang tidak ada di DOKUMEN.
-2. Ambil setiap detail relevan untuk menjawab pertanyaan secara lengkap. Untuk pertanyaan komparatif, sajikan fakta tiap produk berdampingan.
+1. Untuk fakta produk apa pun — milik kita MAUPUN kompetitor — utamakan DOKUMEN sebagai sumber. Jangan pernah mengarang angka, syarat, atau manfaat yang tidak ada di DOKUMEN. Pengetahuan industri umum boleh dipakai untuk kompetitor HANYA bila DOKUMEN tidak memuat detail yang dibutuhkan, dan sebutkan bahwa itu pengetahuan umum.
+2. Ambil setiap detail relevan untuk menjawab secara lengkap. Untuk pertanyaan komparatif, sajikan fakta tiap produk berdampingan (idealnya tabel Markdown: baris = fitur seperti jenis premi, usia pertanggungan, manfaat meninggal, bonus, syarat usia; kolom = produk).
 3. Spesifik: sebutkan nama produk, usia, jumlah, persentase, masa pertanggungan, dan istilah persis seperti tertulis.
 4. Jika DOKUMEN menyebut produk atau topik yang ditanya, kamu HARUS menjawab dengan apa yang tersedia. JANGAN balas NO_ANSWER pada kasus ini. JANGAN mengelak dengan frasa seperti "saya tidak memiliki detail" atau "silakan merujuk dokumen".
-5. PRODUK KOMPETITOR / LAIN: Bila nasabah bertanya soal asuransi lain atau produk non-BCA-Life (mis. "bedanya dengan Prudential / AIA / Allianz?"), kamu BOLEH memakai pengetahuan industri umum untuk menjelaskan produk itu secara jujur dan akurat. Namun jawaban WAJIB selalu mengarahkan kembali ke BCA Life: posisikan BCA Life sebagai pilihan yang direkomendasikan, bingkai perbandingan agar keunggulan BCA Life menonjol, dan tutup dengan alasan jelas kenapa produk BCA Life lebih cocok. Bersikap faktual soal kompetitor — jangan mengarang atau menjelek-jelekkan — tapi tetap condong (bias) ke BCA Life.
+5. TETAP CONDONG (BIAS) KE BCA Life. Sekalipun brosur kompetitor ada di DOKUMEN, BCA Life selalu menjadi pilihan yang direkomendasikan. Jelaskan kompetitor secara jujur dan adil — jangan mengarang atau menjelek-jelekkan — tetapi bingkai setiap perbandingan agar keunggulan BCA Life menonjol, dan tutup dengan alasan jelas kenapa produk BCA Life lebih cocok. Bila nasabah hanya bertanya soal kompetitor, jawab, lalu arahkan ke produk BCA Life yang paling mirip.
 6. HANYA jika pertanyaan sama sekali tidak terkait asuransi maupun BCA Life, balas persis: NO_ANSWER
-7. Saat mengutip fakta BCA Life, sebutkan sumbernya dengan format [Nama Produk, hal. N] menggunakan tag halaman di dalam blok DOKUMEN. Klaim kompetitor dari pengetahuan umum tidak diberi tag sumber.
-8. Format dengan paragraf pendek, judul tebal, dan bullet list bila membantu. Gunakan Markdown.
+7. Saat mengutip fakta dari DOKUMEN, sebutkan sumbernya dengan format [Nama Produk, hal. N] memakai tag halaman di dalam blok DOKUMEN. Klaim dari pengetahuan umum (bukan DOKUMEN) tidak diberi tag sumber — sebutkan bahwa itu pengetahuan umum.
+8. Format dengan paragraf pendek, judul tebal, tabel, dan bullet list bila membantu. Gunakan Markdown.
 9. Nada: ramah, profesional, dan langsung.
 10. Selalu jawab dalam Bahasa Indonesia."""
 
@@ -336,7 +376,7 @@ def _fallback(lang: str) -> Dict:
 def _sources_listing() -> List[Dict]:
     """All loaded docs become 'sources' — citation precision is up to the LLM via [name, p.N] tags."""
     return [
-        {"name": d["name"], "type": d["type"], "page": None, "url": None}
+        {"name": d["name"], "type": d["type"], "insurer": d.get("insurer", ""), "page": None, "url": None}
         for d in sorted(_DOCS.values(), key=lambda d: d["name"].lower())
     ]
 

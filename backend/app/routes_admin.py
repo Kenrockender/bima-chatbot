@@ -30,7 +30,7 @@ def list_sources(_=Depends(require_admin)):
     return db.list_sources()
 
 
-def _process_pdf(source_id: str, source_name: str, temp_path: str):
+def _process_pdf(source_id: str, source_name: str, temp_path: str, insurer: str = ""):
     """Extract text, persist it to Firestore, cache it, then drop the temp file."""
     try:
         text, pages = rag.extract_pdf_text(temp_path)
@@ -38,7 +38,7 @@ def _process_pdf(source_id: str, source_name: str, temp_path: str):
             db.set_failed(source_id, "No extractable text in PDF")
             return
         db.set_ready(source_id, text, pages)
-        rag.register_source(source_id, source_name, "pdf", text)
+        rag.register_source(source_id, source_name, "pdf", text, insurer)
     except Exception as e:
         db.set_failed(source_id, str(e))
     finally:
@@ -55,7 +55,7 @@ def _process_url(source_id: str, source_name: str, url: str):
             db.set_failed(source_id, "No extractable text at URL")
             return
         db.set_ready(source_id, text, 1)
-        rag.register_source(source_id, source_name, "url", text)
+        rag.register_source(source_id, source_name, "url", text, rag.HOME_INSURER)
     except Exception as e:
         db.set_failed(source_id, str(e))
 
@@ -76,8 +76,9 @@ async def upload_pdfs(
         temp_path = os.path.join(settings.upload_dir, f"{source_id}_{name}")
         with open(temp_path, "wb") as out:
             shutil.copyfileobj(file.file, out)
-        db.create_source(source_id, name, "pdf", name)
-        background.add_task(_process_pdf, source_id, name, temp_path)
+        # Admin uploads to the BCA Life onboarding tool are our own product docs.
+        db.create_source(source_id, name, "pdf", name, rag.HOME_INSURER)
+        background.add_task(_process_pdf, source_id, name, temp_path, rag.HOME_INSURER)
         created.append({"id": source_id, "name": name})
     return {"created": created}
 
@@ -90,7 +91,7 @@ def add_url(
 ):
     source_id = uuid.uuid4().hex
     name = req.name or str(req.url)
-    db.create_source(source_id, name, "url", str(req.url))
+    db.create_source(source_id, name, "url", str(req.url), rag.HOME_INSURER)
     background.add_task(_process_url, source_id, name, str(req.url))
     return {"id": source_id, "name": name}
 
@@ -119,7 +120,7 @@ def reindex(source_id: str, background: BackgroundTasks, _=Depends(require_admin
         # PDF binaries aren't retained; reindex just reloads the stored text
         # into the in-memory prompt cache.
         try:
-            rag.register_source(source_id, src["name"], "pdf", src.get("text", ""))
+            rag.register_source(source_id, src["name"], "pdf", src.get("text", ""), src.get("insurer", ""))
         except Exception:
             pass
     return {"ok": True}

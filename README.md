@@ -16,7 +16,36 @@ The dataset is small (a handful of product brochures, ~30k tokens total) so we s
 
 ## Seed data
 
-The `dataset/` folder is automatically ingested on first backend startup (controlled by `SEED_DIR`). On subsequent startups the existing sources from SQLite are re-hydrated into memory.
+The `dataset/` folder is automatically ingested on first backend startup (controlled by `SEED_DIR`). On subsequent startups the existing sources from Firestore are re-hydrated into memory.
+
+### Layout — one subfolder per insurer
+
+```
+dataset/
+  BCA Life/      <- our products (recommended)
+    heritage-platinum-protection-....pdf
+    heritage-platinum-protection-....txt   <- curated, preferred
+  Manulife/      <- competitor reference
+  Prudential/    <- competitor reference
+```
+
+The **subfolder name becomes the document's `insurer` tag**. BIMA groups the DOCUMENTS block by issuer (`PENERBIT: BCA Life (PRODUK KAMI)` vs `… (KOMPETITOR)`), which is what lets it **compare products side by side while staying biased toward BCA Life** — competitor facts are described fairly, then the answer is steered back to the closest BCA Life product.
+
+### Pre-extracted `.txt` (why, and how)
+
+The seeder prefers a curated `.txt` next to each `.pdf` and only falls back to the PDF when no `.txt` twin exists. We commit the `.txt` because:
+
+- **Faster, lighter seeding** — no pdfplumber on the startup path for the seed corpus.
+- **Reviewable & deterministic** — the `.txt` is exactly what the LLM reads, git-diffable, with no per-run extraction variance.
+- **Hand-correctable** — several competitor brochures extract poorly (doubled-glyph headers, two-column merges, image-only pages); a committed `.txt` can be fixed once.
+
+Regenerate the `.txt` files after adding/replacing PDFs:
+
+```powershell
+backend\.venv\Scripts\python.exe scripts\extract_dataset.py
+```
+
+> Live admin uploads (`/admin`) still extract PDFs through pdfplumber and are tagged `BCA Life`.
 
 ## Quick start (Docker)
 

@@ -16,6 +16,7 @@ class ChatRequest(BaseModel):
 class SourceRef(BaseModel):
     name: Optional[str]
     type: Optional[str]
+    insurer: Optional[str] = None
     page: Optional[int] = None
     url: Optional[str] = None
 
@@ -42,6 +43,7 @@ class SourceOut(BaseModel):
     id: str
     name: str
     type: str
+    insurer: Optional[str] = None
     origin: str
     status: str
     error: Optional[str]

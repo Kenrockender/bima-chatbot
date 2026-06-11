@@ -29,7 +29,10 @@ def _load_existing_sources() -> None:
         return
     for src in sources:
         try:
-            rag.register_source(src["id"], src.get("name", ""), src.get("type", "pdf"), src.get("text", ""))
+            rag.register_source(
+                src["id"], src.get("name", ""), src.get("type", "pdf"),
+                src.get("text", ""), src.get("insurer", ""),
+            )
         except Exception as e:
             log.warning("failed to cache source %s: %s", src.get("name"), e)
 

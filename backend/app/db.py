@@ -36,6 +36,7 @@ def _public(doc) -> Dict:
         "id": doc.id,
         "name": d.get("name", ""),
         "type": d.get("type", "pdf"),
+        "insurer": d.get("insurer", ""),
         "origin": d.get("origin", ""),
         "status": d.get("status", "processing"),
         "error": d.get("error"),
@@ -45,10 +46,13 @@ def _public(doc) -> Dict:
     }
 
 
-def create_source(source_id: str, name: str, source_type: str, origin: str) -> None:
+def create_source(
+    source_id: str, name: str, source_type: str, origin: str, insurer: str = ""
+) -> None:
     _col().document(source_id).set({
         "name": name,
         "type": source_type,
+        "insurer": insurer,
         "origin": origin,
         "status": "processing",
         "error": None,
@@ -121,6 +125,6 @@ def list_ready_sources() -> List[Dict]:
     return out
 
 
-def existing_pdf_names() -> set:
-    docs = _col().where("type", "==", "pdf").stream()
-    return {(doc.to_dict() or {}).get("name", "") for doc in docs}
+def existing_source_names() -> set:
+    """All source display names (any type) — used by the seeder to stay idempotent."""
+    return {(doc.to_dict() or {}).get("name", "") for doc in _col().stream()}
