@@ -39,13 +39,27 @@ Railway builds the Dockerfile in `backend/`. No volume is needed — all state i
 4. **Networking** tab → **Generate Domain**. Note the URL (e.g. `https://bima-backend.up.railway.app`).
 5. Smoke test: open `https://<your-backend>/docs` — should show FastAPI Swagger UI.
 
-### Seeding the initial dataset
+### Seeding the initial dataset (automatic)
 
-Firestore starts empty. After the backend and frontend are live:
+The curated seed corpus ships **inside the backend image**: `backend/seed/<Insurer>/*.txt`
+is copied in by the Dockerfile and `SEED_DIR=/app/seed` is baked in too. On first
+startup the backend ingests it into Firestore automatically, tagging each document
+with its insurer from the subfolder name (BCA Life = our products, others =
+competitors for comparison). **No manual upload is required** for the seed set.
 
-1. Open the frontend at `https://<your-vercel-url>/admin`.
-2. Sign in with an account listed in `ADMIN_EMAILS` (or carrying the `admin:true` claim).
-3. Drag & drop the PDFs from `dataset/` into the upload area.
+The ingest is idempotent — it skips documents whose name already exists, so
+redeploys won't create duplicates.
+
+To change the seed corpus: drop/replace PDFs under `dataset/<Insurer>/`, regenerate
+the text, and redeploy:
+
+```powershell
+backend\.venv\Scripts\python.exe scripts\extract_dataset.py   # dataset/*.pdf -> backend/seed/*.txt
+git add backend/seed dataset && git commit -m "update seed" && git push
+```
+
+You can still add extra one-off PDFs at runtime via `/admin` (those are tagged
+`BCA Life`).
 
 ## 2. Frontend — Vercel
 

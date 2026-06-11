@@ -21,19 +21,25 @@ The `dataset/` folder is automatically ingested on first backend startup (contro
 ### Layout — one subfolder per insurer
 
 ```
-dataset/
-  BCA Life/      <- our products (recommended)
+dataset/              <- original PDFs (human source of truth)
+  BCA Life/             our products (recommended)
     heritage-platinum-protection-....pdf
-    heritage-platinum-protection-....txt   <- curated, preferred
-  Manulife/      <- competitor reference
-  Prudential/    <- competitor reference
+  Manulife/             competitor reference
+  Prudential/           competitor reference
+
+backend/seed/         <- curated .txt, ingested at startup (SEED_DIR)
+  BCA Life/
+    heritage-platinum-protection-....txt
+  Manulife/
+  Prudential/
 ```
 
+`scripts/extract_dataset.py` turns `dataset/*/*.pdf` into `backend/seed/*/*.txt`.
 The **subfolder name becomes the document's `insurer` tag**. BIMA groups the DOCUMENTS block by issuer (`PENERBIT: BCA Life (PRODUK KAMI)` vs `… (KOMPETITOR)`), which is what lets it **compare products side by side while staying biased toward BCA Life** — competitor facts are described fairly, then the answer is steered back to the closest BCA Life product.
 
 ### Pre-extracted `.txt` (why, and how)
 
-The seeder prefers a curated `.txt` next to each `.pdf` and only falls back to the PDF when no `.txt` twin exists. We commit the `.txt` because:
+The seeder reads the curated `.txt` corpus under `backend/seed/` (and would fall back to a `.pdf` if pointed at one). The text ships inside the backend Docker image, so production (Railway) auto-seeds with no volume mount. We commit the `.txt` because:
 
 - **Faster, lighter seeding** — no pdfplumber on the startup path for the seed corpus.
 - **Reviewable & deterministic** — the `.txt` is exactly what the LLM reads, git-diffable, with no per-run extraction variance.

@@ -1,9 +1,14 @@
-"""Pre-extract dataset PDFs into curated .txt files (one per PDF, same folder).
+"""Pre-extract dataset PDFs into curated .txt files for seeding.
+
+Reads the original PDFs under  dataset/<Insurer>/*.pdf  (human source of truth)
+and writes cleaned text to       backend/seed/<Insurer>/*.txt  (what gets seeded
+and baked into the backend Docker image — see backend/Dockerfile).
 
 Why pre-extract?
-- The seed dataset is small, stable and curated. Extracting once at build time
-  (instead of on every cold start) is faster and removes pdfplumber from the
-  hot path for seeding.
+- The seed corpus is small, stable and curated. Extracting once at build time
+  (instead of on every cold start) is faster and keeps pdfplumber off the seed
+  hot path. The tiny .txt corpus ships inside the image, so Railway auto-seeds
+  with no volume mount.
 - Several competitor brochures extract poorly (doubled-glyph headers, image-only
   pages, two-column body merges). A committed .txt is git-diffable and can be
   hand-corrected so the LLM sees clean, comparable facts.
@@ -11,7 +16,7 @@ Why pre-extract?
   reads — no hidden extraction variance.
 
 Live admin uploads still go through pdfplumber (rag.extract_pdf_text); this
-script only covers the curated seed corpus under dataset/<Insurer>/.
+script only covers the curated seed corpus.
 
 Run:  backend/.venv/Scripts/python.exe scripts/extract_dataset.py
 """
@@ -22,7 +27,8 @@ import sys
 import pdfplumber
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATASET = os.path.join(ROOT, "dataset")
+DATASET = os.path.join(ROOT, "dataset")          # PDFs in (source)
+SEED_OUT = os.path.join(ROOT, "backend", "seed")  # .txt out (deployed/seeded)
 
 # Collapses "RRIINNGG" -> "RING" style doubled-glyph headers that some PDFs emit
 # when two text render layers overlap. Only applied to a line when *most* of it
@@ -79,20 +85,22 @@ def main() -> int:
         folder = os.path.join(DATASET, insurer)
         if not os.path.isdir(folder):
             continue
+        out_folder = os.path.join(SEED_OUT, insurer)
+        os.makedirs(out_folder, exist_ok=True)
         for entry in sorted(os.listdir(folder)):
             if not entry.lower().endswith(".pdf"):
                 continue
             pdf_path = os.path.join(folder, entry)
-            txt_path = os.path.splitext(pdf_path)[0] + ".txt"
+            txt_path = os.path.join(out_folder, os.path.splitext(entry)[0] + ".txt")
             raw, pages = extract(pdf_path)
             cleaned = clean(raw)
             with open(txt_path, "w", encoding="utf-8") as f:
                 f.write(cleaned)
             flag = "  (LOW TEXT — likely image-only, review manually)" if len(cleaned) < 1000 else ""
-            print(f"[{insurer}] {entry} -> {os.path.basename(txt_path)} "
-                  f"({pages}p, {len(cleaned)} chars){flag}")
+            rel = os.path.relpath(txt_path, ROOT)
+            print(f"[{insurer}] {entry} -> {rel} ({pages}p, {len(cleaned)} chars){flag}")
             total += 1
-    print(f"done: {total} file(s) extracted")
+    print(f"done: {total} file(s) extracted into {os.path.relpath(SEED_OUT, ROOT)}")
     return 0
 
 

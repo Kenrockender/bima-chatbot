@@ -35,7 +35,7 @@ if (-not (Test-Path $venv)) {
 }
 
 $env:ADMIN_PASSWORD = if ($env:ADMIN_PASSWORD) { $env:ADMIN_PASSWORD } else { "changeme" }
-$env:SEED_DIR = Join-Path $root "dataset"
+$env:SEED_DIR = Join-Path $backendDir "seed"
 $env:SQLITE_PATH = Join-Path $backendDir "data\bima.db"
 $env:UPLOAD_DIR = Join-Path $backendDir "data\uploads"
 

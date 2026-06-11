@@ -18,10 +18,10 @@ services:
       - ESCALATION_WHATSAPP=${ESCALATION_WHATSAPP:-+62 812-0000-0000}
       - ESCALATION_EMAIL=${ESCALATION_EMAIL:-hr-it@bcalife.co.id}
       - CORS_ORIGINS=http://localhost:3000
-      - SEED_DIR=/app/seed
+      # SEED_DIR and the curated seed corpus are baked into the image
+      # (backend/Dockerfile), so no dataset volume mount is needed.
     volumes:
       - backend_data:/app/data
-      - ./dataset:/app/seed:ro
     restart: unless-stopped
 
   frontend:
