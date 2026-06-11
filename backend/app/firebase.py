@@ -20,7 +20,8 @@ from .config import settings
 
 log = logging.getLogger("bima.firebase")
 
-_lock = threading.Lock()
+# Reentrant: fs() holds the lock and calls _ensure_app(), which takes it again.
+_lock = threading.RLock()
 _app: Optional[firebase_admin.App] = None
 _db = None
 
