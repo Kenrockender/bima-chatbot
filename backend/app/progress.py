@@ -141,7 +141,7 @@ def save_attempt(
 def _rows(fa_id: str) -> List[Dict]:
     docs = _attempts_col(fa_id).order_by("created_at").stream()
     out = []
-    for doc in docs:
+    for doc in (docs or []):
         d = doc.to_dict() or {}
         d.setdefault("id", doc.id)
         out.append(d)
@@ -290,7 +290,7 @@ def recommend_next(fa_id: str) -> Optional[Dict]:
 def _users_summaries() -> List[Dict]:
     docs = fs().collection("users").stream()
     out = []
-    for doc in docs:
+    for doc in (docs or []):
         d = doc.to_dict() or {}
         d.setdefault("uid", doc.id)
         out.append(d)

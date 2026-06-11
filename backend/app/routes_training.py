@@ -79,6 +79,7 @@ class EndResponse(BaseModel):
     improvements: List[str]
     next_focus: str
     turn_count: int
+    eval_failed: Optional[bool] = None
     drill_id: Optional[str] = None
     focus_dimension: Optional[str] = None
     progress: Optional[Dict[str, Any]] = None

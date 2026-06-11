@@ -28,6 +28,7 @@ export type Report = {
   turn_count: number;
   progress?: Progress;
   raw?: string;
+  eval_failed?: boolean;
 };
 
 export function FeedbackReport({
@@ -132,6 +133,28 @@ export function FeedbackReport({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Eval failure banner */}
+      {report.eval_failed && (
+        <div
+          className="rounded-[14px] p-5 flex items-start gap-3"
+          style={{
+            background: "linear-gradient(150deg, #FFF8F0 0%, #FDEBD0 100%)",
+            border: "1px solid #F0C27A",
+          }}
+        >
+          <span className="text-[20px] shrink-0 mt-0.5">⚠️</span>
+          <div>
+            <p className="text-[14px] font-semibold text-bca-ink/90 mb-1">
+              Evaluasi gagal diproses
+            </p>
+            <p className="text-[13px] text-bca-ink/70 leading-relaxed">
+              Skor di bawah bukan penilaian asli — sistem tidak berhasil mengevaluasi sesi ini.
+              Silakan klik &quot;Coba Lagi&quot; untuk mengakhiri sesi dan mendapatkan evaluasi ulang.
+            </p>
+          </div>
         </div>
       )}
 

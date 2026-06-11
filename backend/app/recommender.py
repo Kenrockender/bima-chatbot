@@ -128,7 +128,16 @@ def recommend(profile: Dict) -> Dict:
             "error": "Knowledge base kosong. Upload PDF produk di /admin dulu.",
         }
 
-    catalog = _catalog_block(products)
+    try:
+        catalog = _catalog_block(products)
+    except Exception as e:
+        log.exception("catalog block failed: %s", e)
+        return {
+            "customer_summary": narrative[:200],
+            "recommendations": [],
+            "error": f"Gagal memuat katalog produk: {e}",
+        }
+
     system = f"{SYSTEM}\n\nKATALOG PRODUK BCA LIFE:\n{catalog}"
     user_msg = f"""PROFIL CALON NASABAH:
 {narrative}
@@ -159,7 +168,7 @@ Berikan rekomendasi JSON sesuai format yang diminta."""
             "raw": raw[:600],
         }
 
-    recs = parsed.get("recommendations", [])
+    recs = parsed.get("recommendations") or []
     norm = []
     for r in recs:
         score = r.get("fit_score", 0)

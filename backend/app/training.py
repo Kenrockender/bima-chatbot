@@ -304,22 +304,47 @@ TRANSKRIP PERCAKAPAN:
 
 Kasih evaluasi JSON sesuai format yang diminta."""
 
-    try:
-        out = rag.get_strict_llm().invoke([
-            SystemMessage(content=EVAL_SYSTEM),
-            HumanMessage(content=user_block),
-        ])
-        raw = (out.content or "").strip()
-    except Exception as e:
-        log.exception("eval LLM failed: %s", e)
-        sessions.end(session_id)
-        return _empty_report(persona, error=str(e))
+    report = None
+    last_error = ""
+    for attempt in range(3):
+        try:
+            out = rag.get_strict_llm().invoke([
+                SystemMessage(content=EVAL_SYSTEM),
+                HumanMessage(content=user_block),
+            ])
+            raw = (out.content or "").strip()
+        except Exception as e:
+            log.warning("eval LLM attempt %d failed: %s", attempt + 1, e)
+            last_error = str(e)
+            continue
 
-    report = _extract_json(raw)
+        report = _extract_json(raw)
+        if report and "scores" in report:
+            break
+        log.warning("eval JSON parse attempt %d failed; raw=%r", attempt + 1, raw[:300])
+        last_error = raw[:800]
+        report = None
+
     if not report:
-        log.warning("eval JSON parse failed; raw=%r", raw[:300])
-        report = _empty_report(persona, error="Parsing feedback gagal.")
-        report["raw"] = raw[:800]
+        log.error("eval failed after 3 attempts; last_error=%s", last_error[:200])
+        fallback = _empty_report(persona, error="Evaluasi gagal setelah 3 percobaan. Coba akhiri sesi lagi.")
+        fallback["turn_count"] = sum(1 for h in history if h["role"] == "user")
+        if fa_id and fallback["turn_count"] >= 2:
+            try:
+                transcript = [
+                    {"role": h["role"], "content": h["content"]} for h in history
+                ]
+                fallback["progress"] = progress.save_attempt(fa_id, fallback, transcript, profile)
+            except Exception as e:
+                log.exception("failed to persist fallback attempt: %s", e)
+        sessions.end(session_id)
+        return fallback
+
+    scores = report.get("scores", {})
+    for dim in ("rapport", "discovery", "product_knowledge", "objection_handling", "closing"):
+        val = scores.get(dim)
+        if not isinstance(val, (int, float)) or val < 1 or val > 10:
+            scores[dim] = 5
 
     report["persona"] = {
         "id": persona["id"],
@@ -349,6 +374,7 @@ Kasih evaluasi JSON sesuai format yang diminta."""
 
 
 def _empty_report(persona: Dict, error: Optional[str] = None) -> Dict:
+    is_error = bool(error)
     return {
         "scores": {
             "rapport": 0,
@@ -358,9 +384,10 @@ def _empty_report(persona: Dict, error: Optional[str] = None) -> Dict:
             "closing": 0,
         },
         "overall_score": 0,
+        "eval_failed": is_error,
         "strengths": [],
         "improvements": ["Sesi terlalu singkat untuk dievaluasi."] if not error else [error],
-        "next_focus": "Mulai sesi baru dan ajak nasabah ngobrol lebih lama.",
+        "next_focus": "Mulai sesi baru dan ajak nasabah ngobrol lebih lama." if not error else "Coba akhiri sesi sekali lagi untuk mendapatkan evaluasi.",
         "persona": {
             "id": persona["id"],
             "name": persona["name"],

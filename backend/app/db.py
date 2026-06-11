@@ -93,7 +93,7 @@ def set_processing(source_id: str) -> None:
 
 def list_sources() -> List[Dict]:
     docs = _col().order_by("created_at", direction=firestore.Query.DESCENDING).stream()
-    return [_public(d) for d in docs]
+    return [_public(d) for d in (docs or [])]
 
 
 def get_source(source_id: str) -> Optional[Dict]:
@@ -118,7 +118,7 @@ def list_ready_sources() -> List[Dict]:
     """Ready sources with their extracted text — used to hydrate the cache."""
     docs = _col().where("status", "==", "ready").stream()
     out = []
-    for doc in docs:
+    for doc in (docs or []):
         d = doc.to_dict() or {}
         d["id"] = doc.id
         out.append(d)
@@ -127,4 +127,4 @@ def list_ready_sources() -> List[Dict]:
 
 def existing_source_names() -> set:
     """All source display names (any type) — used by the seeder to stay idempotent."""
-    return {(doc.to_dict() or {}).get("name", "") for doc in _col().stream()}
+    return {(doc.to_dict() or {}).get("name", "") for doc in (_col().stream() or [])}
