@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 function detectPlatform() {
   if (typeof window === "undefined" || typeof navigator === "undefined") {
-    return { isMobile: false, isIOS: false, isSecure: true };
+    return { isMobile: false, isIOS: false, isSafari: false, isSecure: true };
   }
   const ua = navigator.userAgent || "";
   const isIOS =
@@ -21,11 +21,13 @@ function detectPlatform() {
     // iPadOS 13+ reports as Mac
     (ua.includes("Macintosh") && (navigator as any).maxTouchPoints > 1);
   const isMobile = isIOS || /Android|Mobile|webOS|Opera Mini/i.test(ua);
+  const isSafari =
+    /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg/.test(ua);
   const isSecure =
     window.isSecureContext ||
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1";
-  return { isMobile, isIOS, isSecure };
+  return { isMobile, isIOS, isSafari, isSecure };
 }
 
 export function useSTT(opts: { lang?: string } = {}) {
@@ -62,9 +64,10 @@ export function useSTT(opts: { lang?: string } = {}) {
     }
     setSupported(true);
     const rec = new SR();
-    // On mobile, `continuous = true` is flaky (Chrome Android ends recognition
-    // after the first utterance). Use single-shot mode + auto-restart.
-    rec.continuous = !p.isMobile;
+    // Safari and mobile: `continuous = true` is unreliable — the engine stops
+    // after each utterance or short silence. Use single-shot + auto-restart.
+    const needsRestart = p.isMobile || p.isSafari;
+    rec.continuous = !needsRestart;
     rec.interimResults = true;
     rec.lang = lang;
     rec.onresult = (e: any) => {
@@ -79,9 +82,9 @@ export function useSTT(opts: { lang?: string } = {}) {
       setInterim(interT);
     };
     rec.onend = () => {
-      // If we're on mobile and the user hasn't explicitly stopped, restart
-      // so the session feels continuous.
-      if (p.isMobile && wantListeningRef.current && !intentionalStopRef.current) {
+      // On Safari/mobile the engine ends after each utterance — auto-restart
+      // so the session feels continuous until the user explicitly stops.
+      if (needsRestart && wantListeningRef.current && !intentionalStopRef.current) {
         try {
           rec.start();
           return;
@@ -95,8 +98,8 @@ export function useSTT(opts: { lang?: string } = {}) {
     rec.onerror = (e: any) => {
       const code = e?.error ?? "unknown";
       setError(code);
-      // `no-speech` on mobile is normal between utterances — let onend retry
-      if (code === "no-speech" && p.isMobile && wantListeningRef.current) {
+      // `no-speech` is normal between utterances on Safari/mobile — let onend retry
+      if (code === "no-speech" && needsRestart && wantListeningRef.current) {
         return;
       }
       wantListeningRef.current = false;
