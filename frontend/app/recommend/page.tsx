@@ -20,7 +20,7 @@ type Profile = {
   notes?: string;
 };
 
-type Recommendation = {
+type BCARecommendation = {
   product_name: string;
   fit_score: number;
   suggested_up: string;
@@ -30,9 +30,35 @@ type Recommendation = {
   concerns: string[];
 };
 
+type CompetitorComparison = {
+  provider: string;
+  product_name: string;
+  similar_to: string;
+  fit_score: number;
+  strengths: string[];
+  weaknesses_vs_bca: string[];
+};
+
+type ObjectionHandling = {
+  objection: string;
+  response: string;
+};
+
+type SalesScript = {
+  best_product: string;
+  opening: string;
+  discovery_questions: string[];
+  pitch: string;
+  competitive_advantages: string[];
+  objection_handling: ObjectionHandling[];
+  closing: string;
+};
+
 type Response = {
   customer_summary: string;
-  recommendations: Recommendation[];
+  bca_recommendations: BCARecommendation[];
+  competitor_comparisons: CompetitorComparison[];
+  sales_script: SalesScript | null;
   error?: string;
   raw?: string;
   profile_echo?: Profile;
@@ -87,7 +113,9 @@ export default function RecommendPage() {
     } catch {
       setResult({
         customer_summary: "",
-        recommendations: [],
+        bca_recommendations: [],
+        competitor_comparisons: [],
+        sales_script: null,
         error:
           lang === "id"
             ? "Gagal mengambil rekomendasi. Pastikan service jalan & coba lagi."
@@ -445,16 +473,7 @@ export default function RecommendPage() {
             )}
 
             {!submitting && result && (
-              <ResultsPanel
-                result={result}
-                tr={tr}
-                onScript={(rec) => {
-                  // Save context for #2 — script generator. Not yet built; placeholder.
-                  alert(
-                    "Skrip jualan personalisasi akan dibangun di langkah berikutnya. Untuk sekarang, latihan dengan persona di /",
-                  );
-                }}
-              />
+              <ResultsPanel result={result} tr={tr} />
             )}
           </div>
         </div>
@@ -486,11 +505,9 @@ function Field({
 function ResultsPanel({
   result,
   tr,
-  onScript,
 }: {
   result: Response;
   tr: any;
-  onScript: (rec: Recommendation) => void;
 }) {
   if (result.error) {
     return (
@@ -512,8 +529,11 @@ function ResultsPanel({
     );
   }
 
-  const recs = result.recommendations;
-  if (recs.length === 0) {
+  const bcaRecs = result.bca_recommendations;
+  const compRecs = result.competitor_comparisons;
+  const script = result.sales_script;
+
+  if (bcaRecs.length === 0) {
     return (
       <div className="surface-paper rounded-[18px] shadow-paper p-12 text-center animate-fadeIn">
         <p className="font-serif text-bca-ink text-[18px] italic mb-2">
@@ -525,7 +545,8 @@ function ResultsPanel({
   }
 
   return (
-    <div className="space-y-5 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn">
+      {/* Customer summary */}
       <div className="surface-paper rounded-[18px] shadow-paper p-6 relative overflow-hidden">
         <span
           aria-hidden
@@ -541,29 +562,65 @@ function ResultsPanel({
         </p>
       </div>
 
-      {recs.map((rec, i) => (
-        <RecommendationCard
-          key={rec.product_name + i}
-          rec={rec}
-          rank={i}
-          tr={tr}
-          onScript={() => onScript(rec)}
-        />
-      ))}
+      {/* Two-column: BCA Life vs Competitors */}
+      <div className="grid lg:grid-cols-2 gap-5">
+        {/* Column 1: BCA Life */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ background: "#003D7A" }}
+            />
+            <span className="smallcaps text-bca-navy text-[11px] font-semibold">
+              {tr.bcaLifeCol}
+            </span>
+            <span className="h-px flex-1 bg-bca-rule" />
+          </div>
+          {bcaRecs.map((rec, i) => (
+            <BCACard key={rec.product_name + i} rec={rec} rank={i} tr={tr} />
+          ))}
+        </div>
+
+        {/* Column 2: Competitors */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ background: "#7A7A7A" }}
+            />
+            <span className="smallcaps text-bca-mute text-[11px] font-semibold">
+              {tr.competitorCol}
+            </span>
+            <span className="h-px flex-1 bg-bca-rule" />
+          </div>
+          {compRecs.length > 0 ? (
+            compRecs.map((comp, i) => (
+              <CompetitorCard key={comp.product_name + i} comp={comp} tr={tr} />
+            ))
+          ) : (
+            <div className="surface-paper rounded-[18px] shadow-paper p-6 text-center">
+              <p className="text-[13px] text-bca-mute italic">
+                Tidak ada data kompetitor.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sales Script */}
+      {script && <SalesScriptPanel script={script} tr={tr} />}
     </div>
   );
 }
 
-function RecommendationCard({
+function BCACard({
   rec,
   rank,
   tr,
-  onScript,
 }: {
-  rec: Recommendation;
+  rec: BCARecommendation;
   rank: number;
   tr: any;
-  onScript: () => void;
 }) {
   const isBest = rank === 0;
   const scorePct = (rec.fit_score / 10) * 100;
@@ -571,49 +628,49 @@ function RecommendationCard({
     rec.fit_score >= 7
       ? "linear-gradient(90deg, #C8941E, #E6B85A)"
       : rec.fit_score >= 4
-      ? "linear-gradient(90deg, #003D7A, #1B6FC9)"
-      : "linear-gradient(90deg, #B23A3A, #D86B6B)";
+        ? "linear-gradient(90deg, #003D7A, #1B6FC9)"
+        : "linear-gradient(90deg, #B23A3A, #D86B6B)";
 
   return (
-    <div className="surface-paper rounded-[18px] shadow-paper p-7 relative overflow-hidden">
+    <div className="surface-paper rounded-[18px] shadow-paper p-6 relative overflow-hidden">
       <span
         aria-hidden
         className="absolute top-0 left-0 h-1 w-16"
         style={{ background: isBest ? "#C8941E" : "#003D7A" }}
       />
-      <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
           <span
-            className="smallcaps text-[10.5px] mb-1.5 block"
+            className="smallcaps text-[10px] mb-1 block"
             style={{ color: isBest ? "#C8941E" : "#003D7A" }}
           >
             {isBest ? tr.bestMatch : `${tr.altOption} #${rank}`}
           </span>
           <h3
-            className="font-serif text-bca-ink text-[24px] leading-tight"
+            className="font-serif text-bca-ink text-[20px] leading-tight"
             style={{ fontWeight: 500, letterSpacing: "-0.02em" }}
           >
             {rec.product_name}
           </h3>
         </div>
         <div className="text-right shrink-0">
-          <span className="smallcaps text-bca-mute text-[10.5px]">
+          <span className="smallcaps text-bca-mute text-[10px]">
             {tr.fitScore}
           </span>
           <div className="flex items-baseline gap-1 justify-end">
             <span
-              className="font-serif text-bca-ink text-[34px] leading-none"
+              className="font-serif text-bca-ink text-[28px] leading-none"
               style={{ fontWeight: 500 }}
             >
               {rec.fit_score}
             </span>
-            <span className="text-bca-mute text-[13px]">/ 10</span>
+            <span className="text-bca-mute text-[12px]">/ 10</span>
           </div>
         </div>
       </div>
 
       <div
-        className="h-1.5 rounded-full overflow-hidden mb-5"
+        className="h-1.5 rounded-full overflow-hidden mb-4"
         style={{ background: "rgba(10, 27, 46, 0.06)" }}
       >
         <div
@@ -622,35 +679,21 @@ function RecommendationCard({
         />
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-3 gap-2 mb-4">
         <Stat label={tr.suggestedUP} value={rec.suggested_up} accent="#003D7A" />
-        <Stat
-          label={tr.suggestedPremium}
-          value={rec.suggested_premium}
-          accent="#C8941E"
-        />
-        <Stat
-          label={tr.suggestedTenor}
-          value={rec.suggested_tenor}
-          accent="#1E7B47"
-        />
+        <Stat label={tr.suggestedPremium} value={rec.suggested_premium} accent="#C8941E" />
+        <Stat label={tr.suggestedTenor} value={rec.suggested_tenor} accent="#1E7B47" />
       </div>
 
       {rec.rationale.length > 0 && (
-        <div className="mb-4">
-          <span className="smallcaps text-bca-navy text-[10.5px] block mb-2">
+        <div className="mb-3">
+          <span className="smallcaps text-bca-navy text-[10px] block mb-1.5">
             {tr.whyFit}
           </span>
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {rec.rationale.map((r, i) => (
-              <li
-                key={i}
-                className="flex gap-2.5 text-[14px] text-bca-ink/85 leading-relaxed"
-              >
-                <span
-                  aria-hidden
-                  className="w-1.5 h-1.5 rounded-full mt-2 shrink-0 bg-bca-gold"
-                />
+              <li key={i} className="flex gap-2 text-[13px] text-bca-ink/85 leading-relaxed">
+                <span aria-hidden className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 bg-bca-gold" />
                 <span>{r}</span>
               </li>
             ))}
@@ -659,40 +702,239 @@ function RecommendationCard({
       )}
 
       {rec.concerns.length > 0 && (
-        <div className="mb-5">
-          <span className="smallcaps text-[10.5px] block mb-2 text-red-700/90">
+        <div>
+          <span className="smallcaps text-[10px] block mb-1.5 text-red-700/90">
             {tr.concernsLabel}
           </span>
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {rec.concerns.map((c, i) => (
-              <li
-                key={i}
-                className="flex gap-2.5 text-[14px] text-bca-ink/85 leading-relaxed"
-              >
-                <span
-                  aria-hidden
-                  className="w-1.5 h-1.5 rounded-full mt-2 shrink-0"
-                  style={{ background: "#B23A3A" }}
-                />
+              <li key={i} className="flex gap-2 text-[13px] text-bca-ink/85 leading-relaxed">
+                <span aria-hidden className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: "#B23A3A" }} />
                 <span>{c}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
+    </div>
+  );
+}
 
-      {isBest && (
-        <button
-          onClick={onScript}
-          className="inline-flex items-center gap-2 bg-bca-navy hover:bg-bca-ink transition text-bca-cream text-[14px] font-medium rounded-full px-5 py-2.5 shadow-soft"
-        >
-          <span
-            className="inline-block w-1.5 h-1.5 rounded-full"
-            style={{ background: "#C8941E" }}
-          />
-          {tr.generateScript}
-        </button>
+function CompetitorCard({
+  comp,
+  tr,
+}: {
+  comp: CompetitorComparison;
+  tr: any;
+}) {
+  const scorePct = (comp.fit_score / 10) * 100;
+
+  return (
+    <div
+      className="rounded-[18px] p-6 relative overflow-hidden"
+      style={{
+        background: "linear-gradient(150deg, #F8F7F4 0%, #EDECEB 100%)",
+        border: "1px solid #D9D5CF",
+      }}
+    >
+      <span
+        aria-hidden
+        className="absolute top-0 left-0 h-1 w-16"
+        style={{ background: "#7A7A7A" }}
+      />
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0">
+          <span className="smallcaps text-[10px] text-bca-mute block mb-1">
+            {comp.provider}
+          </span>
+          <h3
+            className="font-serif text-bca-ink text-[20px] leading-tight"
+            style={{ fontWeight: 500, letterSpacing: "-0.02em" }}
+          >
+            {comp.product_name}
+          </h3>
+          <span className="text-[11px] text-bca-mute mt-1 block">
+            {tr.comparedTo}: <span className="text-bca-navy font-medium">{comp.similar_to}</span>
+          </span>
+        </div>
+        <div className="text-right shrink-0">
+          <span className="smallcaps text-bca-mute text-[10px]">
+            {tr.fitScore}
+          </span>
+          <div className="flex items-baseline gap-1 justify-end">
+            <span
+              className="font-serif text-bca-ink text-[28px] leading-none"
+              style={{ fontWeight: 500 }}
+            >
+              {comp.fit_score}
+            </span>
+            <span className="text-bca-mute text-[12px]">/ 10</span>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="h-1.5 rounded-full overflow-hidden mb-4"
+        style={{ background: "rgba(10, 27, 46, 0.06)" }}
+      >
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${scorePct}%`, background: "linear-gradient(90deg, #7A7A7A, #A3A3A3)" }}
+        />
+      </div>
+
+      {comp.strengths.length > 0 && (
+        <div className="mb-3">
+          <span className="smallcaps text-[10px] block mb-1.5 text-bca-mute">
+            {tr.compStrengths}
+          </span>
+          <ul className="space-y-1.5">
+            {comp.strengths.map((s, i) => (
+              <li key={i} className="flex gap-2 text-[13px] text-bca-ink/75 leading-relaxed">
+                <span aria-hidden className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: "#7A7A7A" }} />
+                <span>{s}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
+
+      {comp.weaknesses_vs_bca.length > 0 && (
+        <div>
+          <span className="smallcaps text-[10px] block mb-1.5" style={{ color: "#1E7B47" }}>
+            {tr.compWeaknesses}
+          </span>
+          <ul className="space-y-1.5">
+            {comp.weaknesses_vs_bca.map((w, i) => (
+              <li key={i} className="flex gap-2 text-[13px] text-bca-ink/85 leading-relaxed">
+                <span aria-hidden className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: "#1E7B47" }} />
+                <span>{w}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SalesScriptPanel({
+  script,
+  tr,
+}: {
+  script: SalesScript;
+  tr: any;
+}) {
+  return (
+    <div className="surface-paper rounded-[18px] shadow-paper p-7 relative overflow-hidden">
+      <span
+        aria-hidden
+        className="absolute top-0 left-0 h-1 w-full"
+        style={{ background: "linear-gradient(90deg, #003D7A, #C8941E)" }}
+      />
+
+      <div className="flex items-center gap-2 mb-1 mt-1">
+        <span className="smallcaps text-bca-navy text-[11px] font-semibold">
+          {tr.salesScriptTitle}
+        </span>
+        <span className="h-px flex-1 max-w-[80px] bg-bca-rule" />
+      </div>
+      <p className="text-[13px] text-bca-mute mb-6">
+        Produk: <span className="text-bca-navy font-medium">{script.best_product}</span>
+      </p>
+
+      <div className="space-y-5">
+        {/* Opening */}
+        <ScriptSection label={tr.scriptOpening} accent="#003D7A">
+          <p className="text-[14px] text-bca-ink/90 leading-relaxed italic">
+            &ldquo;{script.opening}&rdquo;
+          </p>
+        </ScriptSection>
+
+        {/* Discovery Questions */}
+        {script.discovery_questions.length > 0 && (
+          <ScriptSection label={tr.scriptDiscovery} accent="#C8941E">
+            <ol className="space-y-2">
+              {script.discovery_questions.map((q, i) => (
+                <li key={i} className="flex gap-2.5 text-[14px] text-bca-ink/85 leading-relaxed">
+                  <span className="text-bca-gold font-semibold shrink-0">{i + 1}.</span>
+                  <span>&ldquo;{q}&rdquo;</span>
+                </li>
+              ))}
+            </ol>
+          </ScriptSection>
+        )}
+
+        {/* Pitch */}
+        <ScriptSection label={tr.scriptPitch} accent="#003D7A">
+          <p className="text-[14px] text-bca-ink/90 leading-relaxed italic">
+            &ldquo;{script.pitch}&rdquo;
+          </p>
+        </ScriptSection>
+
+        {/* Competitive Advantages */}
+        {script.competitive_advantages.length > 0 && (
+          <ScriptSection label={tr.scriptAdvantages} accent="#1E7B47">
+            <ul className="space-y-2">
+              {script.competitive_advantages.map((a, i) => (
+                <li key={i} className="flex gap-2.5 text-[14px] text-bca-ink/85 leading-relaxed">
+                  <span aria-hidden className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: "#1E7B47" }} />
+                  <span>{a}</span>
+                </li>
+              ))}
+            </ul>
+          </ScriptSection>
+        )}
+
+        {/* Objection Handling */}
+        {script.objection_handling.length > 0 && (
+          <ScriptSection label={tr.scriptObjections} accent="#B23A3A">
+            <div className="space-y-3">
+              {script.objection_handling.map((oh, i) => (
+                <div key={i} className="rounded-[12px] p-3.5" style={{ background: "rgba(10, 27, 46, 0.03)", border: "1px solid #E6DFD0" }}>
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="smallcaps text-[10px] text-red-700/80 shrink-0 mt-0.5">{tr.objectionLabel}:</span>
+                    <span className="text-[13px] text-bca-ink/80 italic">&ldquo;{oh.objection}&rdquo;</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="smallcaps text-[10px] text-bca-navy shrink-0 mt-0.5">{tr.responseLabel}:</span>
+                    <span className="text-[13px] text-bca-ink/90">&ldquo;{oh.response}&rdquo;</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScriptSection>
+        )}
+
+        {/* Closing */}
+        <ScriptSection label={tr.scriptClosing} accent="#C8941E">
+          <p className="text-[14px] text-bca-ink/90 leading-relaxed italic">
+            &ldquo;{script.closing}&rdquo;
+          </p>
+        </ScriptSection>
+      </div>
+    </div>
+  );
+}
+
+function ScriptSection({
+  label,
+  accent,
+  children,
+}: {
+  label: string;
+  accent: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
+        <span className="smallcaps text-[10.5px] font-semibold" style={{ color: accent }}>
+          {label}
+        </span>
+      </div>
+      {children}
     </div>
   );
 }
@@ -708,21 +950,18 @@ function Stat({
 }) {
   return (
     <div
-      className="rounded-[12px] p-3"
+      className="rounded-[10px] p-2.5"
       style={{
         background: "linear-gradient(150deg, #FDFBF6 0%, #F4ECDA 100%)",
         border: "1px solid #E6DFD0",
       }}
     >
-      <div className="flex items-center gap-1.5 mb-1">
-        <span
-          className="w-1 h-1 rounded-full"
-          style={{ background: accent }}
-        />
-        <span className="smallcaps text-bca-mute text-[10px]">{label}</span>
+      <div className="flex items-center gap-1 mb-0.5">
+        <span className="w-1 h-1 rounded-full" style={{ background: accent }} />
+        <span className="smallcaps text-bca-mute text-[9px]">{label}</span>
       </div>
       <div
-        className="font-serif text-bca-ink text-[15px] leading-tight"
+        className="font-serif text-bca-ink text-[13px] leading-tight"
         style={{ fontWeight: 500 }}
       >
         {value}

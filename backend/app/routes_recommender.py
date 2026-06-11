@@ -22,7 +22,7 @@ class CustomerProfile(BaseModel):
     notes: Optional[str] = None
 
 
-class Recommendation(BaseModel):
+class BCARecommendation(BaseModel):
     product_name: str
     fit_score: int
     suggested_up: str
@@ -32,9 +32,35 @@ class Recommendation(BaseModel):
     concerns: List[str]
 
 
+class CompetitorComparison(BaseModel):
+    provider: str
+    product_name: str
+    similar_to: str
+    fit_score: int
+    strengths: List[str]
+    weaknesses_vs_bca: List[str]
+
+
+class ObjectionHandling(BaseModel):
+    objection: str
+    response: str
+
+
+class SalesScript(BaseModel):
+    best_product: str
+    opening: str
+    discovery_questions: List[str]
+    pitch: str
+    competitive_advantages: List[str]
+    objection_handling: List[ObjectionHandling]
+    closing: str
+
+
 class RecommendationResponse(BaseModel):
     customer_summary: str
-    recommendations: List[Recommendation]
+    bca_recommendations: List[BCARecommendation] = []
+    competitor_comparisons: List[CompetitorComparison] = []
+    sales_script: Optional[SalesScript] = None
     error: Optional[str] = None
     raw: Optional[str] = None
     profile_echo: Optional[dict] = None

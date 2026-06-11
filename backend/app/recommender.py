@@ -60,20 +60,40 @@ def build_narrative(p: Dict) -> str:
 # Prompt
 # -----------------------------------------------------------------------------
 
-SYSTEM = """Kamu senior product advisor BCA Life. Tugasmu: cocokkan profil calon nasabah dengan produk-produk yang tersedia, lalu rekomendasikan UP (Uang Pertanggungan), premi bulanan, dan tenor.
+SYSTEM = """Kamu senior product advisor BCA Life yang juga memahami produk asuransi kompetitor (Manulife, Prudential). Tugasmu:
+1. Cocokkan profil nasabah dengan produk BCA Life in-branch (Heritage+, Prosper, Star) dari KATALOG.
+2. Bandingkan dengan produk sejenis dari Manulife & Prudential.
+3. Buatkan skrip jualan lengkap untuk FA menjual produk BCA Life terbaik, termasuk keunggulan vs kompetitor.
 
-Untuk tiap produk di KATALOG, evaluasi:
-- Apakah cocok dengan tujuan & profil nasabah? (skor 1-10)
-- UP yang masuk akal (patokan: 5-10x penghasilan tahunan, sesuaikan dengan tanggungan & tujuan)
-- Premi bulanan realistik (HARUS dalam budget nasabah)
-- Tenor yang cocok (sesuaikan dengan horizon waktu & usia)
-- Kelebihan yang relevan untuk nasabah ini
-- Concern atau red flag
+BAGIAN A — REKOMENDASI BCA LIFE (dari KATALOG):
+Untuk tiap produk BCA Life di KATALOG:
+- Skor kecocokan 1-10
+- UP (patokan: 5-10x penghasilan tahunan)
+- Premi bulanan (HARUS dalam budget nasabah)
+- Tenor
+- Alasan & concern
+
+BAGIAN B — PERBANDINGAN KOMPETITOR:
+Untuk tiap produk kompetitor yang SEJENIS dengan rekomendasi BCA Life terbaik:
+- Nama provider & produk
+- Produk BCA Life mana yang dibandingkan
+- Skor kecocokan 1-10
+- Kelebihan produk kompetitor
+- Kelemahan dibanding BCA Life (kenapa BCA Life lebih baik)
+
+BAGIAN C — SKRIP JUALAN FA:
+Buatkan skrip lengkap untuk FA menjual produk BCA Life terbaik:
+- Pembukaan (salam + ice breaking)
+- Pertanyaan discovery (3-4 pertanyaan menggali kebutuhan)
+- Pitch produk (penjelasan manfaat sesuai kebutuhan nasabah)
+- Keunggulan vs kompetitor (3-5 poin konkret kenapa BCA Life lebih baik)
+- Handling keberatan (3 keberatan umum + respons)
+- Closing (ajakan action)
 
 OUTPUT WAJIB JSON valid, struktur PERSIS:
 {
   "customer_summary": "<ringkas profil nasabah 1-2 kalimat>",
-  "recommendations": [
+  "bca_recommendations": [
     {
       "product_name": "<nama produk PERSIS dari katalog>",
       "fit_score": <integer 1-10>,
@@ -83,15 +103,36 @@ OUTPUT WAJIB JSON valid, struktur PERSIS:
       "rationale": ["<alasan 1>", "<alasan 2>", "<alasan 3>"],
       "concerns": ["<concern kalau ada, atau array kosong>"]
     }
-  ]
+  ],
+  "competitor_comparisons": [
+    {
+      "provider": "<Manulife atau Prudential>",
+      "product_name": "<nama produk kompetitor>",
+      "similar_to": "<nama produk BCA Life yang dibandingkan>",
+      "fit_score": <integer 1-10>,
+      "strengths": ["<kelebihan kompetitor 1>", "<kelebihan 2>"],
+      "weaknesses_vs_bca": ["<kelemahan vs BCA Life 1>", "<kelemahan 2>"]
+    }
+  ],
+  "sales_script": {
+    "best_product": "<nama produk BCA Life terbaik>",
+    "opening": "<pembukaan + ice breaking 2-3 kalimat>",
+    "discovery_questions": ["<pertanyaan 1>", "<pertanyaan 2>", "<pertanyaan 3>"],
+    "pitch": "<pitch produk 3-5 kalimat, sesuai kebutuhan nasabah>",
+    "competitive_advantages": ["<keunggulan vs kompetitor 1>", "<keunggulan 2>", "<keunggulan 3>"],
+    "objection_handling": [
+      {"objection": "<keberatan umum>", "response": "<respons FA>"}
+    ],
+    "closing": "<kalimat closing + ajakan action>"
+  }
 }
 
 Aturan:
-- Urutkan recommendations dari fit_score tertinggi ke terendah.
-- WAJIB masukkan SEMUA produk dari katalog (bahkan yang fit-score-nya rendah) — supaya FA bisa lihat alternatif.
-- Hanya pakai produk dari KATALOG. Dilarang mengarang produk.
-- Angka UP/premi/tenor HARUS REASONABLE — perhatikan budget nasabah & informasi dari KATALOG.
-- Bahasa Indonesia, alasan dalam kalimat lengkap (bukan satu kata).
+- bca_recommendations: urutkan dari fit_score tertinggi. WAJIB masukkan SEMUA produk dari KATALOG.
+- competitor_comparisons: minimal 2 produk (1 Manulife, 1 Prudential) yang paling sejenis dengan best BCA Life product.
+- sales_script: harus spesifik untuk profil nasabah ini, bukan generik.
+- Angka UP/premi/tenor HARUS REASONABLE.
+- Bahasa Indonesia, kalimat lengkap.
 - JANGAN output text di luar JSON. JANGAN pakai markdown fence."""
 
 
@@ -124,7 +165,9 @@ def recommend(profile: Dict) -> Dict:
     if not products:
         return {
             "customer_summary": narrative[:200],
-            "recommendations": [],
+            "bca_recommendations": [],
+            "competitor_comparisons": [],
+            "sales_script": None,
             "error": "Knowledge base kosong. Upload PDF produk di /admin dulu.",
         }
 
@@ -134,7 +177,9 @@ def recommend(profile: Dict) -> Dict:
         log.exception("catalog block failed: %s", e)
         return {
             "customer_summary": narrative[:200],
-            "recommendations": [],
+            "bca_recommendations": [],
+            "competitor_comparisons": [],
+            "sales_script": None,
             "error": f"Gagal memuat katalog produk: {e}",
         }
 
@@ -154,7 +199,9 @@ Berikan rekomendasi JSON sesuai format yang diminta."""
         log.exception("recommend LLM failed: %s", e)
         return {
             "customer_summary": narrative[:200],
-            "recommendations": [],
+            "bca_recommendations": [],
+            "competitor_comparisons": [],
+            "sales_script": None,
             "error": str(e),
         }
 
@@ -163,32 +210,71 @@ Berikan rekomendasi JSON sesuai format yang diminta."""
         log.warning("recommender JSON parse failed; raw=%r", raw[:300])
         return {
             "customer_summary": narrative[:200],
-            "recommendations": [],
+            "bca_recommendations": [],
+            "competitor_comparisons": [],
+            "sales_script": None,
             "error": "Gagal parsing output AI. Coba ulangi.",
             "raw": raw[:600],
         }
 
-    recs = parsed.get("recommendations") or []
-    norm = []
-    for r in recs:
-        score = r.get("fit_score", 0)
+    def _norm_score(val):
         try:
-            score = int(score)
+            s = int(val)
         except Exception:
-            score = 0
-        score = max(0, min(10, score))
-        norm.append({
+            s = 0
+        return max(0, min(10, s))
+
+    def _as_list(val):
+        return val if isinstance(val, list) else []
+
+    bca_recs = parsed.get("bca_recommendations") or parsed.get("recommendations") or []
+    norm_bca = []
+    for r in bca_recs:
+        norm_bca.append({
             "product_name": r.get("product_name", "—"),
-            "fit_score": score,
+            "fit_score": _norm_score(r.get("fit_score", 0)),
             "suggested_up": r.get("suggested_up", "—"),
             "suggested_premium": r.get("suggested_premium", "—"),
             "suggested_tenor": r.get("suggested_tenor", "—"),
-            "rationale": r.get("rationale", []) if isinstance(r.get("rationale"), list) else [],
-            "concerns": r.get("concerns", []) if isinstance(r.get("concerns"), list) else [],
+            "rationale": _as_list(r.get("rationale")),
+            "concerns": _as_list(r.get("concerns")),
         })
-    norm.sort(key=lambda x: x["fit_score"], reverse=True)
+    norm_bca.sort(key=lambda x: x["fit_score"], reverse=True)
+
+    comp_recs = parsed.get("competitor_comparisons") or []
+    norm_comp = []
+    for c in comp_recs:
+        norm_comp.append({
+            "provider": c.get("provider", "—"),
+            "product_name": c.get("product_name", "—"),
+            "similar_to": c.get("similar_to", "—"),
+            "fit_score": _norm_score(c.get("fit_score", 0)),
+            "strengths": _as_list(c.get("strengths")),
+            "weaknesses_vs_bca": _as_list(c.get("weaknesses_vs_bca")),
+        })
+
+    script = parsed.get("sales_script") or {}
+    norm_script = None
+    if script:
+        objections = script.get("objection_handling") or []
+        norm_obj = [
+            {"objection": o.get("objection", ""), "response": o.get("response", "")}
+            for o in objections if isinstance(o, dict)
+        ]
+        norm_script = {
+            "best_product": script.get("best_product", "—"),
+            "opening": script.get("opening", ""),
+            "discovery_questions": _as_list(script.get("discovery_questions")),
+            "pitch": script.get("pitch", ""),
+            "competitive_advantages": _as_list(script.get("competitive_advantages")),
+            "objection_handling": norm_obj,
+            "closing": script.get("closing", ""),
+        }
+
     return {
         "customer_summary": parsed.get("customer_summary", narrative[:200]),
-        "recommendations": norm,
+        "bca_recommendations": norm_bca,
+        "competitor_comparisons": norm_comp,
+        "sales_script": norm_script,
         "profile_echo": profile,
     }
