@@ -117,7 +117,7 @@ export default function Home() {
     if (captured) {
       silenceTimerRef.current = setTimeout(() => {
         if (stt.listening) toggleMic();
-      }, 1600);
+      }, 3000);
     }
     return () => {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);

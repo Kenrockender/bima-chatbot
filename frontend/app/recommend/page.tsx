@@ -364,7 +364,7 @@ export default function RecommendPage() {
                 <input
                   type="number"
                   min={1}
-                  max={60}
+                  max={profile.age ? 100 - Number(profile.age) : 80}
                   value={profile.horizon_years ?? ""}
                   onChange={(e) =>
                     set(
