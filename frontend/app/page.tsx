@@ -25,6 +25,16 @@ type Message = {
 
 type Stage = "pick" | "chat" | "report" | "ending";
 
+// Order prospects easy → hard so trainees can ramp up gradually.
+const DIFFICULTY_RANK: Record<string, number> = { Mudah: 0, Sedang: 1, Sulit: 2 };
+function sortByDifficulty(list: Persona[]): Persona[] {
+  if (!Array.isArray(list)) return [];
+  return [...list].sort(
+    (a, b) =>
+      (DIFFICULTY_RANK[a.challenge] ?? 99) - (DIFFICULTY_RANK[b.challenge] ?? 99),
+  );
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Lang>("id");
   const [stage, setStage] = useState<Stage>("pick");
@@ -84,6 +94,7 @@ export default function Home() {
   useEffect(() => {
     authedFetch("/api/training/personas")
       .then((r) => r.json())
+      .then(sortByDifficulty)
       .then(setPersonas)
       .catch(() => setPersonas([]));
   }, []);
