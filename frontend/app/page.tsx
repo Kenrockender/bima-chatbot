@@ -581,7 +581,6 @@ export default function Home() {
                     silenceProgress={silenceProgress}
                     paused={stt.paused}
                     coach={lastCoach}
-                    facts={lastFacts}
                     onMicClick={toggleMic}
                     onPauseToggle={pauseMic}
                     onRedo={redoMic}
@@ -629,8 +628,6 @@ export default function Home() {
                         <ChatBubble
                           role={m.role}
                           content={m.content}
-                          sources={m.facts as any}
-                          sourcesLabel={tr.factsTag}
                           youLabel="USER"
                           bimaLabel={activePersona.name.toUpperCase()}
                           timestamp={m.timestamp}
