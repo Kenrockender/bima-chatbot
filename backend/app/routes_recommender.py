@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import APIRouter
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from . import recommender
 
@@ -18,8 +18,15 @@ class CustomerProfile(BaseModel):
     health_notes: Optional[str] = None
     budget_premium_per_month: Optional[float] = Field(default=None, ge=0, description="in millions IDR")
     goal: Optional[str] = None  # "proteksi keluarga" | "legacy planning" | etc
-    horizon_years: Optional[int] = Field(default=None, ge=1, le=60)
+    horizon_years: Optional[int] = Field(default=None, ge=1)
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def clamp_horizon(self):
+        max_h = 100 - self.age
+        if self.horizon_years is not None and self.horizon_years > max_h:
+            self.horizon_years = max(1, max_h)
+        return self
 
 
 class BCARecommendation(BaseModel):

@@ -13,6 +13,7 @@ export function VoiceStage({
   aiSubtitle,
   userCaption,
   userInterim,
+  silenceProgress,
   coach,
   facts,
   onMicClick,
@@ -30,6 +31,7 @@ export function VoiceStage({
   aiSubtitle: string;
   userCaption: string;
   userInterim: boolean;
+  silenceProgress: number;
   coach: Coach | null;
   facts: Fact[] | null;
   onMicClick: () => void;
@@ -144,6 +146,19 @@ export function VoiceStage({
               {i < facts.length - 1 && ", "}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Silence countdown bar */}
+      {voiceState === "recording" && silenceProgress > 0 && (
+        <div className="w-32 h-1 rounded-full bg-black/10 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-none"
+            style={{
+              width: `${silenceProgress * 100}%`,
+              background: silenceProgress > 0.7 ? "#e53e3e" : "#d69e2e",
+            }}
+          />
         </div>
       )}
 

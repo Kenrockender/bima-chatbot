@@ -37,13 +37,20 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [starting, setStarting] = useState(false);
   const [report, setReport] = useState<Report | null>(null);
-  const [inputMode, setInputMode] = useState<"voice" | "text">("text");
+  const [inputMode, setInputMode] = useState<"voice" | "text">(() => {
+    if (typeof window === "undefined") return "text";
+    try { return (localStorage.getItem("bima.inputMode") as "voice" | "text") || "text"; } catch { return "text"; }
+  });
+  const [silenceProgress, setSilenceProgress] = useState(0);
+  const silenceStartRef = useRef<number | null>(null);
+  const silenceRafRef = useRef<number | null>(null);
   const [muted, setMuted] = useState(false);
   const [listenStart, setListenStart] = useState<number | null>(null);
   const [listenSeconds, setListenSeconds] = useState(0);
   const [aiSubtitle, setAiSubtitle] = useState("");
   const [lastCoach, setLastCoach] = useState<Coach | null>(null);
   const [lastFacts, setLastFacts] = useState<{ name?: string; page?: number | null }[] | null>(null);
+  const [lastFailedMsg, setLastFailedMsg] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const voiceInitRef = useRef(false);
@@ -101,26 +108,46 @@ export default function Home() {
   useEffect(() => {
     if (!voiceInitRef.current && stt.supported && !stt.isIOS) {
       voiceInitRef.current = true;
-      setInputMode("voice");
+      try {
+        if (!localStorage.getItem("bima.inputMode")) setInputMode("voice");
+      } catch { setInputMode("voice"); }
     }
   }, [stt.supported, stt.isIOS]);
 
-  // Auto-send on silence: while listening, a ~1.6s pause with captured speech
-  // ends the turn and sends it — so practice feels hands-free, like a real call.
+  useEffect(() => {
+    try { localStorage.setItem("bima.inputMode", inputMode); } catch {}
+  }, [inputMode]);
+
   useEffect(() => {
     if (!stt.listening) {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (silenceRafRef.current) cancelAnimationFrame(silenceRafRef.current);
+      silenceStartRef.current = null;
+      setSilenceProgress(0);
       return;
     }
     const captured = (stt.transcript + " " + stt.interim).trim();
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (silenceRafRef.current) cancelAnimationFrame(silenceRafRef.current);
+    silenceStartRef.current = null;
+    setSilenceProgress(0);
     if (captured) {
+      const SILENCE_MS = 3000;
+      silenceStartRef.current = Date.now();
+      const tick = () => {
+        if (!silenceStartRef.current) return;
+        const elapsed = Date.now() - silenceStartRef.current;
+        setSilenceProgress(Math.min(elapsed / SILENCE_MS, 1));
+        if (elapsed < SILENCE_MS) silenceRafRef.current = requestAnimationFrame(tick);
+      };
+      silenceRafRef.current = requestAnimationFrame(tick);
       silenceTimerRef.current = setTimeout(() => {
         if (stt.listening) toggleMic();
-      }, 3000);
+      }, SILENCE_MS);
     }
     return () => {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (silenceRafRef.current) cancelAnimationFrame(silenceRafRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stt.transcript, stt.interim, stt.listening]);
@@ -173,6 +200,7 @@ export default function Home() {
   async function send(textOverride?: string) {
     const text = (textOverride ?? input).trim();
     if (!text || busy || !sessionId) return;
+    setLastFailedMsg(null);
     setMessages((prev) => [
       ...prev,
       { role: "user", content: text, timestamp: new Date() },
@@ -204,6 +232,7 @@ export default function Home() {
       setLastFacts(factsData);
       if (inputMode === "voice" && !muted && tts.supported) tts.speak(data.reply);
     } catch {
+      setLastFailedMsg(text);
       setMessages((prev) => [
         ...prev,
         {
@@ -219,6 +248,14 @@ export default function Home() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function retry() {
+    if (!lastFailedMsg) return;
+    const msg = lastFailedMsg;
+    setMessages((prev) => prev.filter((m) => !m.escalation || m !== prev[prev.length - 1]));
+    setLastFailedMsg(null);
+    send(msg);
   }
 
   async function endSession() {
@@ -497,6 +534,7 @@ export default function Home() {
                     aiSubtitle={aiSubtitle}
                     userCaption={(stt.transcript + " " + stt.interim).trim()}
                     userInterim={!!stt.interim}
+                    silenceProgress={silenceProgress}
                     coach={lastCoach}
                     facts={lastFacts}
                     onMicClick={toggleMic}
@@ -547,22 +585,34 @@ export default function Home() {
                           timestamp={m.timestamp}
                         />
                         {m.escalation && (
-                          <EscalationCard
-                            whatsapp="+62 812-1234-5678"
-                            email="hr-it@bcalife.co.id"
-                            title={
-                              lang === "id"
-                                ? "Butuh bantuan langsung?"
-                                : "Need direct help?"
-                            }
-                            body={
-                              lang === "id"
-                                ? "Tim kami siap membantu kamu melalui WhatsApp atau email."
-                                : "Our team is ready to help via WhatsApp or email."
-                            }
-                            whatsappLabel="WhatsApp"
-                            emailLabel="Email"
-                          />
+                          <>
+                            <EscalationCard
+                              whatsapp="+62 812-1234-5678"
+                              email="hr-it@bcalife.co.id"
+                              title={
+                                lang === "id"
+                                  ? "Butuh bantuan langsung?"
+                                  : "Need direct help?"
+                              }
+                              body={
+                                lang === "id"
+                                  ? "Tim kami siap membantu kamu melalui WhatsApp atau email."
+                                  : "Our team is ready to help via WhatsApp or email."
+                              }
+                              whatsappLabel="WhatsApp"
+                              emailLabel="Email"
+                            />
+                            {lastFailedMsg && i === messages.length - 1 && (
+                              <button
+                                onClick={retry}
+                                disabled={busy}
+                                className="mt-1.5 ml-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-bca-navy hover:text-bca-ink bg-bca-cream hover:bg-bca-shellMid border border-bca-rule rounded-full px-3.5 py-1.5 transition disabled:opacity-50"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+                                {tr.retry}
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     ))}

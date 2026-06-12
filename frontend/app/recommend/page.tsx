@@ -86,7 +86,16 @@ export default function RecommendPage() {
   const tr = t[lang];
 
   function set<K extends keyof Profile>(key: K, value: Profile[K]) {
-    setProfile((p) => ({ ...p, [key]: value }));
+    setProfile((p) => {
+      const next = { ...p, [key]: value };
+      if (key === "age" && next.age !== "" && next.horizon_years !== "") {
+        const maxH = 100 - Number(next.age);
+        if (Number(next.horizon_years) > maxH) {
+          next.horizon_years = maxH < 1 ? "" : maxH;
+        }
+      }
+      return next;
+    });
   }
 
   async function submit(e: React.FormEvent) {

@@ -71,6 +71,7 @@ export const t = {
     tapToInterrupt: "Tap to interrupt",
     voiceFallbackHint: "Voice not available — using text input",
     micPermissionNeeded: "Mic permission needed",
+    retry: "Retry",
 
     // Report
     reportEyebrow: "Coaching Report",
@@ -263,6 +264,7 @@ export const t = {
     tapToInterrupt: "Ketuk untuk interupsi",
     voiceFallbackHint: "Suara tidak tersedia — menggunakan teks",
     micPermissionNeeded: "Izin mikrofon diperlukan",
+    retry: "Coba Lagi",
 
     reportEyebrow: "Coaching Report",
     reportTitle: "Begini hasil sesi tadi.",
