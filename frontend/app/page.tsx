@@ -51,6 +51,8 @@ export default function Home() {
   const [lastCoach, setLastCoach] = useState<Coach | null>(null);
   const [lastFacts, setLastFacts] = useState<{ name?: string; page?: number | null }[] | null>(null);
   const [lastFailedMsg, setLastFailedMsg] = useState<string | null>(null);
+  const [sessionStart, setSessionStart] = useState<number | null>(null);
+  const [sessionElapsed, setSessionElapsed] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const voiceInitRef = useRef(false);
@@ -153,6 +155,12 @@ export default function Home() {
   }, [stt.transcript, stt.interim, stt.listening]);
 
   useEffect(() => {
+    if (!sessionStart) { setSessionElapsed(0); return; }
+    const id = setInterval(() => setSessionElapsed(Math.floor((Date.now() - sessionStart) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [sessionStart]);
+
+  useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
@@ -184,6 +192,7 @@ export default function Home() {
         },
       ]);
       setStage("chat");
+      setSessionStart(Date.now());
       setAiSubtitle(data.opening_message);
       setLastCoach(null);
       setLastFacts(null);
@@ -283,6 +292,7 @@ export default function Home() {
     setSelectedId(null);
     setActivePersona(null);
     setSessionId(null);
+    setSessionStart(null);
     setMessages([]);
     setReport(null);
     setInput("");
@@ -312,6 +322,8 @@ export default function Home() {
       // immediate start would be too aggressive; show a Start button in the welcome card
     }
   }
+
+  const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
   const voiceMode = inputMode === "voice";
   const voiceState = stt.listening
@@ -387,13 +399,20 @@ export default function Home() {
 
           {/* Right side: end-session, links, language */}
           {stage === "chat" && activePersona && (
-            <button
-              onClick={endSession}
-              className="hidden md:inline-flex items-center gap-2 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-white/80 hover:text-white px-3 py-2 rounded-full border border-white/15 hover:border-bca-accentGold/60 transition"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
-              {tr.endSession}
-            </button>
+            <div className="hidden md:flex items-center gap-3">
+              {sessionStart && (
+                <span className="text-[12px] font-mono text-white/60 tabular-nums">
+                  {fmtTime(sessionElapsed)}
+                </span>
+              )}
+              <button
+                onClick={endSession}
+                className="inline-flex items-center gap-2 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-white/80 hover:text-white px-3 py-2 rounded-full border border-white/15 hover:border-bca-accentGold/60 transition"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+                {tr.endSession}
+              </button>
+            </div>
           )}
 
           <Link
@@ -531,6 +550,7 @@ export default function Home() {
                     voiceState={voiceState}
                     personaName={activePersona.name}
                     personaDifficulty={tr.challengeLabel}
+                    sessionTimer={sessionStart ? fmtTime(sessionElapsed) : null}
                     aiSubtitle={aiSubtitle}
                     userCaption={(stt.transcript + " " + stt.interim).trim()}
                     userInterim={!!stt.interim}

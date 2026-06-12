@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BimaAvatar } from "@/components/BimaAvatar";
 import { authedFetch } from "@/lib/api";
@@ -79,11 +79,22 @@ const EMPTY: Profile = {
 };
 
 export default function RecommendPage() {
+  const STORAGE_KEY = "bima.reco.profile";
   const [lang, setLang] = useState<Lang>("id");
-  const [profile, setProfile] = useState<Profile>(EMPTY);
+  const [profile, setProfile] = useState<Profile>(() => {
+    if (typeof window === "undefined") return EMPTY;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? { ...EMPTY, ...JSON.parse(saved) } : EMPTY;
+    } catch { return EMPTY; }
+  });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<Response | null>(null);
   const tr = t[lang];
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(profile)); } catch {}
+  }, [profile]);
 
   function set<K extends keyof Profile>(key: K, value: Profile[K]) {
     setProfile((p) => {
@@ -138,6 +149,7 @@ export default function RecommendPage() {
   function reset() {
     setProfile(EMPTY);
     setResult(null);
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
   }
 
   return (

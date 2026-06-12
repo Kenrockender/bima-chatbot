@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AudioWaveform } from "./AudioWaveform";
 import { BimaAvatar } from "./BimaAvatar";
 import { CoachChip, type Coach } from "./CoachChip";
 import { MicButton, type VoiceState } from "./MicButton";
@@ -10,6 +11,7 @@ export function VoiceStage({
   voiceState,
   personaName,
   personaDifficulty,
+  sessionTimer,
   aiSubtitle,
   userCaption,
   userInterim,
@@ -28,6 +30,7 @@ export function VoiceStage({
   voiceState: VoiceState;
   personaName: string;
   personaDifficulty: string;
+  sessionTimer: string | null;
   aiSubtitle: string;
   userCaption: string;
   userInterim: boolean;
@@ -105,6 +108,12 @@ export function VoiceStage({
         <span className="text-[11px] font-semibold text-bca-ink/70">{personaName}</span>
         <span className="text-[10px] text-bca-ink/40">·</span>
         <span className="text-[10px] text-bca-ink/45">{personaDifficulty}</span>
+        {sessionTimer && (
+          <>
+            <span className="text-[10px] text-bca-ink/40">·</span>
+            <span className="text-[10px] font-mono text-bca-ink/50 tabular-nums">{sessionTimer}</span>
+          </>
+        )}
       </div>
 
       {/* Avatar */}
@@ -112,6 +121,9 @@ export function VoiceStage({
 
       {/* Subtitle area */}
       {subtitleContent}
+
+      {/* Audio waveform */}
+      {voiceState === "recording" && <AudioWaveform active />}
 
       {/* Error display */}
       {sttErrorMessage && (
