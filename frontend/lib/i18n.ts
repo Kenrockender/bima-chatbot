@@ -72,6 +72,10 @@ export const t = {
     voiceFallbackHint: "Voice not available — using text input",
     micPermissionNeeded: "Mic permission needed",
     retry: "Retry",
+    pauseRec: "Pause",
+    resumeRec: "Resume",
+    redoRec: "Redo",
+    pausedStatus: "Paused — tap mic to send",
 
     // Report
     reportEyebrow: "Coaching Report",
@@ -265,6 +269,10 @@ export const t = {
     voiceFallbackHint: "Suara tidak tersedia — menggunakan teks",
     micPermissionNeeded: "Izin mikrofon diperlukan",
     retry: "Coba Lagi",
+    pauseRec: "Jeda",
+    resumeRec: "Lanjut",
+    redoRec: "Ulangi",
+    pausedStatus: "Dijeda — ketuk mic untuk kirim",
 
     reportEyebrow: "Coaching Report",
     reportTitle: "Begini hasil sesi tadi.",

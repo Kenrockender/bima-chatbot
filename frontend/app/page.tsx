@@ -296,13 +296,14 @@ export default function Home() {
     setMessages([]);
     setReport(null);
     setInput("");
-    if (stt.listening) stt.stop();
+    if (stt.listening || stt.paused) stt.stop();
     if (tts.speaking) tts.cancel();
   }
 
   function toggleMic() {
     if (!stt.supported) return;
-    if (stt.listening) {
+    if (stt.listening || stt.paused) {
+      // finish the turn and send whatever was captured
       stt.stop();
       const finalText = (stt.transcript + " " + stt.interim).trim();
       if (finalText) {
@@ -313,6 +314,18 @@ export default function Home() {
       if (tts.speaking) tts.cancel();
       stt.start();
     }
+  }
+
+  function pauseMic() {
+    if (stt.listening) stt.pause();
+    else if (stt.paused) stt.resume();
+  }
+
+  // Rekam ulang: clear what's captured so far and keep (or resume) listening.
+  function redoMic() {
+    stt.reset();
+    if (stt.paused) stt.resume();
+    else if (!stt.listening) stt.start();
   }
 
   function onPickPersona(p: Persona) {
@@ -326,7 +339,7 @@ export default function Home() {
   const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
   const voiceMode = inputMode === "voice";
-  const voiceState = stt.listening
+  const voiceState = stt.listening || stt.paused
     ? "recording" as const
     : busy
       ? "processing" as const
@@ -555,12 +568,15 @@ export default function Home() {
                     userCaption={(stt.transcript + " " + stt.interim).trim()}
                     userInterim={!!stt.interim}
                     silenceProgress={silenceProgress}
+                    paused={stt.paused}
                     coach={lastCoach}
                     facts={lastFacts}
                     onMicClick={toggleMic}
+                    onPauseToggle={pauseMic}
+                    onRedo={redoMic}
                     onSwitchToText={() => {
                       setInputMode("text");
-                      if (stt.listening) stt.stop();
+                      if (stt.listening || stt.paused) stt.stop();
                       if (tts.speaking) tts.cancel();
                     }}
                     onMuteToggle={() => {
@@ -584,6 +600,10 @@ export default function Home() {
                       coachLabel: tr.coachLabel,
                       factsTag: tr.factsTag,
                       voiceErrDismiss: tr.voiceErrDismiss,
+                      pauseRec: tr.pauseRec,
+                      resumeRec: tr.resumeRec,
+                      redoRec: tr.redoRec,
+                      pausedStatus: tr.pausedStatus,
                     }}
                   />
                 )}
@@ -687,7 +707,7 @@ export default function Home() {
                         const next = inputMode === "voice" ? "text" : "voice";
                         setInputMode(next);
                         if (next === "text") {
-                          if (stt.listening) stt.stop();
+                          if (stt.listening || stt.paused) stt.stop();
                           if (tts.speaking) tts.cancel();
                         }
                       }}

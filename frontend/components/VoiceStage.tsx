@@ -16,9 +16,12 @@ export function VoiceStage({
   userCaption,
   userInterim,
   silenceProgress,
+  paused,
   coach,
   facts,
   onMicClick,
+  onPauseToggle,
+  onRedo,
   onSwitchToText,
   onMuteToggle,
   onEndSession,
@@ -35,9 +38,12 @@ export function VoiceStage({
   userCaption: string;
   userInterim: boolean;
   silenceProgress: number;
+  paused: boolean;
   coach: Coach | null;
   facts: Fact[] | null;
   onMicClick: () => void;
+  onPauseToggle: () => void;
+  onRedo: () => void;
   onSwitchToText: () => void;
   onMuteToggle: () => void;
   onEndSession: () => void;
@@ -57,6 +63,10 @@ export function VoiceStage({
     coachLabel: string;
     factsTag: string;
     voiceErrDismiss: string;
+    pauseRec: string;
+    resumeRec: string;
+    redoRec: string;
+    pausedStatus: string;
   };
 }) {
   const [showCoach, setShowCoach] = useState(false);
@@ -80,7 +90,9 @@ export function VoiceStage({
 
   const statusText =
     voiceState === "recording"
-      ? labels.recording
+      ? paused
+        ? labels.pausedStatus
+        : labels.recording
       : voiceState === "processing"
         ? labels.processingVoice
         : voiceState === "speaking"
@@ -89,7 +101,7 @@ export function VoiceStage({
 
   const subtitleContent = (() => {
     if (voiceState === "recording" && userCaption) {
-      return <SubtitleDisplay text={userCaption} variant="user" interim={userInterim} />;
+      return <SubtitleDisplay text={userCaption} variant="user" interim={userInterim && !paused} />;
     }
     if (voiceState === "processing") {
       return <SubtitleDisplay text={labels.processingVoice} variant="status" />;
@@ -123,7 +135,7 @@ export function VoiceStage({
       {subtitleContent}
 
       {/* Audio waveform */}
-      {voiceState === "recording" && <AudioWaveform active />}
+      {voiceState === "recording" && <AudioWaveform active={!paused} />}
 
       {/* Error display */}
       {sttErrorMessage && (
@@ -177,6 +189,30 @@ export function VoiceStage({
       {/* Mic button */}
       <MicButton state={voiceState} onClick={onMicClick} />
 
+      {/* Recording controls: pause/resume + redo */}
+      {voiceState === "recording" && (
+        <div className="flex items-center gap-2 -mt-1">
+          <button
+            onClick={onPauseToggle}
+            className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border transition ${
+              paused
+                ? "bg-bca-shellMid text-bca-accentGold border-bca-accentGold/60"
+                : "bg-white/60 text-bca-ink/65 border-black/10 hover:border-black/20"
+            }`}
+          >
+            {paused ? <PlayIcon /> : <PauseIcon />}
+            {paused ? labels.resumeRec : labels.pauseRec}
+          </button>
+          <button
+            onClick={onRedo}
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border bg-white/60 text-bca-ink/65 border-black/10 hover:border-black/20 transition"
+          >
+            <RedoIcon />
+            {labels.redoRec}
+          </button>
+        </div>
+      )}
+
       {/* Secondary controls */}
       <div className="flex items-center gap-3">
         <button
@@ -208,6 +244,32 @@ export function VoiceStage({
         </button>
       </div>
     </div>
+  );
+}
+
+function PauseIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <rect x="6" y="5" width="4" height="14" rx="1" />
+      <rect x="14" y="5" width="4" height="14" rx="1" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <polygon points="6 4 20 12 6 20 6 4" />
+    </svg>
+  );
+}
+
+function RedoIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="1 4 1 10 7 10" />
+      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+    </svg>
   );
 }
 

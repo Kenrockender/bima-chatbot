@@ -34,6 +34,7 @@ export function useSTT(opts: { lang?: string } = {}) {
   const lang = opts.lang ?? "id-ID";
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -115,21 +116,32 @@ export function useSTT(opts: { lang?: string } = {}) {
     };
   }, [lang]);
 
-  const start = useCallback(() => {
+  const startEngine = useCallback((opts?: { keepTranscript?: boolean }) => {
     if (!recRef.current) return;
     setError(null);
-    setTranscript("");
-    setInterim("");
+    if (!opts?.keepTranscript) {
+      setTranscript("");
+      setInterim("");
+    }
     intentionalStopRef.current = false;
     wantListeningRef.current = true;
     try {
       recRef.current.start();
       setListening(true);
+      setPaused(false);
     } catch (e: any) {
       wantListeningRef.current = false;
       setError(e?.message ?? "start-failed");
     }
   }, []);
+
+  const start = useCallback(() => startEngine(), [startEngine]);
+
+  // Resume after a pause — keep the captured transcript and append to it.
+  const resume = useCallback(
+    () => startEngine({ keepTranscript: true }),
+    [startEngine],
+  );
 
   const stop = useCallback(() => {
     if (!recRef.current) return;
@@ -139,6 +151,20 @@ export function useSTT(opts: { lang?: string } = {}) {
       recRef.current.stop();
     } catch {}
     setListening(false);
+    setPaused(false);
+  }, []);
+
+  // Pause the engine but preserve transcript so the user can gather their
+  // thoughts without the silence timer auto-sending the turn.
+  const pause = useCallback(() => {
+    if (!recRef.current) return;
+    intentionalStopRef.current = true;
+    wantListeningRef.current = false;
+    try {
+      recRef.current.stop();
+    } catch {}
+    setListening(false);
+    setPaused(true);
   }, []);
 
   const reset = useCallback(() => {
@@ -150,11 +176,14 @@ export function useSTT(opts: { lang?: string } = {}) {
   return {
     supported,
     listening,
+    paused,
     transcript,
     interim,
     error,
     start,
     stop,
+    pause,
+    resume,
     reset,
     isMobile: platform.isMobile,
     isIOS: platform.isIOS,
