@@ -1,0 +1,39 @@
+# Render Blueprint — deploys the BIMA FastAPI backend as a Docker web service.
+# In Render: New + → Blueprint → pick this repo. Render reads this file, then
+# prompts for the secret env vars marked `sync: false`.
+#
+# The frontend is NOT here — it deploys separately on Vercel (root dir: frontend).
+services:
+  - type: web
+    name: bima-backend
+    runtime: docker
+    repo: https://github.com/Kenrockender/bima-chatbot
+    branch: master
+    region: singapore            # closest Render region to Indonesia
+    plan: free                   # free tier sleeps after 15 min idle; bump to "starter" for always-on
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend     # Dockerfile COPYs app/ and seed/ relative to this
+    healthCheckPath: /health
+    autoDeploy: true             # redeploy on every push to `branch`
+    envVars:
+      # ---- Secrets: you paste these in the Render dashboard (never committed) ----
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT      # the service-account JSON, on one line
+        sync: false
+      - key: ADMIN_EMAILS                  # comma-separated admin emails
+        sync: false
+      - key: CORS_ORIGINS                  # your Vercel URL, e.g. https://bima.vercel.app
+        sync: false
+
+      # ---- Non-secret defaults (safe to commit) ----
+      - key: OPENROUTER_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: OPENROUTER_CHAT_MODEL
+        value: anthropic/claude-3.5-haiku
+      - key: ALLOWED_EMAIL_DOMAINS
+        value: bcalife.co.id
+      - key: SEED_DIR
+        value: /app/seed
+      - key: UPLOAD_DIR
+        value: /app/data/uploads

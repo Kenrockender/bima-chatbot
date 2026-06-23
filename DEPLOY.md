@@ -1,6 +1,9 @@
 # Deployment Guide
 
-Frontend deploys to **Vercel**. Backend deploys to **Railway** (or any platform that runs a Dockerfile). Persistent data lives in **Firestore**; users authenticate with **Firebase (Google sign-in)**.
+Frontend deploys to **Vercel**. Backend deploys to **Render** as an always-on
+Docker container (any platform that runs a Dockerfile works too). Persistent data
+lives in **Firestore**; users authenticate with **Firebase (Google sign-in)**. The
+backend is stateless — no persistent disk is needed.
 
 ## 0. Firebase (one-time)
 
@@ -15,29 +18,41 @@ Frontend deploys to **Vercel**. Backend deploys to **Railway** (or any platform 
    frontend's `NEXT_PUBLIC_FIREBASE_*` values.
 6. Under Authentication → Settings → **Authorized domains**, add your Vercel domain.
 
-## 1. Backend — Railway
+## 1. Backend — Render
 
-Railway builds the Dockerfile in `backend/`. No volume is needed — all state is in Firestore.
+Render builds `backend/Dockerfile` from the [`render.yaml`](render.yaml) blueprint
+at the repo root. No volume is needed — all state is in Firestore. The Dockerfile
+binds to `$PORT` (which Render injects), falling back to 8000 locally.
+
+> **Push first.** Render's Blueprint reads `render.yaml` from GitHub, so commit and
+> push it before importing:
+> ```bash
+> git add render.yaml backend/Dockerfile DEPLOY.md
+> git commit -m "Add Render blueprint for backend deploy"
+> git push
+> ```
 
 ### Steps
 
-1. Sign up at https://railway.app → **New Project** → **Deploy from GitHub repo** → pick this repo.
-2. After Railway detects the repo, open the service settings:
-   - **Root Directory:** `backend`
-   - **Build:** Railway auto-detects the Dockerfile.
-   - **Start command:** leave empty (Dockerfile `CMD` handles it).
-3. Set environment variables (Variables tab):
+1. Go to https://dashboard.render.com → **New +** → **Blueprint**.
+2. Connect the GitHub repo `Kenrockender/bima-chatbot`. Render reads `render.yaml`
+   and creates the `bima-backend` web service (region: Singapore, free plan).
+3. Render prompts for the 4 secret env vars (the ones marked `sync: false`):
 
    | Variable | Value |
    |---|---|
    | `OPENROUTER_API_KEY` | your key from https://openrouter.ai/keys |
-   | `FIREBASE_SERVICE_ACCOUNT` | the service-account JSON from step 0.4 (paste as one line) |
+   | `FIREBASE_SERVICE_ACCOUNT` | the service-account JSON from step 0.4 (one line; `jq -c . file.json` to minify) |
    | `ADMIN_EMAILS` | comma-separated admin emails (or set the `admin:true` claim instead) |
-   | `ALLOWED_EMAIL_DOMAINS` | e.g. `bcalife.co.id` — restricts who may sign in (empty = any) |
-   | `CORS_ORIGINS` | your Vercel URL (e.g. `https://bima.vercel.app`) — comma-separated if multiple |
+   | `CORS_ORIGINS` | leave as `http://localhost:3000` for now — update in step 3 once you have the Vercel URL |
 
-4. **Networking** tab → **Generate Domain**. Note the URL (e.g. `https://bima-backend.up.railway.app`).
-5. Smoke test: open `https://<your-backend>/docs` — should show FastAPI Swagger UI.
+   The non-secret vars (`OPENROUTER_BASE_URL`, `OPENROUTER_CHAT_MODEL`,
+   `ALLOWED_EMAIL_DOMAINS`, `SEED_DIR`, `UPLOAD_DIR`) are already set in `render.yaml`.
+
+4. Click **Apply**. The first Docker build takes a few minutes.
+5. Copy the service URL (e.g. `https://bima-backend.onrender.com`).
+6. Smoke test: open `https://<your-backend>/health` → should return `{"status":"ok"}`,
+   or `/docs` for the FastAPI Swagger UI.
 
 ### Seeding the initial dataset (automatic)
 
@@ -73,7 +88,7 @@ The frontend is a Next.js app in `frontend/`. It proxies `/api/*` calls to the b
 
    | Variable | Value |
    |---|---|
-   | `BACKEND_URL` | the Railway URL from step 1.4 (no trailing slash) |
+   | `BACKEND_URL` | the Render URL from step 1.5 (no trailing slash) |
    | `NEXT_PUBLIC_FIREBASE_API_KEY` | from the Firebase web config (step 0.5) |
    | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `<project>.firebaseapp.com` |
    | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | your Firebase project id |
@@ -88,6 +103,6 @@ The frontend is a Next.js app in `frontend/`. It proxies `/api/*` calls to the b
 
 ## Troubleshooting
 
-- **CORS error in browser console:** make sure `CORS_ORIGINS` on Railway includes the exact Vercel URL (with `https://`, no trailing slash).
-- **Backend cold start is slow:** Railway free tier sleeps after inactivity. The first request after sleep can take 10–30s. Upgrade to a paid plan or use a keep-alive ping if this matters.
-- **Uploaded PDFs disappear after redeploy:** the Railway volume wasn't mounted at `/app/data`. Check the volume mount path in service settings.
+- **CORS error in browser console:** make sure `CORS_ORIGINS` on Render includes the exact Vercel URL (with `https://`, no trailing slash). Also confirm your Vercel domain is in Firebase → Authentication → Authorized domains.
+- **Backend cold start is slow:** Render's free tier sleeps after 15 min of inactivity. The first request after sleep can take ~50s. Upgrade to the **Starter** plan ($7/mo) for always-on, or hit `/health` on a schedule to keep it warm.
+- **Google login fails on the deployed site:** add your Vercel domain under Firebase → Authentication → Settings → Authorized domains.
