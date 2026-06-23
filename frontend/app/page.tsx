@@ -581,6 +581,7 @@ export default function Home() {
                     silenceProgress={silenceProgress}
                     paused={stt.paused}
                     coach={lastCoach}
+                    facts={null}
                     onMicClick={toggleMic}
                     onPauseToggle={pauseMic}
                     onRedo={redoMic}
