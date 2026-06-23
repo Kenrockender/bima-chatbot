@@ -65,23 +65,25 @@ export default function AdminPage() {
   }, [authed, loadSources]);
 
   async function uploadFiles(files: FileList | File[]) {
-    const pdfs = Array.from(files).filter((f) =>
-      f.name.toLowerCase().endsWith(".pdf"),
+    const docs = Array.from(files).filter(
+      (f) =>
+        f.name.toLowerCase().endsWith(".pdf") ||
+        f.name.toLowerCase().endsWith(".pptx"),
     );
-    if (pdfs.length === 0) {
-      toast("err", "Only PDF files are accepted");
+    if (docs.length === 0) {
+      toast("err", "Only PDF or PPTX files are accepted");
       return;
     }
     setUploading(true);
     const fd = new FormData();
-    pdfs.forEach((f) => fd.append("files", f));
+    docs.forEach((f) => fd.append("files", f));
     try {
       const res = await authedFetch("/api/admin/sources/pdf", {
         method: "POST",
         body: fd,
       });
       if (!res.ok) throw new Error("Upload failed");
-      toast("ok", `Uploaded ${pdfs.length} file(s) — processing…`);
+      toast("ok", `Uploaded ${docs.length} file(s) — processing…`);
       loadSources();
     } catch {
       toast("err", "Upload failed");
@@ -290,7 +292,7 @@ export default function AdminPage() {
               style={{ background: "#C8941E" }}
             />
             <div className="flex items-center gap-2 mb-3">
-              <span className="smallcaps text-bca-gold">PDF upload</span>
+              <span className="smallcaps text-bca-gold">PDF / PPTX upload</span>
               <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
             </div>
             <div className="flex items-start gap-4">
@@ -314,7 +316,7 @@ export default function AdminPage() {
                 <p className="font-serif text-bca-ink text-[18px] leading-snug">
                   {uploading
                     ? "Uploading…"
-                    : "Drop PDFs here, or click to browse."}
+                    : "Drop PDF or PPTX files here, or click to browse."}
                 </p>
                 <p className="text-[12.5px] text-bca-mute mt-1">
                   Multiple files supported · processed in the background
@@ -324,7 +326,7 @@ export default function AdminPage() {
             <input
               ref={fileInput}
               type="file"
-              accept=".pdf"
+              accept=".pdf,.pptx"
               multiple
               className="hidden"
               onChange={(e) => e.target.files && uploadFiles(e.target.files)}
@@ -444,7 +446,7 @@ export default function AdminPage() {
                         Nothing here yet.
                       </p>
                       <p className="text-[13px]">
-                        Upload a PDF or add a URL above to start the library.
+                        Upload a PDF/PPTX or add a URL above to start the library.
                       </p>
                     </td>
                   </tr>

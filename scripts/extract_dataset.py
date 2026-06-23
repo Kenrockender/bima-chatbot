@@ -1,8 +1,8 @@
-"""Pre-extract dataset PDFs into curated .txt files for seeding.
+"""Pre-extract dataset PDFs and PPTX decks into curated .txt files for seeding.
 
-Reads the original PDFs under  dataset/<Insurer>/*.pdf  (human source of truth)
-and writes cleaned text to       backend/seed/<Insurer>/*.txt  (what gets seeded
-and baked into the backend Docker image — see backend/Dockerfile).
+Reads the original sources under  dataset/<Insurer>/*.pdf|*.pptx  (human source
+of truth) and writes cleaned text to  backend/seed/<Insurer>/*.txt  (what gets
+seeded and baked into the backend Docker image — see backend/Dockerfile).
 
 Why pre-extract?
 - The seed corpus is small, stable and curated. Extracting once at build time
@@ -25,6 +25,7 @@ import re
 import sys
 
 import pdfplumber
+from pptx import Presentation
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATASET = os.path.join(ROOT, "dataset")          # PDFs in (source)
@@ -65,7 +66,7 @@ def clean(text: str) -> str:
     return text.strip()
 
 
-def extract(path: str) -> tuple[str, int]:
+def extract_pdf(path: str) -> tuple[str, int]:
     parts, pages = [], 0
     with pdfplumber.open(path) as pdf:
         for i, page in enumerate(pdf.pages, start=1):
@@ -74,6 +75,50 @@ def extract(path: str) -> tuple[str, int]:
             if t:
                 parts.append(f"[hal. {i}]\n{t}")
     return "\n\n".join(parts), pages
+
+
+def _shape_text(shape) -> str:
+    """Pull text out of a shape: text frames, grouped shapes and tables."""
+    chunks: list[str] = []
+    if shape.has_text_frame:
+        t = shape.text_frame.text.strip()
+        if t:
+            chunks.append(t)
+    if shape.has_table:
+        for row in shape.table.rows:
+            cells = [c.text.strip() for c in row.cells]
+            if any(cells):
+                chunks.append("  ".join(cells))
+    if shape.shape_type == 6:  # GROUP
+        for sub in shape.shapes:
+            sub_t = _shape_text(sub)
+            if sub_t:
+                chunks.append(sub_t)
+    return "\n".join(chunks)
+
+
+def extract_pptx(path: str) -> tuple[str, int]:
+    """One slide -> one [hal. N] block, so page counting matches the PDF path."""
+    prs = Presentation(path)
+    parts, pages = [], 0
+    for i, slide in enumerate(prs.slides, start=1):
+        pages = i
+        lines = [t for shape in slide.shapes if (t := _shape_text(shape))]
+        notes = ""
+        if slide.has_notes_slide:
+            notes = slide.notes_slide.notes_text_frame.text.strip()
+        if notes:
+            lines.append(f"[catatan] {notes}")
+        body = "\n".join(lines).strip()
+        if body:
+            parts.append(f"[hal. {i}]\n{body}")
+    return "\n\n".join(parts), pages
+
+
+def extract(path: str) -> tuple[str, int]:
+    if path.lower().endswith(".pptx"):
+        return extract_pptx(path)
+    return extract_pdf(path)
 
 
 def main() -> int:
@@ -88,7 +133,7 @@ def main() -> int:
         out_folder = os.path.join(SEED_OUT, insurer)
         os.makedirs(out_folder, exist_ok=True)
         for entry in sorted(os.listdir(folder)):
-            if not entry.lower().endswith(".pdf"):
+            if not entry.lower().endswith((".pdf", ".pptx")):
                 continue
             pdf_path = os.path.join(folder, entry)
             txt_path = os.path.join(out_folder, os.path.splitext(entry)[0] + ".txt")

@@ -30,12 +30,19 @@ def list_sources(_=Depends(require_admin)):
     return db.list_sources()
 
 
-def _process_pdf(source_id: str, source_name: str, temp_path: str, insurer: str = ""):
+# Upload formats we can extract text from at runtime.
+_ALLOWED_EXTS = (".pdf", ".pptx")
+
+
+def _process_file(source_id: str, source_name: str, temp_path: str, insurer: str = ""):
     """Extract text, persist it to Firestore, cache it, then drop the temp file."""
     try:
-        text, pages = rag.extract_pdf_text(temp_path)
+        if temp_path.lower().endswith(".pptx"):
+            text, pages = rag.extract_pptx_text(temp_path)
+        else:
+            text, pages = rag.extract_pdf_text(temp_path)
         if not text.strip():
-            db.set_failed(source_id, "No extractable text in PDF")
+            db.set_failed(source_id, "No extractable text in file")
             return
         db.set_ready(source_id, text, pages)
         rag.register_source(source_id, source_name, "pdf", text, insurer)
@@ -69,7 +76,7 @@ async def upload_pdfs(
     os.makedirs(settings.upload_dir, exist_ok=True)
     created = []
     for file in files:
-        if not file.filename.lower().endswith(".pdf"):
+        if not file.filename.lower().endswith(_ALLOWED_EXTS):
             continue
         source_id = uuid.uuid4().hex
         name = file.filename
@@ -78,7 +85,7 @@ async def upload_pdfs(
             shutil.copyfileobj(file.file, out)
         # Admin uploads to the BCA Life onboarding tool are our own product docs.
         db.create_source(source_id, name, "pdf", name, rag.HOME_INSURER)
-        background.add_task(_process_pdf, source_id, name, temp_path, rag.HOME_INSURER)
+        background.add_task(_process_file, source_id, name, temp_path, rag.HOME_INSURER)
         created.append({"id": source_id, "name": name})
     return {"created": created}
 

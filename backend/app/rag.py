@@ -16,6 +16,7 @@ from typing import Dict, List, Optional, Tuple
 import requests
 from bs4 import BeautifulSoup
 import pdfplumber
+from pptx import Presentation
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
@@ -189,6 +190,47 @@ def extract_pdf_text(path: str) -> Tuple[str, int]:
             if text:
                 parts.append(f"[hal. {i}]\n{text}")
     return "\n\n".join(parts), page_count
+
+
+def _pptx_shape_text(shape) -> str:
+    """Pull text out of a shape: text frames, tables and grouped shapes."""
+    chunks: List[str] = []
+    if shape.has_text_frame:
+        t = shape.text_frame.text.strip()
+        if t:
+            chunks.append(t)
+    if shape.has_table:
+        for row in shape.table.rows:
+            cells = [c.text.strip() for c in row.cells]
+            if any(cells):
+                chunks.append("  ".join(cells))
+    if shape.shape_type == 6:  # GROUP
+        for sub in shape.shapes:
+            sub_t = _pptx_shape_text(sub)
+            if sub_t:
+                chunks.append(sub_t)
+    return "\n".join(chunks)
+
+
+def extract_pptx_text(path: str) -> Tuple[str, int]:
+    """Returns (full_text_with_page_tags, slide_count).
+
+    One slide -> one [hal. N] block so page tagging matches the PDF path and
+    `read_txt_text`'s page counter. Speaker notes are tagged [catatan]."""
+    prs = Presentation(path)
+    parts: List[str] = []
+    slide_count = 0
+    for i, slide in enumerate(prs.slides, start=1):
+        slide_count = i
+        lines = [t for shape in slide.shapes if (t := _pptx_shape_text(shape))]
+        if slide.has_notes_slide:
+            notes = slide.notes_slide.notes_text_frame.text.strip()
+            if notes:
+                lines.append(f"[catatan] {notes}")
+        body = "\n".join(lines).strip()
+        if body:
+            parts.append(f"[hal. {i}]\n{body}")
+    return "\n\n".join(parts), slide_count
 
 
 def read_txt_text(path: str) -> Tuple[str, int]:
