@@ -6,6 +6,7 @@ return a ranked list with suggested UP, premium, and tenor.
 """
 import json
 import logging
+import os
 import re
 from typing import Dict, List, Optional
 
@@ -13,9 +14,44 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from . import rag
 from . import db
+from .config import settings
 
 
 log = logging.getLogger("bima.recommender")
+
+
+# -----------------------------------------------------------------------------
+# Condensed fact sheets (token-saving). For each product we prefer a curated
+# `<stem>.md` fact sheet sitting next to its seed file over the full brochure
+# text. The full text still feeds chat RAG; the recommender only needs the key
+# figures, so a 1-page sheet keeps the catalog (injected every call) cheap.
+# -----------------------------------------------------------------------------
+
+def _factsheet_dirs() -> List[str]:
+    dirs = []
+    if settings.seed_dir:
+        dirs.append(settings.seed_dir)
+    # Repo-relative fallback so local runs (SEED_DIR unset) still find sheets.
+    dirs.append(os.path.join(os.path.dirname(__file__), "..", "seed"))
+    return [d for d in dirs if os.path.isdir(d)]
+
+
+def _factsheet_for(name: str) -> Optional[str]:
+    """Return the curated .md fact sheet for a source display name, if present."""
+    stem = os.path.splitext(name)[0].strip().lower()
+    target = f"{stem}.md"
+    for base in _factsheet_dirs():
+        for root, _, files in os.walk(base):
+            for f in files:
+                if f.lower() == target:
+                    try:
+                        with open(os.path.join(root, f), encoding="utf-8") as fh:
+                            text = fh.read().strip()
+                        if text:
+                            return text
+                    except OSError:
+                        pass
+    return None
 
 
 # -----------------------------------------------------------------------------
@@ -60,9 +96,9 @@ def build_narrative(p: Dict) -> str:
 # Prompt
 # -----------------------------------------------------------------------------
 
-SYSTEM = """Kamu senior product advisor BCA Life yang juga memahami produk asuransi kompetitor (Manulife, Prudential). Tugasmu:
+SYSTEM = """Kamu senior product advisor BCA Life yang juga memahami produk asuransi kompetitor (Manulife, Prudential, AIA). Tugasmu:
 1. Cocokkan profil nasabah dengan produk BCA Life in-branch (Heritage+, Prosper, Star) dari KATALOG.
-2. Bandingkan dengan produk sejenis dari Manulife & Prudential.
+2. Bandingkan dengan produk sejenis dari Manulife, Prudential & AIA.
 3. Buatkan skrip jualan lengkap untuk FA menjual produk BCA Life terbaik, termasuk keunggulan vs kompetitor.
 
 BAGIAN A — REKOMENDASI BCA LIFE (dari KATALOG):
@@ -106,7 +142,7 @@ OUTPUT WAJIB JSON valid, struktur PERSIS:
   ],
   "competitor_comparisons": [
     {
-      "provider": "<Manulife atau Prudential>",
+      "provider": "<Manulife, Prudential, atau AIA>",
       "product_name": "<nama produk kompetitor>",
       "similar_to": "<nama produk BCA Life yang dibandingkan>",
       "fit_score": <integer 1-10>,
@@ -129,7 +165,7 @@ OUTPUT WAJIB JSON valid, struktur PERSIS:
 
 Aturan:
 - bca_recommendations: urutkan dari fit_score tertinggi. WAJIB masukkan SEMUA produk dari KATALOG.
-- competitor_comparisons: minimal 2 produk (1 Manulife, 1 Prudential) yang paling sejenis dengan best BCA Life product.
+- competitor_comparisons: minimal 2 produk dari provider berbeda (Manulife, Prudential, atau AIA) yang paling sejenis dengan best BCA Life product. Hanya sertakan produk kompetitor yang ada di KATALOG.
 - sales_script: harus spesifik untuk profil nasabah ini, bukan generik.
 - Angka UP/premi/tenor HARUS REASONABLE.
 - Bahasa Indonesia, kalimat lengkap.
@@ -153,8 +189,10 @@ def _catalog_block(products: List[Dict]) -> str:
     every recommend() call, so it sits in the cache-friendly system prefix."""
     blocks: List[str] = []
     for p in products:
-        doc = rag.get_document(p["id"])
-        text = (doc or {}).get("text", "").strip() or "(brosur belum dimuat)"
+        text = _factsheet_for(p["name"])
+        if not text:
+            doc = rag.get_document(p["id"])
+            text = (doc or {}).get("text", "").strip() or "(brosur belum dimuat)"
         blocks.append(f"=== PRODUK: {p['name']}\n{text}")
     return "\n\n".join(blocks)
 
