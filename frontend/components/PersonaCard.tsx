@@ -7,6 +7,16 @@ export type Persona = {
   accent: string;
 };
 
+// Difficulty → dot/label colour, so the list reads at a glance.
+const CHALLENGE_COLOR: Record<string, string> = {
+  Mudah: "#1E7B47",
+  Easy: "#1E7B47",
+  Sedang: "#2E86C1",
+  Medium: "#2E86C1",
+  Sulit: "#E0533D",
+  Hard: "#E0533D",
+};
+
 export function PersonaCard({
   persona,
   selected,
@@ -21,58 +31,52 @@ export function PersonaCard({
   active?: boolean;
 }) {
   const isActive = !!active || selected;
+  const diffColor = CHALLENGE_COLOR[persona.challenge] ?? "#C8941E";
   return (
     <button
       onClick={() => onSelect(persona)}
-      className={`tile-persona w-full text-left p-3.5 flex items-center gap-3 ${
-        isActive ? "is-active" : ""
-      }`}
+      title={`${persona.title} — ${persona.summary} (${challengeLabel}: ${persona.challenge})`}
       aria-pressed={isActive}
+      className={`group w-full text-left flex items-center gap-2.5 px-2.5 py-2 rounded-xl border transition ${
+        isActive
+          ? "bg-white/10 border-bca-accentGold/70"
+          : "bg-transparent border-transparent hover:bg-white/5"
+      }`}
     >
-      <div className="relative shrink-0">
-        <div
-          className="rounded-full flex items-center justify-center font-serif text-white"
-          style={{
-            width: 52,
-            height: 52,
-            background: `radial-gradient(120% 120% at 30% 25%, ${lighten(
-              persona.accent,
-            )} 0%, ${persona.accent} 55%, ${darken(persona.accent)} 100%)`,
-            fontSize: 22,
-            fontStyle: "italic",
-            boxShadow:
-              "inset 0 1px 0 rgba(255,255,255,0.25), 0 6px 14px -6px rgba(0,0,0,0.55)",
-          }}
+      <div
+        className="shrink-0 rounded-full grid place-items-center font-serif text-white"
+        style={{
+          width: 32,
+          height: 32,
+          background: `radial-gradient(120% 120% at 30% 25%, ${lighten(
+            persona.accent,
+          )} 0%, ${persona.accent} 55%, ${darken(persona.accent)} 100%)`,
+          fontSize: 14,
+          fontStyle: "italic",
+          boxShadow: isActive
+            ? "0 0 0 2px rgba(245,197,24,0.7)"
+            : "inset 0 1px 0 rgba(255,255,255,0.25)",
+        }}
+      >
+        {persona.name.charAt(0)}
+      </div>
+
+      <span className="flex-1 min-w-0 text-[13px] font-semibold text-white/90 truncate">
+        {persona.name}
+      </span>
+
+      <span className="shrink-0 inline-flex items-center gap-1.5">
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ background: diffColor }}
+        />
+        <span
+          className="text-[10px] uppercase tracking-[0.1em] font-semibold"
+          style={{ color: diffColor }}
         >
-          {persona.name.charAt(0)}
-        </div>
-        {isActive && (
-          <span
-            aria-hidden
-            className="absolute -inset-0.5 rounded-full pointer-events-none"
-            style={{ boxShadow: "0 0 0 2px rgba(245,197,24,0.7)" }}
-          />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[14px] font-semibold text-white truncate">
-            {persona.name}
-          </div>
-          <span
-            className={`wave-glyph ${isActive ? "live" : ""}`}
-            aria-hidden
-          >
-            <span /><span /><span /><span /><span /><span />
-          </span>
-        </div>
-        <div className="text-[11.5px] text-white/55 truncate mt-0.5">
-          {persona.title}
-        </div>
-        <div className="text-[10px] uppercase tracking-[0.14em] text-bca-accentGold/80 mt-1">
-          {challengeLabel}: {persona.challenge}
-        </div>
-      </div>
+          {persona.challenge}
+        </span>
+      </span>
     </button>
   );
 }

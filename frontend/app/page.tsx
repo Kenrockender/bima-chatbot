@@ -79,6 +79,10 @@ export default function Home() {
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tr = t[lang];
 
+  // The custom persona is rendered as a distinct CTA, not a regular card.
+  const customPersona = personas.find((p) => p.id === CUSTOM_ID) ?? null;
+  const presetPersonas = personas.filter((p) => p.id !== CUSTOM_ID);
+
   const speechLang = lang === "id" ? "id-ID" : "en-US";
   const stt = useSTT({ lang: speechLang });
   const tts = useTTS({ lang: speechLang });
@@ -499,7 +503,7 @@ export default function Home() {
             <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-white/40 px-1 mb-1">
               {tr.pickPersona}
             </div>
-            {personas.map((p) => (
+            {presetPersonas.map((p) => (
               <PersonaCard
                 key={p.id}
                 persona={p}
@@ -509,6 +513,13 @@ export default function Home() {
                 challengeLabel={tr.challengeLabel}
               />
             ))}
+            {customPersona && (
+              <CustomCta
+                label={tr.customCardCta}
+                selected={(activePersona?.id ?? selectedId) === CUSTOM_ID}
+                onClick={() => onPickPersona(customPersona)}
+              />
+            )}
             {personas.length === 0 && (
               <div className="text-white/40 text-[12px] px-1 py-3 italic">
                 Loading personas…
@@ -521,7 +532,7 @@ export default function Home() {
             <div className="flex-1 bg-chatpanel flex flex-col min-h-0 overflow-hidden">
               {/* Mobile persona strip */}
               <div className="md:hidden flex gap-2 overflow-x-auto px-3 py-3 border-b border-black/5">
-                {personas.map((p) => (
+                {presetPersonas.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => onPickPersona(p)}
@@ -534,6 +545,18 @@ export default function Home() {
                     {p.name}
                   </button>
                 ))}
+                {customPersona && (
+                  <button
+                    onClick={() => onPickPersona(customPersona)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold border border-dashed transition ${
+                      (activePersona?.id ?? selectedId) === CUSTOM_ID
+                        ? "bg-bca-shellMid text-white border-transparent"
+                        : "bg-white/40 text-bca-ink/70 border-bca-ink/25"
+                    }`}
+                  >
+                    + {tr.customCardCta}
+                  </button>
+                )}
               </div>
 
               {/* Scrolling messages or welcome / report */}
@@ -901,6 +924,38 @@ export default function Home() {
 }
 
 // ─────────────────────────── helpers ───────────────────────────
+
+function CustomCta({
+  label,
+  selected,
+  onClick,
+}: {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={selected}
+      className={`group w-full mt-1 flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-dashed transition ${
+        selected
+          ? "bg-bca-accentGold/10 border-bca-accentGold/70 text-white"
+          : "border-white/20 text-white/70 hover:border-bca-accentGold/60 hover:text-white"
+      }`}
+    >
+      <span
+        className="shrink-0 grid place-items-center rounded-full border border-current"
+        style={{ width: 32, height: 32, fontSize: 18, lineHeight: 1 }}
+      >
+        +
+      </span>
+      <span className="flex-1 min-w-0 text-[13px] font-semibold truncate">
+        {label}
+      </span>
+    </button>
+  );
+}
 
 function Welcome({
   tr,

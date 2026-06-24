@@ -19,6 +19,7 @@ export const t = {
     startSession: "Start roleplay",
 
     // Custom persona
+    customCardCta: "Create your own",
     customIntro:
       "Design your own prospect: set their background and what they need, then I'll play them so you can practice your pitch.",
     customFormTitle: "Design your prospect",
@@ -251,6 +252,7 @@ export const t = {
     startSession: "Mulai roleplay",
 
     // Custom persona
+    customCardCta: "Buat nasabah sendiri",
     customIntro:
       "Rancang sendiri calon nasabahmu: tentukan latar belakang dan kebutuhannya, nanti aku perankan supaya kamu bisa latihan pitch.",
     customFormTitle: "Rancang calon nasabah",
