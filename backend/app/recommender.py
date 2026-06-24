@@ -96,9 +96,9 @@ def build_narrative(p: Dict) -> str:
 # Prompt
 # -----------------------------------------------------------------------------
 
-SYSTEM = """Kamu senior product advisor BCA Life yang juga memahami produk asuransi kompetitor (Manulife, Prudential, AIA). Tugasmu:
+SYSTEM = """Kamu senior product advisor BCA Life yang juga memahami produk asuransi kompetitor (Manulife, Prudential, AIA, MSIG Life). Tugasmu:
 1. Cocokkan profil nasabah dengan produk BCA Life in-branch (Heritage+, Prosper, Star) dari KATALOG.
-2. Bandingkan dengan produk sejenis dari Manulife, Prudential & AIA.
+2. Bandingkan dengan produk sejenis dari Manulife, Prudential, AIA & MSIG Life.
 3. Buatkan skrip jualan lengkap untuk FA menjual produk BCA Life terbaik, termasuk keunggulan vs kompetitor.
 
 BAGIAN A — REKOMENDASI BCA LIFE (dari KATALOG):
@@ -142,7 +142,7 @@ OUTPUT WAJIB JSON valid, struktur PERSIS:
   ],
   "competitor_comparisons": [
     {
-      "provider": "<Manulife, Prudential, atau AIA>",
+      "provider": "<Manulife, Prudential, AIA, atau MSIG Life>",
       "product_name": "<nama produk kompetitor>",
       "similar_to": "<nama produk BCA Life yang dibandingkan>",
       "fit_score": <integer 1-10>,
@@ -165,7 +165,7 @@ OUTPUT WAJIB JSON valid, struktur PERSIS:
 
 Aturan:
 - bca_recommendations: urutkan dari fit_score tertinggi. WAJIB masukkan SEMUA produk dari KATALOG.
-- competitor_comparisons: minimal 2 produk dari provider berbeda (Manulife, Prudential, atau AIA) yang paling sejenis dengan best BCA Life product. Hanya sertakan produk kompetitor yang ada di KATALOG.
+- competitor_comparisons: minimal 2 produk dari provider berbeda (Manulife, Prudential, AIA, atau MSIG Life) yang paling sejenis dengan best BCA Life product. Hanya sertakan produk kompetitor yang ada di KATALOG.
 - sales_script: harus spesifik untuk profil nasabah ini, bukan generik.
 - Angka UP/premi/tenor HARUS REASONABLE.
 - Bahasa Indonesia, kalimat lengkap.
