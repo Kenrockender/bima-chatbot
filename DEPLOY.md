@@ -1,9 +1,12 @@
 # Deployment Guide
 
-Frontend deploys to **Vercel**. Backend deploys to **Render** as an always-on
-Docker container (any platform that runs a Dockerfile works too). Persistent data
-lives in **Firestore**; users authenticate with **Firebase (Google sign-in)**. The
-backend is stateless — no persistent disk is needed.
+Frontend deploys to **Vercel**. Backend deploys to **Hugging Face Spaces** as a
+Docker container — the only major host left with a genuinely free tier that needs
+**no credit card** (Render, Koyeb, Fly, and Railway all now require one). Any
+platform that runs a Dockerfile works too; `render.yaml` is kept in the repo as a
+paid alternative. Persistent data lives in **Firestore**; users authenticate with
+**Firebase (Google sign-in)**. The backend is stateless — no persistent disk is
+needed.
 
 ## 0. Firebase (one-time)
 
@@ -18,41 +21,61 @@ backend is stateless — no persistent disk is needed.
    frontend's `NEXT_PUBLIC_FIREBASE_*` values.
 6. Under Authentication → Settings → **Authorized domains**, add your Vercel domain.
 
-## 1. Backend — Render
+## 1. Backend — Hugging Face Spaces
 
-Render builds `backend/Dockerfile` from the [`render.yaml`](render.yaml) blueprint
-at the repo root. No volume is needed — all state is in Firestore. The Dockerfile
-binds to `$PORT` (which Render injects), falling back to 8000 locally.
+A Space is its own git repo and builds a Docker image from the repo **root**, so
+the deploy is: push the **contents of `backend/`** to a Space repo. The
+[`backend/README.md`](backend/README.md) carries the HF metadata (`sdk: docker`,
+`app_port: 8000`) and [`backend/.gitignore`](backend/.gitignore) keeps `.env` and
+the service-account JSON out of the push. The Dockerfile needs **no changes**.
 
-> **Push first.** Render's Blueprint reads `render.yaml` from GitHub, so commit and
-> push it before importing:
-> ```bash
-> git add render.yaml backend/Dockerfile DEPLOY.md
-> git commit -m "Add Render blueprint for backend deploy"
-> git push
-> ```
+Free **CPU Basic** hardware is 2 vCPU / 16 GB RAM, no credit card. It sleeps when
+idle (first request after sleep is slow) and the disk is ephemeral — fine here
+since all state lives in Firestore. Outbound calls to OpenRouter and Firebase go
+over port 443, which Spaces allows.
 
 ### Steps
 
-1. Go to https://dashboard.render.com → **New +** → **Blueprint**.
-2. Connect the GitHub repo `Kenrockender/bima-chatbot`. Render reads `render.yaml`
-   and creates the `bima-backend` web service (region: Singapore, free plan).
-3. Render prompts for the 4 secret env vars (the ones marked `sync: false`):
+1. Create the Space: https://huggingface.co/new-space → name `bima-backend`,
+   **SDK: Docker** → **Blank**, visibility **Private** (or **Protected** if you
+   want the app reachable but the code hidden). No card is requested.
+2. Push the backend folder to the new Space repo. From the project root:
+   ```bash
+   # one-time: clone the empty Space alongside the project
+   git clone https://huggingface.co/spaces/<your-hf-user>/bima-backend ../bima-space
+   # copy backend/ into it (respects backend/.gitignore: skips .env, .venv, data/)
+   git -C backend archive HEAD 2>/dev/null | tar -x -C ../bima-space || cp -r backend/. ../bima-space/
+   cd ../bima-space
+   # make sure secrets didn't sneak in
+   rm -f .env backend.log && rm -rf .venv data
+   git add -A && git commit -m "Deploy BIMA backend" && git push
+   cd -
+   ```
+   (You'll be prompted for an HF **access token** as the password — create one at
+   https://huggingface.co/settings/tokens with *write* scope.)
+3. In the Space → **Settings → Variables and secrets**, add:
 
-   | Variable | Value |
-   |---|---|
-   | `OPENROUTER_API_KEY` | your key from https://openrouter.ai/keys |
-   | `FIREBASE_SERVICE_ACCOUNT` | the service-account JSON from step 0.4 (one line; `jq -c . file.json` to minify) |
-   | `ADMIN_EMAILS` | comma-separated admin emails (or set the `admin:true` claim instead) |
-   | `CORS_ORIGINS` | leave as `http://localhost:3000` for now — update in step 3 once you have the Vercel URL |
+   | Name | Kind | Value |
+   |---|---|---|
+   | `OPENROUTER_API_KEY` | secret | your key from https://openrouter.ai/keys |
+   | `FIREBASE_SERVICE_ACCOUNT` | secret | the service-account JSON from step 0.4 (one line; `jq -c . file.json` to minify) |
+   | `ADMIN_EMAILS` | secret | comma-separated admin emails (or set the `admin:true` claim instead) |
+   | `CORS_ORIGINS` | variable | leave as `http://localhost:3000` for now — change it to your Vercel URL once section 2 gives you one |
+   | `OPENROUTER_BASE_URL` | variable | `https://openrouter.ai/api/v1` |
+   | `OPENROUTER_CHAT_MODEL` | variable | `anthropic/claude-3.5-haiku` |
+   | `ALLOWED_EMAIL_DOMAINS` | variable | `bcalife.co.id` |
+   | `SEED_DIR` | variable | `/app/seed` |
+   | `UPLOAD_DIR` | variable | `/app/data/uploads` |
 
-   The non-secret vars (`OPENROUTER_BASE_URL`, `OPENROUTER_CHAT_MODEL`,
-   `ALLOWED_EMAIL_DOMAINS`, `SEED_DIR`, `UPLOAD_DIR`) are already set in `render.yaml`.
+   Adding a secret rebuilds the Space automatically.
+4. Wait for the build (a few minutes). The app URL is
+   `https://<your-hf-user>-bima-backend.hf.space`.
+5. Smoke test: open `https://<your-hf-user>-bima-backend.hf.space/health` → should
+   return `{"status":"ok"}`, or `/docs` for the FastAPI Swagger UI.
 
-4. Click **Apply**. The first Docker build takes a few minutes.
-5. Copy the service URL (e.g. `https://bima-backend.onrender.com`).
-6. Smoke test: open `https://<your-backend>/health` → should return `{"status":"ok"}`,
-   or `/docs` for the FastAPI Swagger UI.
+> **Future updates:** the Space is a separate repo. Re-run the copy + push from
+> step 2 to redeploy, or add the Space as a second git remote and push the
+> `backend/` subtree to it.
 
 ### Seeding the initial dataset (automatic)
 
@@ -88,7 +111,7 @@ The frontend is a Next.js app in `frontend/`. It proxies `/api/*` calls to the b
 
    | Variable | Value |
    |---|---|
-   | `BACKEND_URL` | the Render URL from step 1.5 (no trailing slash) |
+   | `BACKEND_URL` | the Space URL from step 1.4 (no trailing slash) |
    | `NEXT_PUBLIC_FIREBASE_API_KEY` | from the Firebase web config (step 0.5) |
    | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `<project>.firebaseapp.com` |
    | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | your Firebase project id |
@@ -103,6 +126,7 @@ The frontend is a Next.js app in `frontend/`. It proxies `/api/*` calls to the b
 
 ## Troubleshooting
 
-- **CORS error in browser console:** make sure `CORS_ORIGINS` on Render includes the exact Vercel URL (with `https://`, no trailing slash). Also confirm your Vercel domain is in Firebase → Authentication → Authorized domains.
-- **Backend cold start is slow:** Render's free tier sleeps after 15 min of inactivity. The first request after sleep can take ~50s. Upgrade to the **Starter** plan ($7/mo) for always-on, or hit `/health` on a schedule to keep it warm.
+- **CORS error in browser console:** make sure `CORS_ORIGINS` on the Space includes the exact Vercel URL (with `https://`, no trailing slash). Also confirm your Vercel domain is in Firebase → Authentication → Authorized domains.
+- **Backend cold start:** the free Space sleeps after a period of inactivity, so the first request after sleep can take a while to wake. To keep it warm, hit `/health` on a schedule (e.g. a free cron-ping service) or pause it manually when not in use. 16 GB RAM means `pdfplumber` + `langchain` won't OOM.
+- **Space build/runtime can't reach a service:** Spaces only allow outbound traffic on ports 80, 443, and 8080. OpenRouter and Firebase use 443, so they work; anything on a custom port would be blocked.
 - **Google login fails on the deployed site:** add your Vercel domain under Firebase → Authentication → Settings → Authorized domains.

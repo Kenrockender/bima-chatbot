@@ -1,0 +1,11 @@
+# Secrets — set these in the HF Space Settings → secrets, never commit them
+.env
+*firebase-adminsdk*.json
+*-serviceaccount*.json
+
+# Local-only
+.venv/
+__pycache__/
+*.pyc
+backend.log
+data/
