@@ -80,16 +80,27 @@ def _loaded_product_refs() -> List[Dict[str, Optional[int]]]:
     return [{"name": d["name"], "page": None} for d in rag.list_documents()]
 
 
-def start_session(persona_id: str, drill_id: Optional[str] = None) -> Dict:
+def start_session(
+    persona_id: str,
+    drill_id: Optional[str] = None,
+    custom: Optional[Dict] = None,
+) -> Dict:
     drill = drills.get_drill_safe(drill_id)
     if drill:
         persona_id = drill["persona_id"]
-    persona = personas.get_persona(persona_id)
+        custom = None  # drills always target a fixed persona
+    if persona_id == "custom" and custom:
+        persona = personas.build_custom(custom)
+    else:
+        persona = personas.get_persona(persona_id)
     focus_dimension = drill["dimension"] if drill else None
     sid = sessions.create(
-        persona_id, persona["opening"],
+        persona["id"], persona["opening"],
         drill_id=drill["id"] if drill else None,
         focus_dimension=focus_dimension,
+        # Persist the built persona so reply()/end_session() can recover its
+        # prompt — a custom persona has no PERSONAS entry.
+        persona=persona if persona["id"] == "custom" else None,
     )
     return {
         "session_id": sid,
@@ -111,12 +122,18 @@ def start_session(persona_id: str, drill_id: Optional[str] = None) -> Dict:
     }
 
 
+def _session_persona(session: Dict) -> Dict:
+    """A session may carry a built persona inline (custom); otherwise look it
+    up in PERSONAS by id."""
+    return session.get("persona") or personas.get_persona(session["persona_id"])
+
+
 def reply(session_id: str, fa_message: str) -> Dict:
     session = sessions.get(session_id)
     if not session:
         raise KeyError("session not found or expired")
 
-    persona = personas.get_persona(session["persona_id"])
+    persona = _session_persona(session)
     history = session["history"]
     focus = session.get("focus_dimension")
 
@@ -283,7 +300,7 @@ def end_session(
     if not session:
         raise KeyError("session not found or expired")
 
-    persona = personas.get_persona(session["persona_id"])
+    persona = _session_persona(session)
     history = session["history"]
     drill_id = session.get("drill_id")
     focus_dimension = session.get("focus_dimension")

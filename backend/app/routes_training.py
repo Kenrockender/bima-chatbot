@@ -25,9 +25,17 @@ class DrillPublic(BaseModel):
     summary: str
 
 
+class CustomPersona(BaseModel):
+    name: Optional[str] = None
+    background: Optional[str] = None
+    needs: Optional[str] = None
+    challenge: Optional[str] = None  # "Mudah" | "Sedang" | "Sulit"
+
+
 class StartRequest(BaseModel):
     persona_id: str
     drill_id: Optional[str] = None
+    custom: Optional[CustomPersona] = None
 
 
 class StartResponse(BaseModel):
@@ -99,7 +107,11 @@ def list_drills():
 @router.post("/start", response_model=StartResponse)
 def start(req: StartRequest):
     try:
-        return training.start_session(req.persona_id, req.drill_id)
+        return training.start_session(
+            req.persona_id,
+            req.drill_id,
+            req.custom.model_dump() if req.custom else None,
+        )
     except KeyError:
         raise HTTPException(status_code=404, detail="Unknown persona")
 

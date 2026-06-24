@@ -237,7 +237,98 @@ Cara membalas FA:
 - Kalau FA tunjukkan empati tulus DAN solusi yang realistis sesuai budget: mulai terbuka.
 - Bahkan kalau tertarik: "Boleh saya hitung-hitung dulu ya, saya harus pastikan masih cukup untuk kebutuhan anak.".""",
     },
+    {
+        "id": "custom",
+        "name": "Nasabah Kustom",
+        "title": "Atur sendiri profil nasabah",
+        "summary": (
+            "Tentukan sendiri latar belakang & kebutuhan calon nasabah, lalu "
+            "latih pitch-mu pada profil itu."
+        ),
+        "challenge": "Custom",
+        "accent": "#6B4FA1",
+        "opening": (
+            "Halo, saya calon nasabah. Saya sedang mempertimbangkan asuransi dan "
+            "ingin tahu produk yang cocok untuk situasi saya. Bisa dibantu?"
+        ),
+        "persona_prompt": "",  # built per-session from FA input via build_custom()
+    },
 ]
+
+
+# -----------------------------------------------------------------------------
+# Custom persona — FA defines the background & needs at session start
+# -----------------------------------------------------------------------------
+
+_DEFAULT_CUSTOM_BG = (
+    "Belum dispesifikkan — perankan calon nasabah umum kelas menengah Indonesia "
+    "yang sedang mempertimbangkan asuransi."
+)
+_DEFAULT_CUSTOM_NEEDS = (
+    "Belum dispesifikkan — gali sendiri lewat percakapan; tunjukkan kebutuhan & "
+    "kekhawatiran yang wajar."
+)
+_VALID_CHALLENGES = ("Mudah", "Sedang", "Sulit", "Custom")
+
+
+def _custom_prompt(name: str, background: str, needs: str) -> str:
+    return f"""Kamu {name}, calon nasabah BCA Life — BUKAN AI, BUKAN financial advisor, BUKAN sales agent.
+
+LATAR BELAKANG:
+{background}
+
+KEBUTUHAN & KEKHAWATIRAN (jangan langsung kamu ungkap semuanya — biarkan FA menggalinya):
+{needs}
+
+Cara bermain peran:
+- Perankan nasabah di atas secara konsisten & realistis sesuai latar belakang dan kebutuhan tersebut.
+- Stay in character 100%. Jangan pernah bilang "saya AI".
+- 1-3 kalimat, gaya percakapan natural seperti chat WhatsApp. Tanpa bullet/markdown.
+- Jangan gampang tertarik — kalau FA langsung jualan tanpa menggali kebutuhanmu, balas dengan pertanyaan atau keberatan yang wajar.
+- Kalau FA menyebut angka/produk, boleh klarifikasi atau uji pakai FAKTA_PRODUK.
+- Tunjukkan minat hanya kalau FA benar-benar menjawab kebutuhan & kekhawatiranmu."""
+
+
+def build_custom(cfg: Dict) -> Dict:
+    """Build a one-off persona from FA-supplied background & needs.
+
+    The result has the same shape as a static persona, so the rest of the
+    training engine treats it identically. It is stored on the session because
+    it has no entry in PERSONAS to look up later."""
+    name = (cfg.get("name") or "").strip() or "Nasabah"
+    raw_bg = (cfg.get("background") or "").strip()
+    raw_needs = (cfg.get("needs") or "").strip()
+    background = raw_bg or _DEFAULT_CUSTOM_BG
+    needs = raw_needs or _DEFAULT_CUSTOM_NEEDS
+
+    challenge = (cfg.get("challenge") or "Custom").strip().title()
+    if challenge not in _VALID_CHALLENGES:
+        challenge = "Custom"
+
+    opening_parts = [f"Halo, saya {name}."]
+    if raw_bg:
+        opening_parts.append(raw_bg.rstrip(".") + ".")
+    opening_parts.append(
+        "Saya sedang mempertimbangkan asuransi dan ingin tahu yang cocok untuk "
+        "situasi saya. Bisa dibantu?"
+    )
+    opening = " ".join(opening_parts)
+
+    summary = background
+    if raw_needs:
+        summary = f"{background} | Kebutuhan: {needs}"
+    summary = summary[:240]
+
+    return {
+        "id": "custom",
+        "name": name,
+        "title": "Profil diatur oleh FA",
+        "summary": summary,
+        "challenge": challenge,
+        "accent": "#6B4FA1",
+        "opening": opening,
+        "persona_prompt": _custom_prompt(name, background, needs),
+    }
 
 
 def get_persona(persona_id: str) -> Dict:

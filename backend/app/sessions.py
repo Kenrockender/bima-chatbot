@@ -29,6 +29,7 @@ def create(
     opening_message: str,
     drill_id: Optional[str] = None,
     focus_dimension: Optional[str] = None,
+    persona: Optional[Dict] = None,
 ) -> str:
     sid = uuid.uuid4().hex
     with _lock:
@@ -36,6 +37,9 @@ def create(
         _sessions[sid] = {
             "id": sid,
             "persona_id": persona_id,
+            # Built one-off personas (e.g. the custom persona) are stored inline
+            # because they can't be looked up in PERSONAS later.
+            "persona": persona,
             "drill_id": drill_id,
             "focus_dimension": focus_dimension,
             "started_at": _now(),

@@ -25,6 +25,16 @@ type Message = {
 
 type Stage = "pick" | "chat" | "report" | "ending";
 
+export type CustomConfig = {
+  name?: string;
+  background?: string;
+  needs?: string;
+  challenge?: string;
+};
+
+// Persona id reserved for the FA-defined custom persona.
+const CUSTOM_ID = "custom";
+
 // Order prospects easy → hard so trainees can ramp up gradually.
 const DIFFICULTY_RANK: Record<string, number> = { Mudah: 0, Sedang: 1, Sulit: 2 };
 function sortByDifficulty(list: Persona[]): Persona[] {
@@ -178,7 +188,11 @@ export default function Home() {
     });
   }, [messages, busy]);
 
-  async function startSession(persona: Persona | null, drillId?: string) {
+  async function startSession(
+    persona: Persona | null,
+    drillId?: string,
+    custom?: CustomConfig,
+  ) {
     if (starting) return;
     setStarting(true);
     try {
@@ -188,6 +202,7 @@ export default function Home() {
         body: JSON.stringify({
           persona_id: persona?.id ?? "",
           drill_id: drillId ?? null,
+          custom: custom ?? null,
         }),
       });
       if (!res.ok) throw new Error();
@@ -531,6 +546,9 @@ export default function Home() {
                   selected={personas.find((x) => x.id === selectedId) ?? null}
                   starting={starting}
                   onStart={startSession}
+                  onStartCustom={(cfg) =>
+                    startSession({ id: CUSTOM_ID } as Persona, undefined, cfg)
+                  }
                 />}
 
                 {stage === "ending" && <EndingState tr={tr} />}
@@ -854,7 +872,7 @@ export default function Home() {
                   </div>
 
                   {/* secondary row: persona quick-start / status */}
-                  {stage === "pick" && selectedId && (
+                  {stage === "pick" && selectedId && selectedId !== CUSTOM_ID && (
                     <div className="mt-3 flex items-center justify-end gap-2">
                       <span className="text-[11px] text-bca-ink/55">
                         {personas.find((p) => p.id === selectedId)?.name}
@@ -889,12 +907,15 @@ function Welcome({
   selected,
   starting,
   onStart,
+  onStartCustom,
 }: {
   tr: (typeof t)["en"] | (typeof t)["id"];
   selected: Persona | null;
   starting: boolean;
   onStart: (p: Persona) => void;
+  onStartCustom: (cfg: CustomConfig) => void;
 }) {
+  const isCustom = selected?.id === CUSTOM_ID;
   return (
     <div className="max-w-[640px] mx-auto py-6 animate-fadeIn">
       <div className="inline-flex items-center gap-2 mb-4">
@@ -916,23 +937,157 @@ function Welcome({
       <div className="bubble-bima max-w-[460px]">
         <p className="text-[13.5px] leading-[1.6]">
           {selected
-            ? `${tr.pickPersona}: ${selected.name} · ${selected.title}. ${selected.summary}`
+            ? isCustom
+              ? tr.customIntro
+              : `${tr.pickPersona}: ${selected.name} · ${selected.title}. ${selected.summary}`
             : tr.pickPersonaHint}
         </p>
       </div>
 
-      {selected && (
-        <div className="mt-5">
-          <button
-            onClick={() => onStart(selected)}
-            disabled={starting}
-            className="inline-flex items-center gap-2 bg-bca-shellMid hover:bg-bca-ink text-white text-[13.5px] font-semibold rounded-full px-5 py-3 shadow-soft transition disabled:opacity-60"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
-            {starting ? "…" : tr.startSession}
-          </button>
-        </div>
+      {isCustom ? (
+        <CustomPersonaForm tr={tr} starting={starting} onStart={onStartCustom} />
+      ) : (
+        selected && (
+          <div className="mt-5">
+            <button
+              onClick={() => onStart(selected)}
+              disabled={starting}
+              className="inline-flex items-center gap-2 bg-bca-shellMid hover:bg-bca-ink text-white text-[13.5px] font-semibold rounded-full px-5 py-3 shadow-soft transition disabled:opacity-60"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+              {starting ? "…" : tr.startSession}
+            </button>
+          </div>
+        )
       )}
+    </div>
+  );
+}
+
+function CustomPersonaForm({
+  tr,
+  starting,
+  onStart,
+}: {
+  tr: (typeof t)["en"] | (typeof t)["id"];
+  starting: boolean;
+  onStart: (cfg: CustomConfig) => void;
+}) {
+  const [name, setName] = useState("");
+  const [background, setBackground] = useState("");
+  const [needs, setNeeds] = useState("");
+  const [challenge, setChallenge] = useState("Sedang");
+
+  const ready = background.trim().length > 0 || needs.trim().length > 0;
+
+  function submit() {
+    if (!ready || starting) return;
+    onStart({
+      name: name.trim() || undefined,
+      background: background.trim() || undefined,
+      needs: needs.trim() || undefined,
+      challenge,
+    });
+  }
+
+  return (
+    <div className="mt-5 rounded-2xl border border-bca-rule bg-white/70 p-5 max-w-[520px] shadow-soft">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+        <span className="text-[11px] uppercase tracking-[0.16em] font-bold text-bca-ink/70">
+          {tr.customFormTitle}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 mb-3">
+        <label className="block">
+          <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-bca-ink/55 block mb-1">
+            {tr.customNameLabel}
+          </span>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={40}
+            placeholder={tr.customNamePh}
+            className="custom-field"
+          />
+        </label>
+        <label className="block">
+          <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-bca-ink/55 block mb-1">
+            {tr.customChallengeLabel}
+          </span>
+          <select
+            value={challenge}
+            onChange={(e) => setChallenge(e.target.value)}
+            className="custom-field"
+          >
+            <option value="Mudah">{tr.diffEasy}</option>
+            <option value="Sedang">{tr.diffMedium}</option>
+            <option value="Sulit">{tr.diffHard}</option>
+          </select>
+        </label>
+      </div>
+
+      <label className="block mb-3">
+        <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-bca-ink/55 block mb-1">
+          {tr.customBackgroundLabel}
+        </span>
+        <textarea
+          value={background}
+          onChange={(e) => setBackground(e.target.value)}
+          rows={3}
+          maxLength={600}
+          placeholder={tr.customBackgroundPh}
+          className="custom-field resize-none"
+        />
+      </label>
+
+      <label className="block mb-1">
+        <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-bca-ink/55 block mb-1">
+          {tr.customNeedsLabel}
+        </span>
+        <textarea
+          value={needs}
+          onChange={(e) => setNeeds(e.target.value)}
+          rows={3}
+          maxLength={600}
+          placeholder={tr.customNeedsPh}
+          className="custom-field resize-none"
+        />
+      </label>
+
+      <p className="text-[11.5px] text-bca-ink/50 mt-2 mb-4">{tr.customRequiredHint}</p>
+
+      <button
+        onClick={submit}
+        disabled={!ready || starting}
+        className="inline-flex items-center gap-2 bg-bca-shellMid hover:bg-bca-ink text-white text-[13.5px] font-semibold rounded-full px-5 py-3 shadow-soft transition disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+        {starting ? "…" : tr.customStart}
+      </button>
+
+      <style jsx>{`
+        :global(.custom-field) {
+          width: 100%;
+          background: #ffffff;
+          border: 1px solid #e6dfd0;
+          border-radius: 10px;
+          padding: 0.5rem 0.7rem;
+          font-size: 13.5px;
+          color: #0a1b2e;
+          transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        :global(.custom-field::placeholder) {
+          color: #9aa3b0;
+        }
+        :global(.custom-field:focus) {
+          outline: none;
+          border-color: #c8941e;
+          box-shadow: 0 0 0 4px rgba(200, 148, 30, 0.16);
+        }
+      `}</style>
     </div>
   );
 }

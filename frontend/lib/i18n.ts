@@ -18,6 +18,25 @@ export const t = {
     challengeLabel: "Difficulty",
     startSession: "Start roleplay",
 
+    // Custom persona
+    customIntro:
+      "Design your own prospect: set their background and what they need, then I'll play them so you can practice your pitch.",
+    customFormTitle: "Design your prospect",
+    customNameLabel: "Name (optional)",
+    customNamePh: "e.g. Bu Rina",
+    customChallengeLabel: "Difficulty",
+    diffEasy: "Easy",
+    diffMedium: "Medium",
+    diffHard: "Hard",
+    customBackgroundLabel: "Background",
+    customBackgroundPh:
+      "e.g. 47 y/o kiosk owner, married, 3 kids, irregular income, never owned insurance.",
+    customNeedsLabel: "Needs & concerns",
+    customNeedsPh:
+      "e.g. worried about hospital costs, wants health protection but a tight budget.",
+    customRequiredHint: "Fill in at least the background or the needs.",
+    customStart: "Start with this prospect",
+
     // Chat
     inSessionLabel: "In session",
     endSession: "End & get feedback",
@@ -199,6 +218,21 @@ export const t = {
     scriptClosing: "Closing",
     objectionLabel: "Objection",
     responseLabel: "Response",
+
+    // Product comparison view
+    compareEyebrow: "Product Comparison",
+    compareTitle: "Compare BCA Life products head-to-head.",
+    compareSubtitle:
+      "Pick a BCA Life product to see its features, strengths and watch-outs against the closest competitors — plus a ready-to-use sales script.",
+    selectProductLabel: "Select a BCA Life product",
+    prototypeBadge: "Prototype",
+    productTypeLabel: "Type",
+    featuresLabel: "Key features",
+    strengthsHighlight: "Strengths to highlight",
+    weaknessesHighlight: "Honest watch-outs",
+    headToHeadLabel: "Head-to-head",
+    scriptInProgress:
+      "Sales script for this product is still in progress. VALUE+ is the working prototype.",
   },
   id: {
     appName: "BIMA",
@@ -215,6 +249,25 @@ export const t = {
       "Setiap persona punya latar belakang, kekhawatiran, dan toleransi yang berbeda. Pilih yang sesuai tujuan latihanmu.",
     challengeLabel: "Tingkat kesulitan",
     startSession: "Mulai roleplay",
+
+    // Custom persona
+    customIntro:
+      "Rancang sendiri calon nasabahmu: tentukan latar belakang dan kebutuhannya, nanti aku perankan supaya kamu bisa latihan pitch.",
+    customFormTitle: "Rancang calon nasabah",
+    customNameLabel: "Nama (opsional)",
+    customNamePh: "mis. Bu Rina",
+    customChallengeLabel: "Tingkat kesulitan",
+    diffEasy: "Mudah",
+    diffMedium: "Sedang",
+    diffHard: "Sulit",
+    customBackgroundLabel: "Latar belakang",
+    customBackgroundPh:
+      "mis. Pemilik kios 47 th, menikah, 3 anak, penghasilan tidak tetap, belum pernah punya asuransi.",
+    customNeedsLabel: "Kebutuhan & kekhawatiran",
+    customNeedsPh:
+      "mis. khawatir biaya RS, ingin proteksi kesehatan tapi budget terbatas.",
+    customRequiredHint: "Isi minimal latar belakang atau kebutuhannya.",
+    customStart: "Mulai dengan nasabah ini",
 
     inSessionLabel: "Sedang sesi",
     endSession: "Selesai & minta feedback",
@@ -398,5 +451,20 @@ export const t = {
     scriptClosing: "Closing",
     objectionLabel: "Keberatan",
     responseLabel: "Respons",
+
+    // Product comparison view
+    compareEyebrow: "Komparasi Produk",
+    compareTitle: "Bandingkan produk BCA Life secara head-to-head.",
+    compareSubtitle:
+      "Pilih produk BCA Life untuk melihat fitur, kelebihan, dan kekurangannya dibanding kompetitor terdekat — lengkap dengan skrip jualan siap pakai.",
+    selectProductLabel: "Pilih produk BCA Life",
+    prototypeBadge: "Prototype",
+    productTypeLabel: "Jenis",
+    featuresLabel: "Fitur utama",
+    strengthsHighlight: "Kelebihan untuk di-highlight",
+    weaknessesHighlight: "Kekurangan / catatan jujur",
+    headToHeadLabel: "Head to head",
+    scriptInProgress:
+      "Skrip jualan untuk produk ini masih dalam penyusunan. VALUE+ adalah prototype yang sudah jadi.",
   },
 } as const;
