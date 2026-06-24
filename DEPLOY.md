@@ -24,10 +24,13 @@ needed.
 ## 1. Backend — Hugging Face Spaces
 
 A Space is its own git repo and builds a Docker image from the repo **root**, so
-the deploy is: push the **contents of `backend/`** to a Space repo. The
+the deploy is: push the **contents of `backend/`** to a Space repo. Rather than
+keep a second copy of the folder on disk, we push the `backend/` subtree straight
+to the Space remote with `git subtree` — `backend/` stays the single source of
+truth and there's no copy to keep in sync. The
 [`backend/README.md`](backend/README.md) carries the HF metadata (`sdk: docker`,
 `app_port: 8000`) and [`backend/.gitignore`](backend/.gitignore) keeps `.env` and
-the service-account JSON out of the push. The Dockerfile needs **no changes**.
+the service-account JSON out of the repo. The Dockerfile needs **no changes**.
 
 Free **CPU Basic** hardware is 2 vCPU / 16 GB RAM, no credit card. It sleeps when
 idle (first request after sleep is slow) and the disk is ephemeral — fine here
@@ -39,18 +42,23 @@ over port 443, which Spaces allows.
 1. Create the Space: https://huggingface.co/new-space → name `bima-backend`,
    **SDK: Docker** → **Blank**, visibility **Private** (or **Protected** if you
    want the app reachable but the code hidden). No card is requested.
-2. Push the backend folder to the new Space repo. From the project root:
+2. Add the Space as a git remote and push the `backend/` subtree to it. From the
+   project root:
    ```bash
-   # one-time: clone the empty Space alongside the project
-   git clone https://huggingface.co/spaces/<your-hf-user>/bima-backend ../bima-space
-   # copy backend/ into it (respects backend/.gitignore: skips .env, .venv, data/)
-   git -C backend archive HEAD 2>/dev/null | tar -x -C ../bima-space || cp -r backend/. ../bima-space/
-   cd ../bima-space
-   # make sure secrets didn't sneak in
-   rm -f .env backend.log && rm -rf .venv data
-   git add -A && git commit -m "Deploy BIMA backend" && git push
-   cd -
+   # one-time: register the Space repo as a remote called "hf-space"
+   git remote add hf-space https://huggingface.co/spaces/<your-hf-user>/bima-backend
+   # split backend/ into a synthetic commit and push it as the Space repo's root
+   git push hf-space "$(git subtree split --prefix=backend HEAD):refs/heads/main" --force
    ```
+   The Space repo's own history is a throwaway deploy artifact unrelated to this
+   subtree, so the push is a force-push. Only files tracked by git under `backend/`
+   are pushed, so `.env`, the service-account JSON, `data/`, and `.venv/` (all
+   gitignored) never leave your machine. There is no separate folder to maintain —
+   `backend/` is the only copy.
+
+   On Windows, [`scripts/deploy-backend.ps1`](scripts/deploy-backend.ps1) wraps
+   this; run `.\scripts\deploy-backend.ps1` from the project root.
+
    (You'll be prompted for an HF **access token** as the password — create one at
    https://huggingface.co/settings/tokens with *write* scope.)
 3. In the Space → **Settings → Variables and secrets**, add:
@@ -73,9 +81,10 @@ over port 443, which Spaces allows.
 5. Smoke test: open `https://<your-hf-user>-bima-backend.hf.space/health` → should
    return `{"status":"ok"}`, or `/docs` for the FastAPI Swagger UI.
 
-> **Future updates:** the Space is a separate repo. Re-run the copy + push from
-> step 2 to redeploy, or add the Space as a second git remote and push the
-> `backend/` subtree to it.
+> **Future updates:** after committing changes to `backend/` in this repo, redeploy
+> with a single command — `.\scripts\deploy-backend.ps1` (or the
+> `git push hf-space "$(git subtree split --prefix=backend HEAD):refs/heads/main" --force`
+> form above). No copy step, no second folder.
 
 ### Seeding the initial dataset (automatic)
 
