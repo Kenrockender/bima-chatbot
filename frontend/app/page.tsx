@@ -37,6 +37,16 @@ const CUSTOM_ID = "custom";
 
 // Order prospects easy → hard so trainees can ramp up gradually.
 const DIFFICULTY_RANK: Record<string, number> = { Mudah: 0, Sedang: 1, Sulit: 2 };
+
+// Difficulty → dot colour, mirroring PersonaCard so the mobile picker reads the same.
+const CHALLENGE_DOT: Record<string, string> = {
+  Mudah: "#1E7B47",
+  Easy: "#1E7B47",
+  Sedang: "#2E86C1",
+  Medium: "#2E86C1",
+  Sulit: "#E0533D",
+  Hard: "#E0533D",
+};
 function sortByDifficulty(list: Persona[]): Persona[] {
   if (!Array.isArray(list)) return [];
   return [...list].sort(
@@ -530,25 +540,35 @@ export default function Home() {
           {/* Main chat area */}
           <section className="flex-1 flex flex-col min-w-0 p-4 sm:p-5">
             <div className="flex-1 bg-chatpanel flex flex-col min-h-0 overflow-hidden">
-              {/* Mobile persona strip */}
-              <div className="md:hidden flex gap-2 overflow-x-auto px-3 py-3 border-b border-black/5">
-                {presetPersonas.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => onPickPersona(p)}
-                    className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition ${
-                      (activePersona?.id ?? selectedId) === p.id
-                        ? "bg-bca-shellMid text-white"
-                        : "bg-white/70 text-bca-ink/70"
-                    }`}
-                  >
-                    {p.name}
-                  </button>
-                ))}
+              {/* Mobile persona picker — wraps so every persona is visible at once (no horizontal scroll) */}
+              <div className="md:hidden flex flex-wrap gap-2 px-3 py-3 border-b border-black/5">
+                {presetPersonas.map((p) => {
+                  const isOn = (activePersona?.id ?? selectedId) === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => onPickPersona(p)}
+                      title={`${p.title} — ${p.summary} (${tr.challengeLabel}: ${p.challenge})`}
+                      aria-pressed={isOn}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition ${
+                        isOn
+                          ? "bg-bca-shellMid text-white"
+                          : "bg-white/70 text-bca-ink/70"
+                      }`}
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ background: CHALLENGE_DOT[p.challenge] ?? "#C8941E" }}
+                      />
+                      {p.name}
+                    </button>
+                  );
+                })}
                 {customPersona && (
                   <button
                     onClick={() => onPickPersona(customPersona)}
-                    className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold border border-dashed transition ${
+                    aria-pressed={(activePersona?.id ?? selectedId) === CUSTOM_ID}
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold border border-dashed transition ${
                       (activePersona?.id ?? selectedId) === CUSTOM_ID
                         ? "bg-bca-shellMid text-white border-transparent"
                         : "bg-white/40 text-bca-ink/70 border-bca-ink/25"
