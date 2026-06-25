@@ -1,8 +1,12 @@
+import os
+import uuid
+
 from typing import List, Literal, Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
-from . import recommender
+from . import recommender, rag
+from .config import settings
 
 
 router = APIRouter(prefix="/api/recommender", tags=["recommender"])
@@ -153,4 +157,54 @@ def compare(req: CompareRequest):
         bca_name=req.bca_name or "",
         bca_stem=req.bca_stem or "",
         mode=req.mode,
+    )
+
+
+# Formats we can extract text from at runtime for an ad-hoc competitor doc.
+_COMPARE_UPLOAD_EXTS = (".pdf", ".pptx")
+
+
+@router.post("/compare-upload", response_model=CompareResponse)
+async def compare_upload(
+    file: UploadFile = File(...),
+    bca_name: str = Form(""),
+    bca_stem: str = Form(""),
+    mode: Literal["auto", "head_to_head", "complementary"] = Form("auto"),
+):
+    """Compare a BCA Life product against a competitor document uploaded on the
+    fly. The file is extracted to text in a temp path and discarded — nothing is
+    ingested into the knowledge base."""
+    if not (bca_name or bca_stem):
+        raise HTTPException(status_code=422, detail="bca_name atau bca_stem wajib diisi.")
+    filename = file.filename or ""
+    if not filename.lower().endswith(_COMPARE_UPLOAD_EXTS):
+        raise HTTPException(status_code=422, detail="Format harus PDF atau PPTX.")
+
+    os.makedirs(settings.upload_dir, exist_ok=True)
+    temp_path = os.path.join(settings.upload_dir, f"cmp_{uuid.uuid4().hex}_{filename}")
+    try:
+        with open(temp_path, "wb") as out:
+            out.write(await file.read())
+        if temp_path.lower().endswith(".pptx"):
+            comp_text, _ = rag.extract_pptx_text(temp_path)
+        else:
+            comp_text, _ = rag.extract_pdf_text(temp_path)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Gagal membaca dokumen: {e}")
+    finally:
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
+
+    if not (comp_text or "").strip():
+        raise HTTPException(status_code=400, detail="Tidak ada teks yang bisa diekstrak dari dokumen.")
+
+    return recommender.compare_uploaded(
+        comp_text=comp_text,
+        comp_name=filename,
+        comp_insurer="",
+        bca_name=bca_name,
+        bca_stem=bca_stem,
+        mode=mode,
     )

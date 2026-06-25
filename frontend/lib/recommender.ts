@@ -100,3 +100,34 @@ export async function compareProducts(input: {
   }
   return res.json();
 }
+
+/** Run a comparison against a competitor document uploaded on the fly
+ * (PDF/PPTX). The file is extracted server-side and never ingested. */
+export async function compareProductsUpload(input: {
+  file: File;
+  bcaName: string;
+  bcaStem: string;
+  mode: CompareMode;
+}): Promise<CompareResult> {
+  const form = new FormData();
+  form.append("file", input.file);
+  form.append("bca_name", input.bcaName);
+  form.append("bca_stem", input.bcaStem);
+  form.append("mode", input.mode);
+  // Note: do NOT set Content-Type — the browser adds the multipart boundary.
+  const res = await authedFetch("/api/recommender/compare-upload", {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    let detail = `Gagal menjalankan perbandingan (${res.status})`;
+    try {
+      const j = await res.json();
+      if (j?.detail) detail = typeof j.detail === "string" ? j.detail : detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}

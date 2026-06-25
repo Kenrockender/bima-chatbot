@@ -237,9 +237,14 @@ export const t = {
     // Dynamic competitor comparator
     dynCompareTitle: "Compare against a competitor document",
     dynCompareDesc:
-      "Pick a competitor RIPLAY/brochure to compare with the selected BCA Life product. The assistant detects whether they are head-to-head or different types and tailors the analysis.",
+      "Upload a competitor RIPLAY/brochure to compare with the selected BCA Life product. The assistant detects whether they are head-to-head or different types and tailors the analysis.",
     selectCompetitorLabel: "Competitor document",
     competitorPlaceholder: "Select a competitor RIPLAY / brochure…",
+    uploadDropHint: "Drag & drop the competitor document here, or",
+    uploadBrowse: "browse",
+    uploadFormats: "PDF or PPTX · processed on the fly, not stored",
+    uploadRemove: "Remove",
+    uploadInvalidType: "Unsupported file. Please upload a PDF or PPTX.",
     scenarioLabel: "Scenario",
     scenarioAuto: "Auto-detect",
     scenarioHeadToHead: "Head-to-head",
@@ -500,9 +505,14 @@ export const t = {
     // Dynamic competitor comparator
     dynCompareTitle: "Bandingkan dengan dokumen kompetitor",
     dynCompareDesc:
-      "Pilih RIPLAY/brosur kompetitor untuk dibandingkan dengan produk BCA Life yang dipilih. Asisten mendeteksi apakah keduanya sejenis (head-to-head) atau beda jenis, lalu menyesuaikan analisisnya.",
+      "Unggah RIPLAY/brosur kompetitor untuk dibandingkan dengan produk BCA Life yang dipilih. Asisten mendeteksi apakah keduanya sejenis (head-to-head) atau beda jenis, lalu menyesuaikan analisisnya.",
     selectCompetitorLabel: "Dokumen kompetitor",
     competitorPlaceholder: "Pilih RIPLAY / brosur kompetitor…",
+    uploadDropHint: "Tarik & letakkan dokumen kompetitor di sini, atau",
+    uploadBrowse: "pilih file",
+    uploadFormats: "PDF atau PPTX · diproses langsung, tidak disimpan",
+    uploadRemove: "Hapus",
+    uploadInvalidType: "Format tidak didukung. Unggah PDF atau PPTX.",
     scenarioLabel: "Skenario",
     scenarioAuto: "Auto-deteksi",
     scenarioHeadToHead: "Head-to-head",

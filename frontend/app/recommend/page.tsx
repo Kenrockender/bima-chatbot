@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState, type DragEvent } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { t, type Lang } from "@/lib/i18n";
 import {
@@ -10,13 +10,12 @@ import {
   type SalesScript,
 } from "@/lib/productComparison";
 import {
-  fetchCompetitors,
-  groupByInsurer,
-  compareProducts,
-  type CompetitorSource,
+  compareProductsUpload,
   type CompareMode,
   type CompareResult,
 } from "@/lib/recommender";
+
+const COMPARE_UPLOAD_EXTS = [".pdf", ".pptx"];
 
 // The customer-profile analysis flow is hidden for now (kept in git history at
 // commit 4179c3d for easy restore). Flip to true to bring it back.
@@ -496,33 +495,42 @@ function DynamicComparator({
   product: ProductComparison;
   tr: any;
 }) {
-  const [competitors, setCompetitors] = useState<CompetitorSource[]>([]);
-  const [loadErr, setLoadErr] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [mode, setMode] = useState<CompareMode>("auto");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CompareResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    let alive = true;
-    fetchCompetitors()
-      .then((list) => alive && setCompetitors(list))
-      .catch(() => alive && setLoadErr(tr.competitorLoadError));
-    return () => {
-      alive = false;
-    };
-  }, [tr.competitorLoadError]);
+  function acceptFile(f: File | null | undefined) {
+    if (!f) return;
+    const ok = COMPARE_UPLOAD_EXTS.some((ext) =>
+      f.name.toLowerCase().endsWith(ext),
+    );
+    if (!ok) {
+      setError(tr.uploadInvalidType);
+      return;
+    }
+    setError(null);
+    setResult(null);
+    setFile(f);
+  }
 
-  // Reset result when the BCA product changes (component is keyed by product).
+  function onDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOver(false);
+    acceptFile(e.dataTransfer.files?.[0]);
+  }
+
   async function run() {
-    if (!selectedId) return;
+    if (!file) return;
     setLoading(true);
     setError(null);
     setResult(null);
     try {
-      const res = await compareProducts({
-        competitorId: selectedId,
+      const res = await compareProductsUpload({
+        file,
         bcaName: product.name,
         bcaStem: product.factsheetStem,
         mode,
@@ -536,7 +544,6 @@ function DynamicComparator({
     }
   }
 
-  const groups = groupByInsurer(competitors);
   const modes: { key: CompareMode; label: string }[] = [
     { key: "auto", label: tr.scenarioAuto },
     { key: "head_to_head", label: tr.scenarioHeadToHead },
@@ -558,34 +565,79 @@ function DynamicComparator({
         {tr.dynCompareDesc}
       </p>
 
-      <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
+      <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
         <div>
           <label className="smallcaps text-[10px] text-life-body block mb-1.5">
             {tr.selectCompetitorLabel}
           </label>
-          <select
-            value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-            className="w-full rounded-[12px] border border-life-blue/20 bg-white text-life-heading text-[13.5px] px-3 py-2.5 focus-gold outline-none"
-          >
-            <option value="">{tr.competitorPlaceholder}</option>
-            {groups.map((g) => (
-              <optgroup key={g.insurer} label={g.insurer}>
-                {g.items.map((it) => (
-                  <option key={it.id} value={it.id}>
-                    {it.label}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          {loadErr && (
-            <p className="text-[11.5px] text-life-neg mt-1.5">{loadErr}</p>
-          )}
-          {!loadErr && competitors.length === 0 && (
-            <p className="text-[11.5px] text-life-body mt-1.5">
-              {tr.noCompetitors}
-            </p>
+
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".pdf,.pptx"
+            className="hidden"
+            onChange={(e) => acceptFile(e.target.files?.[0])}
+          />
+
+          {file ? (
+            <div className="flex items-center gap-3 rounded-[12px] border border-life-blue/20 bg-white px-3.5 py-3">
+              <span
+                aria-hidden
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-life-blueBg text-life-blue text-[15px]"
+              >
+                📄
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[13px] font-semibold text-life-heading">
+                  {file.name}
+                </div>
+                <div className="text-[11px] text-life-body">
+                  {(file.size / 1024).toFixed(0)} KB
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setFile(null);
+                  setResult(null);
+                  if (inputRef.current) inputRef.current.value = "";
+                }}
+                className="shrink-0 text-[11.5px] font-semibold text-life-body hover:text-life-neg transition"
+              >
+                {tr.uploadRemove}
+              </button>
+            </div>
+          ) : (
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={onDrop}
+              className={`flex flex-col items-center justify-center gap-1.5 rounded-[12px] border border-dashed px-4 py-6 text-center cursor-pointer transition ${
+                dragOver
+                  ? "border-life-blue bg-life-blueBg/60"
+                  : "border-life-blue/30 bg-life-blue/[0.03] hover:bg-life-blue/[0.06]"
+              }`}
+            >
+              <span aria-hidden className="text-[20px] text-life-blue/70">
+                ⬆️
+              </span>
+              <p className="text-[12.5px] text-life-body">
+                {tr.uploadDropHint}{" "}
+                <span className="font-semibold text-life-blue underline">
+                  {tr.uploadBrowse}
+                </span>
+              </p>
+              <p className="text-[10.5px] text-life-body/70">{tr.uploadFormats}</p>
+            </div>
           )}
         </div>
 
@@ -615,7 +667,7 @@ function DynamicComparator({
       <button
         type="button"
         onClick={run}
-        disabled={!selectedId || loading}
+        disabled={!file || loading}
         className="btn-life mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? tr.comparing : tr.compareButton}

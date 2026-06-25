@@ -451,35 +451,17 @@ def _norm_compare(parsed: Dict) -> Dict:
     }
 
 
-def compare(
-    competitor_id: str,
-    bca_name: str = "",
-    bca_stem: str = "",
-    mode: str = "auto",
-) -> Dict:
-    """Compare one BCA Life product against one competitor document.
-
-    The BCA side is resolved from its condensed fact sheet (by display name or
-    file stem); the competitor side from its ingested source id. Mode "auto"
-    lets the model decide head_to_head vs complementary; otherwise it is forced.
-    """
-    bca_text = _text_for_source(name=bca_name) or _text_for_source(name=bca_stem)
-    comp_doc = rag.get_document(competitor_id)
-    if not comp_doc:
-        return {"error": "Dokumen kompetitor tidak ditemukan. Pastikan sudah di-ingest."}
-    comp_text = _text_for_source(source_id=competitor_id, name=comp_doc.get("name", ""))
-    if not bca_text:
-        return {"error": "Fact sheet produk BCA Life tidak ditemukan."}
-    if not comp_text:
-        return {"error": "Teks dokumen kompetitor kosong."}
-
+def _compare_llm(bca_text: str, comp_text: str, comp_insurer: str, mode: str) -> Dict:
+    """Run the comparison LLM on two product texts. Returns the normalized
+    result, or an {"error": ...} dict on failure. The caller attaches
+    competitor_source."""
     mode_line = ""
     if mode in ("head_to_head", "complementary"):
         mode_line = f"\nMODE WAJIB: {mode} (abaikan deteksi otomatis, gunakan skenario ini)."
 
     user_msg = (
         f"PRODUK BCA LIFE (PRODUK KAMI):\n{bca_text}\n\n"
-        f"PRODUK KOMPETITOR ({comp_doc.get('insurer', '-')}):\n{comp_text}\n"
+        f"PRODUK KOMPETITOR ({comp_insurer or '-'}):\n{comp_text}\n"
         f"{mode_line}\n\nBuatkan perbandingan JSON sesuai format yang diminta."
     )
 
@@ -498,10 +480,65 @@ def compare(
         log.warning("compare JSON parse failed; raw=%r", raw[:300])
         return {"error": "Gagal parsing output AI. Coba ulangi.", "raw": raw[:600]}
 
-    result = _norm_compare(parsed)
+    return _norm_compare(parsed)
+
+
+def compare(
+    competitor_id: str,
+    bca_name: str = "",
+    bca_stem: str = "",
+    mode: str = "auto",
+) -> Dict:
+    """Compare one BCA Life product against one *ingested* competitor document.
+
+    The BCA side is resolved from its condensed fact sheet (by display name or
+    file stem); the competitor side from its ingested source id. Mode "auto"
+    lets the model decide head_to_head vs complementary; otherwise it is forced.
+    """
+    bca_text = _text_for_source(name=bca_name) or _text_for_source(name=bca_stem)
+    comp_doc = rag.get_document(competitor_id)
+    if not comp_doc:
+        return {"error": "Dokumen kompetitor tidak ditemukan. Pastikan sudah di-ingest."}
+    comp_text = _text_for_source(source_id=competitor_id, name=comp_doc.get("name", ""))
+    if not bca_text:
+        return {"error": "Fact sheet produk BCA Life tidak ditemukan."}
+    if not comp_text:
+        return {"error": "Teks dokumen kompetitor kosong."}
+
+    result = _compare_llm(bca_text, comp_text, comp_doc.get("insurer", "-"), mode)
+    if result.get("error"):
+        return result
     result["competitor_source"] = {
         "id": competitor_id,
         "insurer": comp_doc.get("insurer", ""),
         "name": comp_doc.get("name", ""),
+    }
+    return result
+
+
+def compare_uploaded(
+    comp_text: str,
+    comp_name: str = "",
+    comp_insurer: str = "",
+    bca_name: str = "",
+    bca_stem: str = "",
+    mode: str = "auto",
+) -> Dict:
+    """Compare one BCA Life product against an *ad-hoc uploaded* competitor
+    document. The competitor text is extracted on the fly (not ingested), so
+    the FA can drop any RIPLAY/brochure without admin onboarding."""
+    bca_text = _text_for_source(name=bca_name) or _text_for_source(name=bca_stem)
+    if not bca_text:
+        return {"error": "Fact sheet produk BCA Life tidak ditemukan."}
+    if not (comp_text or "").strip():
+        return {"error": "Teks dokumen kompetitor kosong."}
+
+    result = _compare_llm(bca_text, comp_text, comp_insurer or "-", mode)
+    if result.get("error"):
+        return result
+    result["competitor_source"] = {
+        "id": "",
+        "insurer": comp_insurer,
+        "name": comp_name,
     }
     return result
