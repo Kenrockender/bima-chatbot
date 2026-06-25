@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BimaAvatar } from "@/components/BimaAvatar";
+import { AppNav } from "@/components/AppNav";
 import { authedFetch } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { t, type Lang } from "@/lib/i18n";
@@ -133,29 +134,7 @@ export default function ManagerPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2.5">
-              <div className="inline-flex items-center rounded-full p-1 text-[11.5px] font-semibold bg-bca-paper border border-bca-rule">
-                {(["en", "id"] as const).map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    className={`px-3 py-1.5 rounded-full transition-all ${
-                      lang === l
-                        ? "bg-bca-navy text-bca-cream shadow-soft"
-                        : "text-bca-mute hover:text-bca-ink"
-                    }`}
-                  >
-                    {l.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <Link href="/admin" className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy px-2 py-1">
-                {tr.admin}
-              </Link>
-              <Link href="/" className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy px-2 py-1">
-                {tr.navTrain}
-              </Link>
-            </div>
+            <AppNav lang={lang} onLang={setLang} current="manager" />
           </div>
           <div className="gold-rule mt-4" />
         </div>

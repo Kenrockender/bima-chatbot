@@ -587,6 +587,12 @@ export default function Home() {
             {tr.navRecommend}
           </Link>
           <Link
+            href="/manager"
+            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
+          >
+            Dashboard
+          </Link>
+          <Link
             href="/admin"
             className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
           >
@@ -661,6 +667,7 @@ export default function Home() {
                     { href: "/progress", label: tr.navProgress },
                     { href: "/leaderboard", label: tr.navLeaderboard },
                     { href: "/recommend", label: tr.navRecommend },
+                    { href: "/manager", label: "Dashboard" },
                     { href: "/admin", label: tr.admin },
                   ].map((it) => (
                     <Link

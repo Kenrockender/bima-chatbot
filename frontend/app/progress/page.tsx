@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BimaAvatar } from "@/components/BimaAvatar";
+import { AppNav } from "@/components/AppNav";
 import { authedFetch } from "@/lib/api";
 import { t, type Lang } from "@/lib/i18n";
 
@@ -111,42 +112,7 @@ export default function ProgressPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              <div
-                className="inline-flex items-center rounded-full p-1 text-[11.5px] font-semibold"
-                style={{
-                  background: "#FDFBF6",
-                  border: "1px solid #E6DFD0",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                {(["en", "id"] as const).map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    className={`px-3 py-1.5 rounded-full transition-all ${
-                      lang === l
-                        ? "bg-bca-navy text-bca-cream shadow-soft"
-                        : "text-bca-mute hover:text-bca-ink"
-                    }`}
-                  >
-                    {l.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <Link
-                href="/"
-                className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy px-2 py-1 transition"
-              >
-                {tr.navTrain}
-              </Link>
-              <Link
-                href="/recommend"
-                className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy px-2 py-1 transition"
-              >
-                {tr.navRecommend}
-              </Link>
-            </div>
+            <AppNav lang={lang} onLang={setLang} current="progress" />
           </div>
           <div className="gold-rule mt-4" />
         </div>

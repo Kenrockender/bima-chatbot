@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { BimaAvatar } from "@/components/BimaAvatar";
+import { AppNav } from "@/components/AppNav";
 import { authedFetch } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -214,27 +215,7 @@ export default function AdminPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2.5">
-              <Link
-                href="/manager"
-                className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy transition px-2 py-1"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/"
-                className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy transition px-2 py-1"
-              >
-                ← Chat
-              </Link>
-              <button
-                onClick={() => signOut()}
-                className="inline-flex items-center gap-1.5 text-[12px] text-bca-ink/75 hover:text-bca-navy px-3.5 py-2 rounded-full border border-bca-rule bg-bca-paper hover:border-bca-gold transition group"
-              >
-                <span className="w-1 h-1 rounded-full bg-bca-gold" />
-                Sign out
-              </button>
-            </div>
+            <AppNav lang="en" current="admin" />
           </div>
           <div className="gold-rule mt-4" />
         </div>
