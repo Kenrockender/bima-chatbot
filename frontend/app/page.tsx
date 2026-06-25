@@ -66,6 +66,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [starting, setStarting] = useState(false);
   const [report, setReport] = useState<Report | null>(null);
   const [inputMode, setInputMode] = useState<"voice" | "text">(() => {
@@ -602,6 +603,78 @@ export default function Home() {
                 {l.toUpperCase()}
               </button>
             ))}
+          </div>
+
+          {/* Mobile nav — the desktop links above are hidden below md, so
+              phones get a hamburger that opens the same destinations. */}
+          <div className="relative md:hidden shrink-0">
+            <button
+              onClick={() => setNavOpen((v) => !v)}
+              aria-label="Menu"
+              aria-expanded={navOpen}
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-white/15 text-white/80 hover:text-white hover:border-bca-accentGold/60 transition"
+            >
+              {navOpen ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              )}
+            </button>
+
+            {navOpen && (
+              <>
+                {/* tap-away backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setNavOpen(false)}
+                />
+                <div className="absolute right-0 top-11 z-50 w-52 rounded-2xl border border-white/10 bg-bca-navy shadow-2xl overflow-hidden py-1.5">
+                  {stage === "chat" && activePersona && (
+                    <>
+                      {sessionStart && (
+                        <div className="px-4 py-1.5 text-[11px] font-mono text-white/45 tabular-nums">
+                          {fmtTime(sessionElapsed)}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => {
+                          setNavOpen(false);
+                          endSession();
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-white/85 hover:bg-white/5 flex items-center gap-2"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+                        {tr.endSession}
+                      </button>
+                      <div className="h-px bg-white/10 my-1" />
+                    </>
+                  )}
+                  {[
+                    { href: "/", label: tr.navTrain ?? "Train" },
+                    { href: "/progress", label: tr.navProgress },
+                    { href: "/leaderboard", label: tr.navLeaderboard },
+                    { href: "/recommend", label: tr.navRecommend },
+                    { href: "/admin", label: tr.admin },
+                  ].map((it) => (
+                    <Link
+                      key={it.href}
+                      href={it.href}
+                      onClick={() => setNavOpen(false)}
+                      className="block px-4 py-2.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-white/70 hover:text-bca-accentGold hover:bg-white/5 transition"
+                    >
+                      {it.label}
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </header>
 
