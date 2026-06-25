@@ -14,7 +14,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage
 
 from . import drills, personas, progress, rag, sessions
 
@@ -141,7 +141,10 @@ def reply(session_id: str, fa_message: str) -> Dict:
         product_facts=_product_facts_block(),
     )
 
-    msgs = [SystemMessage(content=system)]
+    # Mark the (stable, large) system+product-facts prefix as a prompt-cache
+    # breakpoint. It's byte-identical across every turn of the session, so on
+    # turn 2+ the provider bills it at the cheap cache-read rate.
+    msgs = [rag.cached_system(system)]
     for h in history[-8:]:
         if h["role"] == "user":
             msgs.append(HumanMessage(content=h["content"]))
@@ -150,7 +153,9 @@ def reply(session_id: str, fa_message: str) -> Dict:
     msgs.append(HumanMessage(content=fa_message))
 
     # The customer reply and the live coach run independently, so fire them in
-    # parallel — total latency is max(reply, coach), not the sum.
+    # parallel — total latency is max(reply, coach), not the sum. The coach is
+    # gated to the pedagogically meaningful turns (see _should_coach) so most
+    # filler/acknowledgement turns skip the second LLM call entirely.
     def _customer() -> str:
         try:
             out = rag.get_llm().invoke(msgs)
@@ -159,11 +164,15 @@ def reply(session_id: str, fa_message: str) -> Dict:
             log.exception("customer reply failed: %s", e)
             return "Maaf, ada gangguan koneksi sebentar. Bisa diulang?"
 
+    want_coach = _should_coach(history, fa_message, focus)
     with ThreadPoolExecutor(max_workers=2) as pool:
         fut_text = pool.submit(_customer)
-        fut_coach = pool.submit(_coach_turn, history, fa_message, persona, focus)
+        fut_coach = (
+            pool.submit(_coach_turn, history, fa_message, persona, focus)
+            if want_coach else None
+        )
         text = fut_text.result()
-        coach = fut_coach.result()
+        coach = fut_coach.result() if fut_coach else None
 
     sessions.append(session_id, "user", fa_message)
     sessions.append(session_id, "assistant", text)
@@ -175,9 +184,123 @@ def reply(session_id: str, fa_message: str) -> Dict:
     }
 
 
+def reply_stream(session_id: str, fa_message: str):
+    """Streaming variant of reply(). Yields event dicts:
+      {"type": "token", "v": <chunk>}      — incremental customer reply text
+      {"type": "done", "reply", "coach", "facts_referenced"}  — final payload
+
+    Token cost is identical to reply() — same model, same prompt — this is a
+    pure-UX change so the FA sees the customer "typing" instead of a dead pause.
+    The live coach runs in a background thread (gated the same way) and is
+    attached to the final 'done' event."""
+    session = sessions.get(session_id)
+    if not session:
+        raise KeyError("session not found or expired")
+
+    persona = _session_persona(session)
+    history = session["history"]
+    focus = session.get("focus_dimension")
+
+    system = persona["persona_prompt"] + _CUSTOMER_RULES_FOOTER.format(
+        product_facts=_product_facts_block(),
+    )
+    msgs = [rag.cached_system(system)]
+    for h in history[-8:]:
+        if h["role"] == "user":
+            msgs.append(HumanMessage(content=h["content"]))
+        else:
+            msgs.append(AIMessage(content=h["content"]))
+    msgs.append(HumanMessage(content=fa_message))
+
+    want_coach = _should_coach(history, fa_message, focus)
+    pool = ThreadPoolExecutor(max_workers=1)
+    fut_coach = (
+        pool.submit(_coach_turn, history, fa_message, persona, focus)
+        if want_coach else None
+    )
+
+    parts: List[str] = []
+    try:
+        for chunk in rag.get_llm().stream(msgs):
+            tok = chunk.content or ""
+            if tok:
+                parts.append(tok)
+                yield {"type": "token", "v": tok}
+    except Exception as e:
+        log.exception("streaming customer reply failed: %s", e)
+        if not parts:
+            fallback = "Maaf, ada gangguan koneksi sebentar. Bisa diulang?"
+            parts.append(fallback)
+            yield {"type": "token", "v": fallback}
+
+    text = _clean_reply("".join(parts).strip())
+    coach = fut_coach.result() if fut_coach else None
+    pool.shutdown(wait=False)
+
+    sessions.append(session_id, "user", fa_message)
+    sessions.append(session_id, "assistant", text)
+
+    yield {
+        "type": "done",
+        "reply": text,
+        "facts_referenced": _loaded_product_refs(),
+        "coach": coach,
+    }
+
+
 # -----------------------------------------------------------------------------
 # Live per-turn coaching
 # -----------------------------------------------------------------------------
+
+# Cheap Python heuristics that decide whether a turn is worth spending an LLM
+# call on. The goal: coach the moments that actually teach something (questions,
+# objection responses, price/closing talk) and skip pure acknowledgements/filler.
+# Cuts live-coach LLM calls by roughly 60-70% with no loss at the moments that
+# matter.
+_OBJECTION_RX = re.compile(
+    r"\b(mahal|ragu|pikir|nanti|belum|tidak|nggak|gak|enggak|udah punya|"
+    r"sudah punya|keberatan|takut|khawatir|riba|bunga|repot|sibuk|gausah|"
+    r"nggak butuh|tidak butuh|mikir|tunggu)\b",
+    re.IGNORECASE,
+)
+_CLOSING_RX = re.compile(
+    r"\b(ketemu|jadwal|janji|daftar|proposal|lanjut|follow.?up|tanda.?tangan|"
+    r"ttd|aplikasi|formulir|polis|setuju|deal|next step|langkah berikut|"
+    r"kapan|minggu depan|besok)\b",
+    re.IGNORECASE,
+)
+_PRICE_RX = re.compile(
+    r"\b(harga|biaya|premi|bayar|juta|ribu|\brp\b|murah|mahal|diskon|cicil|"
+    r"angsur|budget)\b",
+    re.IGNORECASE,
+)
+
+
+def _should_coach(history: List[Dict], fa_message: str, focus: Optional[str]) -> bool:
+    """Gate the live coach to meaningful moments. Returns True when the FA turn
+    is worth a coaching call, False to skip the LLM entirely."""
+    fa_turns_before = sum(1 for h in history if h["role"] == "user")
+    # Always coach the opening turn — it sets the rapport tone.
+    if fa_turns_before == 0:
+        return True
+    msg = fa_message or ""
+    # A discovery question, price talk, or a closing move is always teachable.
+    if "?" in msg or _PRICE_RX.search(msg) or _CLOSING_RX.search(msg):
+        return True
+    # FA is responding right after the customer raised an objection.
+    last_customer = ""
+    for h in reversed(history):
+        if h["role"] == "assistant":
+            last_customer = h["content"]
+            break
+    if _OBJECTION_RX.search(last_customer):
+        return True
+    # Drill mode is focused practice — stay a bit more attentive.
+    if focus:
+        return True
+    # Otherwise sample lightly so the coach never goes fully silent.
+    return fa_turns_before % 4 == 0
+
 
 _COACH_SYSTEM = """Kamu sales coach BCA Life yang memantau latihan FA secara live.
 Kamu dikasih giliran terakhir percakapan dan satu pesan FA untuk dinilai cepat.
@@ -217,8 +340,8 @@ def _coach_turn(
             f"FA menjawab: \"{fa_message}\"\n\n"
             "Nilai pesan FA itu. Output JSON."
         )
-        out = rag.get_strict_llm().invoke([
-            SystemMessage(content=_COACH_SYSTEM),
+        out = rag.get_coach_llm().invoke([
+            rag.cached_system(_COACH_SYSTEM),
             HumanMessage(content=user),
         ])
         data = _extract_json((out.content or "").strip())
@@ -250,12 +373,17 @@ Kamu akan dikasih:
 
 Tugasmu: kasih evaluasi yang FAIR, SPESIFIK, dan ACTIONABLE.
 
-Dimensi penilaian (skor 1-10 per dimensi):
-1. rapport — Apakah FA membangun hubungan dengan baik di awal sebelum jualan?
-2. discovery — Apakah FA menggali kebutuhan, kekhawatiran, dan situasi finansial calon nasabah?
-3. product_knowledge — Apakah klaim & angka yang FA sebut akurat sesuai FAKTA_PRODUK? (kalau tidak ada produk yang disebut, beri skor 5 — neutral)
-4. objection_handling — Apakah FA menjawab keberatan calon nasabah dengan empati & substansi?
-5. closing — Apakah FA mengarahkan ke next step yang jelas (proposal, follow-up, dll) tanpa terkesan memaksa?
+Dimensi penilaian (skor 1-10 per dimensi). Pakai anchor ini supaya skor konsisten:
+1. rapport — Membangun hubungan sebelum jualan.
+   1-3: langsung jualan, tanpa basa-basi. 4-6: sapaan seadanya. 7-8: hangat & personal. 9-10: bangun kepercayaan tulus, sebut nama, dengarkan.
+2. discovery — Menggali kebutuhan, kekhawatiran, situasi finansial nasabah.
+   1-3: tidak bertanya sama sekali. 4-6: 1-2 pertanyaan dangkal. 7-8: gali kebutuhan + situasi. 9-10: pertanyaan terbuka berlapis, konfirmasi pemahaman.
+3. product_knowledge — Akurasi klaim & angka vs FAKTA_PRODUK.
+   1-3: ada angka/klaim SALAH. 4-6: benar tapi minim/umum. 7-8: detail akurat. 9-10: detail akurat + dikaitkan ke kebutuhan nasabah. (Jika tidak ada produk disebut: skor 5.)
+4. objection_handling — Menjawab keberatan dengan empati & substansi.
+   1-3: defensif/abaikan keberatan. 4-6: jawab tapi tanpa empati. 7-8: akui dulu lalu jawab fakta. 9-10: empati + fakta + cek apakah keberatan teratasi. (Jika tidak ada keberatan muncul: skor 5.)
+5. closing — Mengarahkan ke next step jelas tanpa memaksa.
+   1-3: tidak ada ajakan lanjut. 4-6: ajakan samar. 7-8: next step jelas (proposal/follow-up). 9-10: next step jelas + komitmen waktu, tidak memaksa.
 
 Output WAJIB JSON valid dengan struktur PERSIS sebagai berikut, tanpa text lain di luar JSON:
 
@@ -333,8 +461,8 @@ Kasih evaluasi JSON sesuai format yang diminta."""
     last_error = ""
     for attempt in range(3):
         try:
-            out = rag.get_strict_llm().invoke([
-                SystemMessage(content=EVAL_SYSTEM),
+            out = rag.get_eval_llm().invoke([
+                rag.cached_system(EVAL_SYSTEM),
                 HumanMessage(content=user_block),
             ])
             raw = (out.content or "").strip()

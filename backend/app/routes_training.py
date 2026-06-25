@@ -1,4 +1,7 @@
+import json
+
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
@@ -122,6 +125,37 @@ def chat(req: ChatRequest):
         return training.reply(req.session_id, req.message)
     except KeyError:
         raise HTTPException(status_code=404, detail="Session not found or expired")
+
+
+@router.post("/chat/stream")
+def chat_stream(req: ChatRequest):
+    """Server-sent events: streams the customer reply token-by-token, then a
+    final 'done' event carrying the coach note and referenced facts. The
+    frontend falls back to POST /chat if this fails, so it's safe to use."""
+    try:
+        stream = training.reply_stream(req.session_id, req.message)
+        first = next(stream)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Session not found or expired")
+
+    def gen():
+        for ev in _chain(first, stream):
+            yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+def _chain(first, rest):
+    yield first
+    yield from rest
 
 
 @router.post("/end", response_model=EndResponse)

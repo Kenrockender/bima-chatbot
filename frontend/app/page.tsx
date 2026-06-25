@@ -20,6 +20,7 @@ type Message = {
   facts?: { name?: string; page?: number | null }[];
   coach?: Coach | null;
   escalation?: boolean;
+  streaming?: boolean;
   timestamp?: Date;
 };
 
@@ -246,6 +247,125 @@ export default function Home() {
     }
   }
 
+  // Replace the most recent assistant bubble (the streaming placeholder) with
+  // a new message, or patch its fields. Keeps streaming updates O(1).
+  function patchLastAssistant(prev: Message[], patch: Partial<Message>): Message[] {
+    const copy = [...prev];
+    for (let i = copy.length - 1; i >= 0; i--) {
+      if (copy[i].role === "assistant") {
+        copy[i] = { ...copy[i], ...patch };
+        return copy;
+      }
+    }
+    return copy;
+  }
+
+  function commitAssistant(
+    reply: string,
+    coachData: Coach | null,
+    factsData: Message["facts"] | null,
+  ) {
+    setMessages((prev) =>
+      patchLastAssistant(prev, {
+        content: reply,
+        facts: factsData ?? undefined,
+        coach: coachData,
+        streaming: false,
+      }),
+    );
+    setAiSubtitle(reply);
+    setLastCoach(coachData);
+    setLastFacts(factsData ?? null);
+    if (inputMode === "voice" && !muted && tts.supported) tts.speak(reply);
+  }
+
+  // Streamed reply via SSE. Returns true if it produced usable text, false if
+  // the stream never started (caller then falls back to the plain POST). On a
+  // mid-stream break we keep whatever streamed — never re-submit, to avoid
+  // duplicating the turn in the server-side session.
+  async function streamReply(text: string): Promise<boolean> {
+    let res: Response;
+    try {
+      res = await authedFetch("/api/training/chat/stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
+        body: JSON.stringify({ session_id: sessionId, message: text }),
+      });
+    } catch {
+      return false;
+    }
+    if (!res.ok || !res.body) return false;
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    let acc = "";
+    let finished = false;
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const events = buf.split("\n\n");
+        buf = events.pop() ?? "";
+        for (const evt of events) {
+          const line = evt.split("\n").find((l) => l.startsWith("data:"));
+          if (!line) continue;
+          const payload = line.slice(5).trim();
+          if (!payload) continue;
+          let data: any;
+          try {
+            data = JSON.parse(payload);
+          } catch {
+            continue;
+          }
+          if (data.type === "token") {
+            acc += data.v;
+            const live = acc;
+            setAiSubtitle(live);
+            setMessages((prev) =>
+              patchLastAssistant(prev, { content: live, streaming: true }),
+            );
+          } else if (data.type === "done") {
+            commitAssistant(
+              data.reply ?? acc,
+              data.coach ?? null,
+              data.facts_referenced ?? null,
+            );
+            finished = true;
+          } else if (data.type === "error") {
+            return acc.length > 0;
+          }
+        }
+      }
+    } catch {
+      // Mid-stream break: keep partial text rather than re-submitting.
+    }
+
+    if (finished) return true;
+    if (acc.length > 0) {
+      commitAssistant(acc, null, null);
+      return true;
+    }
+    return false;
+  }
+
+  // Non-streaming fallback. Patches the placeholder assistant bubble.
+  async function jsonReply(text: string): Promise<void> {
+    const res = await authedFetch("/api/training/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId, message: text }),
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    commitAssistant(data.reply, data.coach ?? null, data.facts_referenced ?? null);
+  }
+
   async function send(textOverride?: string) {
     const text = (textOverride ?? input).trim();
     if (!text || busy || !sessionId) return;
@@ -253,47 +373,26 @@ export default function Home() {
     setMessages((prev) => [
       ...prev,
       { role: "user", content: text, timestamp: new Date() },
+      // Placeholder assistant bubble that streaming/fallback fills in.
+      { role: "assistant", content: "", streaming: true, timestamp: new Date() },
     ]);
     setInput("");
     setBusy(true);
     try {
-      const res = await authedFetch("/api/training/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, message: text }),
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      const coachData = data.coach ?? null;
-      const factsData = data.facts_referenced ?? null;
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.reply,
-          facts: factsData,
-          coach: coachData,
-          timestamp: new Date(),
-        },
-      ]);
-      setAiSubtitle(data.reply);
-      setLastCoach(coachData);
-      setLastFacts(factsData);
-      if (inputMode === "voice" && !muted && tts.supported) tts.speak(data.reply);
+      const streamed = await streamReply(text);
+      if (!streamed) await jsonReply(text);
     } catch {
       setLastFailedMsg(text);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
+      setMessages((prev) =>
+        patchLastAssistant(prev, {
           content:
             lang === "id"
               ? "Maaf, koneksi terputus. Jika masalah berlanjut, hubungi tim kami."
               : "Connection error. If this persists, reach out to our team.",
           escalation: true,
-          timestamp: new Date(),
-        },
-      ]);
+          streaming: false,
+        }),
+      );
     } finally {
       setBusy(false);
     }
@@ -682,14 +781,22 @@ export default function Home() {
 
                 {stage === "chat" && activePersona && !voiceMode && (
                   <>
-                    {messages.map((m, i) => (
+                    {messages.map((m, i) => {
+                      // Hide the empty streaming placeholder until its first
+                      // token lands — the TypingIndicator covers that gap.
+                      const isEmptyStreaming =
+                        m.role === "assistant" && m.streaming && !m.content;
+                      if (isEmptyStreaming) return <div key={i} />;
+                      return (
                       <div key={i}>
                         {m.role === "assistant" && m.coach && (
                           <CoachChip coach={m.coach} label={tr.coachLabel} />
                         )}
                         <ChatBubble
                           role={m.role}
-                          content={m.content}
+                          content={
+                            m.streaming && m.content ? m.content + " ▍" : m.content
+                          }
                           youLabel="USER"
                           bimaLabel={activePersona.name.toUpperCase()}
                           timestamp={m.timestamp}
@@ -725,8 +832,17 @@ export default function Home() {
                           </>
                         )}
                       </div>
-                    ))}
-                    {busy && <TypingIndicator label={tr.thinking} />}
+                      );
+                    })}
+                    {busy &&
+                      (() => {
+                        const last = messages[messages.length - 1];
+                        const streamingStarted =
+                          last && last.role === "assistant" && !!last.content;
+                        return streamingStarted ? null : (
+                          <TypingIndicator label={tr.thinking} />
+                        );
+                      })()}
                   </>
                 )}
               </div>

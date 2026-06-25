@@ -301,6 +301,35 @@ def _display_name(s: Dict) -> str:
     return s.get("name") or (s.get("email") or "").split("@")[0] or "FA"
 
 
+# A signature "title" per FA derived from their strongest dimension — turns a
+# bare XP ranking into a bit of personality on the leaderboard. Zero extra cost:
+# it's computed from the averages already stored in the user summary.
+_DIMENSION_TITLE = {
+    "rapport": "People Person",
+    "discovery": "Deep Listener",
+    "product_knowledge": "Product Pro",
+    "objection_handling": "Objection Master",
+    "closing": "Closer",
+}
+
+
+def _signature_title(s: Dict) -> Optional[Dict]:
+    """The FA's strongest dimension as a badge, once they have enough sessions
+    to make it meaningful."""
+    if int(s.get("total_sessions", 0) or 0) < 3:
+        return None
+    avgs = s.get("averages", {}) or {}
+    scored = {d: float(avgs.get(d, 0) or 0) for d in DIMENSIONS}
+    if not any(scored.values()):
+        return None
+    best = max(DIMENSIONS, key=lambda d: scored[d])
+    return {
+        "dimension": best,
+        "label": _DIMENSION_TITLE.get(best, best),
+        "score": round(scored[best], 1),
+    }
+
+
 def leaderboard(current_uid: str, limit: int = 20) -> Dict:
     """Top FAs by total XP. Flags the caller's own row so the UI can highlight it."""
     summaries = [s for s in _users_summaries() if int(s.get("total_sessions", 0) or 0) > 0]
@@ -317,6 +346,7 @@ def leaderboard(current_uid: str, limit: int = 20) -> Dict:
             "total_xp": int(s.get("total_xp", 0) or 0),
             "level": int(s.get("level", 1) or 1),
             "total_sessions": int(s.get("total_sessions", 0) or 0),
+            "title": _signature_title(s),
             "is_me": s.get("uid") == current_uid,
         }
         if row["is_me"]:

@@ -38,24 +38,38 @@ if not log.handlers:
 _lock = threading.Lock()
 _llm = None
 _strict_llm = None
+_coach_llm = None
+_eval_llm = None
 _helper_llm = None
 
 
-def _build_chat(temperature: float, json_mode: bool = False) -> ChatOpenAI:
+def _build_chat(temperature: float, json_mode: bool = False, model: str = "") -> ChatOpenAI:
     if not settings.openrouter_api_key:
         raise RuntimeError(
             "OPENROUTER_API_KEY is not set. This app requires OpenRouter "
             "for chat — see .env.example."
         )
+    model = model or settings.openrouter_chat_model
     kwargs = {
-        "model": settings.openrouter_chat_model,
+        "model": model,
         "api_key": settings.openrouter_api_key,
         "base_url": settings.openrouter_base_url,
         "temperature": temperature,
     }
-    if json_mode and "deepseek" in settings.openrouter_chat_model.lower():
+    if json_mode and "deepseek" in model.lower():
         kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
     return ChatOpenAI(**kwargs)
+
+
+def cached_system(text: str) -> SystemMessage:
+    """A system message whose (large, stable) body is marked as a prompt-cache
+    breakpoint. On Anthropic models via OpenRouter this makes the identical
+    prefix on subsequent turns bill at the much cheaper cache-read rate. If the
+    provider ignores the hint (or the prefix is below the min cache size) the
+    call still works — we just don't get the discount."""
+    return SystemMessage(content=[
+        {"type": "text", "text": text, "cache_control": {"type": "ephemeral"}},
+    ])
 
 
 def get_llm() -> ChatOpenAI:
@@ -69,13 +83,37 @@ def get_llm() -> ChatOpenAI:
 
 
 def get_strict_llm() -> ChatOpenAI:
-    """Low-temperature LLM for JSON-structured outputs (evaluator, recommender)."""
+    """Low-temperature LLM for JSON-structured outputs (recommender)."""
     global _strict_llm
     if _strict_llm is None:
         with _lock:
             if _strict_llm is None:
                 _strict_llm = _build_chat(temperature=0.1, json_mode=True)
     return _strict_llm
+
+
+def get_coach_llm() -> ChatOpenAI:
+    """Live per-turn coach. Defaults to the chat model unless overridden."""
+    global _coach_llm
+    if _coach_llm is None:
+        with _lock:
+            if _coach_llm is None:
+                _coach_llm = _build_chat(
+                    temperature=0.1, json_mode=True, model=settings.coach_model_name(),
+                )
+    return _coach_llm
+
+
+def get_eval_llm() -> ChatOpenAI:
+    """End-of-session evaluator. Defaults to the chat model unless overridden."""
+    global _eval_llm
+    if _eval_llm is None:
+        with _lock:
+            if _eval_llm is None:
+                _eval_llm = _build_chat(
+                    temperature=0.1, json_mode=True, model=settings.eval_model_name(),
+                )
+    return _eval_llm
 
 
 def get_helper_llm() -> ChatOpenAI:
@@ -431,7 +469,7 @@ def _sources_listing() -> List[Dict]:
 
 def _generate(system: str, user: str, *, llm=None) -> str:
     out = (llm or get_llm()).invoke([
-        SystemMessage(content=system),
+        cached_system(system),
         HumanMessage(content=user),
     ])
     return (out.content or "").strip()

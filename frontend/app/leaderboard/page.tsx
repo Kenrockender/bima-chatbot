@@ -6,6 +6,8 @@ import { BimaAvatar } from "@/components/BimaAvatar";
 import { authedFetch } from "@/lib/api";
 import { t, type Lang } from "@/lib/i18n";
 
+type Title = { dimension: string; label: string; score: number };
+
 type Entry = {
   rank: number;
   uid: string;
@@ -14,6 +16,7 @@ type Entry = {
   total_xp: number;
   level: number;
   total_sessions: number;
+  title: Title | null;
   is_me: boolean;
 };
 
@@ -180,9 +183,20 @@ function Row({ e, lang }: { e: Entry; lang: Lang }) {
             </span>
           )}
         </div>
-        <div className="text-[11.5px] text-bca-mute">
-          {lang === "id" ? "Level" : "Level"} {e.level} · {e.total_sessions}{" "}
-          {lang === "id" ? "sesi" : "sessions"}
+        <div className="text-[11.5px] text-bca-mute flex items-center gap-1.5 flex-wrap">
+          <span>
+            {lang === "id" ? "Level" : "Level"} {e.level} · {e.total_sessions}{" "}
+            {lang === "id" ? "sesi" : "sessions"}
+          </span>
+          {e.title && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.1em] text-bca-gold"
+              style={{ background: "#C8941E18" }}
+              title={`${lang === "id" ? "Dimensi terkuat" : "Strongest skill"} · ${e.title.score}/10`}
+            >
+              ★ {e.title.label}
+            </span>
+          )}
         </div>
       </div>
       <div className="text-right">

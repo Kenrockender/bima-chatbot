@@ -8,7 +8,21 @@ class Settings(BaseSettings):
     # is stable, which is the whole point of this app's "stuff all PDFs" mode.
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    openrouter_chat_model: str = "anthropic/claude-3.5-haiku"
+    # Haiku 4.5 is meaningfully smarter than 3.5 at the same price tier — a free
+    # quality upgrade for both roleplay and JSON-structured tasks.
+    openrouter_chat_model: str = "anthropic/claude-haiku-4.5"
+
+    # Optional per-task overrides. Empty = reuse openrouter_chat_model, so the
+    # default stays single-model (cheap). Set these only if you want a smarter
+    # model for the live coach / end-of-session evaluation specifically.
+    openrouter_coach_model: str = ""
+    openrouter_eval_model: str = ""
+
+    def coach_model_name(self) -> str:
+        return self.openrouter_coach_model.strip() or self.openrouter_chat_model
+
+    def eval_model_name(self) -> str:
+        return self.openrouter_eval_model.strip() or self.openrouter_chat_model
 
     # Firebase / Firestore. The service account is the secret that lets the
     # backend verify ID tokens and own all Firestore reads/writes. Provide it

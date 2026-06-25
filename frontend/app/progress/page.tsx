@@ -272,6 +272,20 @@ export default function ProgressPage() {
               </div>
             )}
 
+            {/* Score progression over sessions */}
+            {history.length >= 2 && (
+              <div className="surface-paper rounded-[18px] shadow-paper p-7">
+                <div className="flex items-center gap-2 mb-5">
+                  <span className="smallcaps text-bca-navy">
+                    {lang === "id" ? "Progres skor" : "Score progression"}
+                  </span>
+                  <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+                  <ScoreDelta history={history} lang={lang} />
+                </div>
+                <ScoreTrend history={history} lang={lang} />
+              </div>
+            )}
+
             {/* Skill breakdown */}
             <div className="surface-paper rounded-[18px] shadow-paper p-7">
               <div className="flex items-center gap-2 mb-5">
@@ -480,6 +494,134 @@ function StatCard({
         {value}
       </div>
       {children}
+    </div>
+  );
+}
+
+// Chronological list of overall scores (history arrives newest-first).
+function chronoScores(history: HistoryItem[]): HistoryItem[] {
+  return [...history].reverse();
+}
+
+function ScoreDelta({
+  history,
+  lang,
+}: {
+  history: HistoryItem[];
+  lang: Lang;
+}) {
+  const pts = chronoScores(history);
+  const first = pts[0].overall_score;
+  const last = pts[pts.length - 1].overall_score;
+  const delta = last - first;
+  const up = delta >= 0;
+  const color = delta > 0 ? "#1E7B47" : delta < 0 ? "#B23A3A" : "#6B7B8F";
+  return (
+    <span
+      className="text-[11px] font-bold tabular-nums px-2 py-0.5 rounded-full"
+      style={{ color, background: `${color}14` }}
+      title={
+        lang === "id"
+          ? "Perubahan skor dari sesi pertama ke terakhir"
+          : "Change from first to latest session"
+      }
+    >
+      {up ? "▲" : "▼"} {up ? "+" : ""}
+      {delta} {lang === "id" ? "sejak awal" : "since start"}
+    </span>
+  );
+}
+
+function ScoreTrend({
+  history,
+  lang,
+}: {
+  history: HistoryItem[];
+  lang: Lang;
+}) {
+  const pts = chronoScores(history).slice(-12);
+  const w = 640;
+  const h = 130;
+  const padX = 14;
+  const padY = 16;
+  const max = 10;
+  const n = pts.length;
+  const step = n > 1 ? (w - padX * 2) / (n - 1) : 0;
+  const x = (i: number) => padX + i * step;
+  const y = (v: number) => padY + (1 - v / max) * (h - padY * 2);
+
+  const line = pts.map((p, i) => `${x(i).toFixed(1)},${y(p.overall_score).toFixed(1)}`).join(" ");
+  const area = `${padX},${(h - padY).toFixed(1)} ${line} ${x(n - 1).toFixed(1)},${(h - padY).toFixed(1)}`;
+
+  return (
+    <div>
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        className="w-full"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={lang === "id" ? "Grafik progres skor" : "Score progression chart"}
+      >
+        <defs>
+          <linearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#003D7A" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#003D7A" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* gridlines at 5 and 8 */}
+        {[5, 8].map((g) => (
+          <line
+            key={g}
+            x1={padX}
+            x2={w - padX}
+            y1={y(g)}
+            y2={y(g)}
+            stroke="#E6DFD0"
+            strokeWidth="1"
+            strokeDasharray="3 4"
+          />
+        ))}
+        <polygon points={area} fill="url(#scoreFill)" />
+        <polyline
+          points={line}
+          fill="none"
+          stroke="#003D7A"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {pts.map((p, i) => (
+          <circle
+            key={p.id}
+            cx={x(i)}
+            cy={y(p.overall_score)}
+            r="3.4"
+            fill="#fff"
+            stroke={
+              p.overall_score >= 7
+                ? "#1E7B47"
+                : p.overall_score >= 4
+                ? "#003D7A"
+                : "#B23A3A"
+            }
+            strokeWidth="2"
+          >
+            <title>
+              {p.persona_name} · {p.overall_score}/10
+            </title>
+          </circle>
+        ))}
+      </svg>
+      <div className="flex justify-between text-[10.5px] text-bca-mute mt-1 px-1">
+        <span>
+          {lang === "id" ? "Sesi terlama" : "Oldest"} ·{" "}
+          {new Date(pts[0].created_at).toLocaleDateString()}
+        </span>
+        <span>
+          {lang === "id" ? "Terbaru" : "Latest"} ·{" "}
+          {new Date(pts[pts.length - 1].created_at).toLocaleDateString()}
+        </span>
+      </div>
     </div>
   );
 }
