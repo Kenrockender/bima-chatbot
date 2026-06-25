@@ -5,6 +5,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // ── BCA Life brand system (from the official pitch-deck design spec) ──
+        // Blue→teal signature, Plus Jakarta Sans, navy headings, amber accent.
+        life: {
+          blue: "#0a55ab",      // primary brand blue, CTAs, gradients
+          blueMid: "#1582b3",   // gradient mid
+          blueLight: "#1786b1", // icon gradient end
+          teal: "#19b8a6",      // gradient end / accent
+          tealDark: "#19a594",  // advance phase
+          deep: "#0a2240",      // darkest gradient start
+          heading: "#16386b",   // all heading text on light bg
+          sub: "#3f5a86",       // subheadings / overlines
+          body: "#5a6b82",      // body text
+          bodyLight: "#8a93a0", // captions / axis labels
+          slate: "#9db8d6",     // muted accent / target bars
+          amber: "#F9B233",     // accent dots, highlights, callouts
+          amberDark: "#7a4f00", // amber text on light
+          amberBg: "#fff8e6",   // amber tinted bg
+          card: "#F3F6F4",      // inner card / slide bg
+          page: "#E7EAEE",      // page chrome bg
+          item: "#f0f4f8",      // item row bg
+          blueBg: "#e8f0fb",    // dashed band / tinted bg
+          pos: "#1f9d57",       // positive stat
+          posBg: "#f0faf5",
+          neg: "#c0392b",       // negative stat
+          negBg: "#fdecea",
+          white: "#ffffff",
+        },
         bca: {
           // Core BCA Life palette
           navy: "#003D7A",       // primary corporate blue
@@ -60,7 +87,17 @@ const config: Config = {
         bcaSm: "12px",
         bcaLg: "24px",
       },
+      backgroundImage: {
+        "life-gradient":
+          "linear-gradient(125deg, #0a55ab 0%, #1582b3 52%, #19b8a6 100%)",
+        "life-gradient-soft":
+          "linear-gradient(160deg, #0a55ab 0%, #19b8a6 100%)",
+        "life-icon": "linear-gradient(150deg, #0a55ab, #1786b1)",
+      },
       boxShadow: {
+        life: "0 6px 18px rgba(20,50,100,0.06)",
+        lifeHover: "0 12px 30px -8px rgba(20,50,100,0.14)",
+        lifeBlue: "0 8px 22px -8px rgba(10,85,171,0.45)",
         card: "0 1px 2px rgba(15,34,56,0.04), 0 8px 24px -10px rgba(0,61,122,0.14)",
         cardHover: "0 2px 4px rgba(15,34,56,0.06), 0 16px 36px -12px rgba(0,61,122,0.22)",
         soft: "0 1px 2px rgba(15,34,56,0.06)",

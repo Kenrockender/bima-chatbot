@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap");
 
 @import "tailwindcss";
 @config "../tailwind.config.ts";
@@ -30,6 +30,118 @@
 }
 
 html, body { height: 100%; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BCA Life brand system (pitch-deck spec) — blue→teal, Plus Jakarta Sans,
+   navy headings, amber accent. Additive utilities used by the rebranded pages.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Page chrome background — soft blue wash with a teal hint */
+.bg-life {
+  background-color: #E7EAEE;
+  background-image:
+    radial-gradient(820px 460px at 88% -6%, rgba(10, 85, 171, 0.10), transparent 60%),
+    radial-gradient(680px 420px at -4% 104%, rgba(25, 184, 166, 0.08), transparent 60%);
+}
+
+/* Standard white card — the deck's signature soft blue shadow */
+.life-card {
+  background: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(20, 50, 100, 0.06);
+}
+
+/* Blue→teal gradient surface (hero panels, callout bars) */
+.life-gradient {
+  background: linear-gradient(125deg, #0a55ab 0%, #1582b3 52%, #19b8a6 100%);
+}
+.life-gradient-soft {
+  background: linear-gradient(160deg, #0a55ab 0%, #19b8a6 100%);
+}
+
+/* Gradient icon box with white SVG inside */
+.life-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: linear-gradient(150deg, #0a55ab, #1786b1);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+/* Overline / eyebrow label */
+.life-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #3f5a86;
+}
+
+/* Title decoration: navy dot + dash, placed before an h2 */
+.life-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.life-marker::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: #16386b;
+}
+.life-marker::after {
+  content: "";
+  width: 42px;
+  height: 4px;
+  border-radius: 2px;
+  background: #16386b;
+}
+
+/* Decorative semi-transparent circle blob (top-right of a section) */
+.life-blob {
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(circle at 30% 30%, rgba(25, 184, 166, 0.12), rgba(10, 85, 171, 0.06));
+  z-index: 0;
+}
+
+/* Primary blue CTA (deck style) */
+.btn-life {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #ffffff;
+  background: linear-gradient(160deg, #0a55ab 0%, #1582b3 100%);
+  box-shadow: 0 8px 20px -8px rgba(10, 85, 171, 0.5);
+  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+}
+.btn-life:hover { transform: translateY(-1px); filter: brightness(1.04); }
+.btn-life:active { transform: translateY(0); }
+
+/* Amber accent CTA */
+.btn-life-amber {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  color: #16386b;
+  background: linear-gradient(160deg, #F9B233 0%, #f5a623 100%);
+  box-shadow: 0 8px 20px -8px rgba(249, 178, 51, 0.55);
+  transition: transform 160ms ease, filter 160ms ease;
+}
+.btn-life-amber:hover { transform: translateY(-1px); filter: brightness(1.03); }
 
 body {
   background-color: var(--bca-bg);

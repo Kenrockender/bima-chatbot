@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BimaAvatar } from "@/components/BimaAvatar";
-import { AppNav } from "@/components/AppNav";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionTitle } from "@/components/SectionTitle";
+import { FlameIcon, MedalIcon, CheckIcon, ClockIcon } from "@/components/icons";
 import { authedFetch } from "@/lib/api";
 import { t, type Lang } from "@/lib/i18n";
 
@@ -87,64 +88,34 @@ export default function ProgressPage() {
   const hasData = stats && stats.total_sessions > 0;
 
   return (
-    <main className="min-h-screen bg-canvas relative overflow-hidden">
-      <span className="watermark-b">B</span>
+    <main className="min-h-screen bg-life relative overflow-hidden">
+      <div className="life-blob" style={{ width: 380, height: 380, right: -120, top: -140 }} />
 
-      {/* Header */}
-      <header className="relative z-40 border-b border-bca-rule/70 bg-bca-cream/70 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 pt-5 pb-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <BimaAvatar size={44} />
-              <div className="leading-tight">
-                <div className="flex items-baseline gap-2">
-                  <h1
-                    className="font-serif text-bca-ink text-[26px] leading-none tracking-tight"
-                    style={{ fontWeight: 500, letterSpacing: "-0.02em" }}
-                  >
-                    BIMA
-                  </h1>
-                  <span className="smallcaps text-bca-gold">{tr.navProgress}</span>
-                </div>
-                <p className="text-[12.5px] text-bca-mute mt-1 tracking-wide">
-                  BCA Life · Advisor Cockpit
-                </p>
-              </div>
-            </div>
-
-            <AppNav lang={lang} onLang={setLang} current="progress" />
-          </div>
-          <div className="gold-rule mt-4" />
-        </div>
-      </header>
+      <PageHeader
+        eyebrow={tr.navProgress}
+        tagline="BCA Life · Advisor Cockpit"
+        lang={lang}
+        onLang={setLang}
+        current="progress"
+      />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-10">
-        <div className="animate-riseIn mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="block w-7 h-px bg-bca-gold" />
-            <span className="smallcaps text-bca-gold">{tr.navProgress}</span>
-          </div>
-          <h2
-            className="font-serif text-bca-ink text-[34px] sm:text-[42px] leading-[1.1] tracking-tight"
-            style={{ fontWeight: 400, letterSpacing: "-0.025em" }}
-          >
-            {tr.progressTitle}
-          </h2>
-          <p className="text-[15px] leading-[1.6] text-bca-mute mt-3 max-w-[620px]">
-            {tr.progressSubtitle}
-          </p>
-        </div>
+        <SectionTitle
+          className="animate-riseIn mb-8"
+          eyebrow={tr.navProgress}
+          title={tr.progressTitle}
+          subtitle={tr.progressSubtitle}
+        />
 
         {loading ? (
-          <p className="text-bca-mute italic">…</p>
+          <div className="grid place-items-center py-20">
+            <div className="h-7 w-7 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
+          </div>
         ) : !hasData ? (
-          <div className="surface-paper rounded-[18px] shadow-paper p-10 text-center max-w-[460px]">
-            <p className="text-bca-ink/75 text-[15px] mb-5">{tr.noHistory}</p>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 bg-bca-navy hover:bg-bca-ink text-bca-cream text-[14px] font-medium rounded-full px-6 py-3 shadow-soft transition"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-bca-gold" />
+          <div className="life-card p-10 text-center max-w-[460px]">
+            <p className="text-life-body text-[15px] mb-5">{tr.noHistory}</p>
+            <Link href="/" className="btn-life">
+              <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
               {tr.emptyProgressCta}
             </Link>
           </div>
@@ -152,87 +123,89 @@ export default function ProgressPage() {
           <div className="space-y-7">
             {/* Stat row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label={tr.statLevel} value={stats!.level} accent="#003D7A">
-                <div className="mt-2 h-1.5 rounded-full overflow-hidden bg-bca-ink/[0.06]">
+              <StatCard label={tr.statLevel} value={stats!.level} accent="#0a55ab">
+                <div className="mt-2 h-1.5 rounded-full overflow-hidden bg-life-blue/[0.08]">
                   <div
                     className="h-full rounded-full"
                     style={{
                       width: `${(stats!.xp_into_level / stats!.xp_per_level) * 100}%`,
-                      background: "linear-gradient(90deg, #003D7A, #1B6FC9)",
+                      background: "linear-gradient(90deg, #0a55ab, #19b8a6)",
                     }}
                   />
                 </div>
-                <p className="text-[10.5px] text-bca-mute mt-1.5">
+                <p className="text-[10.5px] text-life-body mt-1.5">
                   {stats!.xp_into_level} / {stats!.xp_per_level} XP
                 </p>
               </StatCard>
-              <StatCard label={tr.statXp} value={stats!.total_xp} accent="#C8941E" />
+              <StatCard label={tr.statXp} value={stats!.total_xp} accent="#19b8a6" />
               <StatCard
                 label={tr.statStreak}
-                value={`🔥 ${stats!.streak}`}
-                accent="#B23A3A"
+                value={
+                  <span className="inline-flex items-center gap-1.5">
+                    <FlameIcon size={22} className="text-life-amber" />
+                    {stats!.streak}
+                  </span>
+                }
+                accent="#F9B233"
               >
-                <p className="text-[10.5px] text-bca-mute mt-1.5">{tr.daysUnit}</p>
+                <p className="text-[10.5px] text-life-body mt-1.5">{tr.daysUnit}</p>
               </StatCard>
               <StatCard
                 label={tr.statSessions}
                 value={stats!.total_sessions}
-                accent="#1E7B47"
+                accent="#1582b3"
               />
             </div>
 
             {/* Daily goal */}
-            <div
-              className="rounded-[18px] p-5 shadow-paper flex items-center gap-4"
-              style={{
-                background:
-                  stats!.done_today >= stats!.daily_goal
-                    ? "linear-gradient(150deg, #F0F7F2 0%, #DCEEE2 100%)"
-                    : "linear-gradient(150deg, #FDFBF6 0%, #F4ECDA 100%)",
-                border: "1px solid #E6DFD0",
-              }}
-            >
-              <span
-                className="flex items-center justify-center rounded-full text-[20px] shrink-0"
-                style={{
-                  width: 44,
-                  height: 44,
-                  background:
-                    stats!.done_today >= stats!.daily_goal ? "#1E7B47" : "#C8941E",
-                }}
-              >
-                {stats!.done_today >= stats!.daily_goal ? "✓" : "◷"}
-              </span>
-              <div>
-                <div className="smallcaps text-bca-gold text-[10px]">
-                  {tr.dailyGoalTitle}
+            {(() => {
+              const done = stats!.done_today >= stats!.daily_goal;
+              return (
+                <div
+                  className="life-card p-5 flex items-center gap-4"
+                  style={{
+                    background: done
+                      ? "linear-gradient(150deg, #f0faf5 0%, #dcefe3 100%)"
+                      : "linear-gradient(150deg, #eef5fc 0%, #e3eef9 100%)",
+                  }}
+                >
+                  <span
+                    className="life-icon"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      background: done
+                        ? "linear-gradient(150deg, #1f9d57, #19a594)"
+                        : "linear-gradient(150deg, #0a55ab, #1786b1)",
+                    }}
+                  >
+                    {done ? <CheckIcon size={20} /> : <ClockIcon size={20} />}
+                  </span>
+                  <div>
+                    <div className="life-eyebrow text-[10px]">{tr.dailyGoalTitle}</div>
+                    <p className="font-sans font-bold text-life-heading text-[17px] leading-snug mt-0.5">
+                      {done ? tr.dailyGoalDone : tr.dailyGoalTodo}
+                    </p>
+                  </div>
                 </div>
-                <p className="font-serif text-bca-ink text-[18px] leading-snug">
-                  {stats!.done_today >= stats!.daily_goal
-                    ? tr.dailyGoalDone
-                    : tr.dailyGoalTodo}
-                </p>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Recommended next */}
             {next && next.persona_id && (
-              <div className="surface-paper rounded-[18px] shadow-paper p-6 flex flex-wrap items-center gap-4 justify-between">
+              <div className="life-card p-6 flex flex-wrap items-center gap-4 justify-between">
                 <div>
-                  <div className="smallcaps text-bca-navy">{tr.recommendedNext}</div>
-                  <p className="font-serif text-bca-ink text-[20px] leading-snug mt-1">
+                  <div className="life-eyebrow">{tr.recommendedNext}</div>
+                  <p className="font-sans font-bold text-life-heading text-[20px] leading-snug mt-1">
                     {dimLabel(next.dimension!)}
-                    <span className="text-bca-mute text-[14px]">
+                    <span className="text-life-body text-[14px] font-normal">
                       {" "}
                       · {tr.avgLabel} {next.average}/10
                     </span>
                   </p>
                 </div>
-                <Link
-                  href={`/?persona=${next.persona_id}`}
-                  className="inline-flex items-center gap-2 bg-bca-gold hover:brightness-95 text-bca-ink text-[13.5px] font-semibold rounded-full px-5 py-2.5 shadow-soft transition"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-bca-ink/70" />
+                <Link href={`/?persona=${next.persona_id}`} className="btn-life-amber">
+                  <span className="w-1.5 h-1.5 rounded-full bg-life-heading/70" />
                   {tr.practiceNow}
                 </Link>
               </div>
@@ -240,12 +213,12 @@ export default function ProgressPage() {
 
             {/* Score progression over sessions */}
             {history.length >= 2 && (
-              <div className="surface-paper rounded-[18px] shadow-paper p-7">
+              <div className="life-card p-7">
                 <div className="flex items-center gap-2 mb-5">
-                  <span className="smallcaps text-bca-navy">
+                  <span className="life-eyebrow">
                     {lang === "id" ? "Progres skor" : "Score progression"}
                   </span>
-                  <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+                  <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
                   <ScoreDelta history={history} lang={lang} />
                 </div>
                 <ScoreTrend history={history} lang={lang} />
@@ -253,10 +226,10 @@ export default function ProgressPage() {
             )}
 
             {/* Skill breakdown */}
-            <div className="surface-paper rounded-[18px] shadow-paper p-7">
+            <div className="life-card p-7">
               <div className="flex items-center gap-2 mb-5">
-                <span className="smallcaps text-bca-navy">{tr.skillBreakdown}</span>
-                <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+                <span className="life-eyebrow">{tr.skillBreakdown}</span>
+                <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
               </div>
               <div className="space-y-4">
                 {DIMS.map((d) => {
@@ -266,38 +239,38 @@ export default function ProgressPage() {
                   return (
                     <div key={d}>
                       <div className="flex items-baseline justify-between mb-1.5 gap-2">
-                        <span className="text-[13.5px] text-bca-ink/85 flex items-center gap-2">
+                        <span className="text-[13.5px] text-life-heading/90 flex items-center gap-2">
                           {dimLabel(d)}
                           {isStrong && (
-                            <span className="text-[9px] uppercase tracking-[0.12em] font-bold text-[#1E7B47]">
+                            <span className="text-[9px] uppercase tracking-[0.12em] font-bold text-life-pos">
                               {tr.strongestLabel}
                             </span>
                           )}
                           {isWeak && !isStrong && (
-                            <span className="text-[9px] uppercase tracking-[0.12em] font-bold text-[#B23A3A]">
+                            <span className="text-[9px] uppercase tracking-[0.12em] font-bold text-life-neg">
                               {tr.weakestLabel}
                             </span>
                           )}
                         </span>
                         <div className="flex items-center gap-3">
                           <Sparkline values={stats!.trend[d] ?? []} />
-                          <span className="font-serif text-bca-ink text-[15px] tabular-nums">
+                          <span className="font-sans font-bold text-life-heading text-[15px] tabular-nums">
                             {avg}
-                            <span className="text-bca-mute text-[12px]"> / 10</span>
+                            <span className="text-life-body text-[12px] font-normal"> / 10</span>
                           </span>
                         </div>
                       </div>
-                      <div className="h-1.5 rounded-full overflow-hidden bg-bca-ink/[0.06]">
+                      <div className="h-1.5 rounded-full overflow-hidden bg-life-blue/[0.08]">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
                             width: `${(avg / 10) * 100}%`,
                             background:
                               avg >= 7
-                                ? "linear-gradient(90deg, #C8941E, #E6B85A)"
+                                ? "linear-gradient(90deg, #0a55ab, #19b8a6)"
                                 : avg >= 4
-                                ? "linear-gradient(90deg, #003D7A, #1B6FC9)"
-                                : "linear-gradient(90deg, #B23A3A, #D86B6B)",
+                                ? "linear-gradient(90deg, #1582b3, #19b8a6)"
+                                : "linear-gradient(90deg, #c0392b, #e8836f)",
                           }}
                         />
                       </div>
@@ -308,37 +281,32 @@ export default function ProgressPage() {
             </div>
 
             {/* Badges */}
-            <div className="surface-paper rounded-[18px] shadow-paper p-7">
+            <div className="life-card p-7">
               <div className="flex items-center gap-2 mb-5">
-                <span className="smallcaps text-bca-gold">{tr.badgesTitle}</span>
-                <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+                <span className="life-eyebrow">{tr.badgesTitle}</span>
+                <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
               </div>
               {stats!.badges.length === 0 ? (
-                <p className="text-[13.5px] text-bca-mute italic">{tr.noBadges}</p>
+                <p className="text-[13.5px] text-life-body italic">{tr.noBadges}</p>
               ) : (
                 <div className="flex flex-wrap gap-3">
                   {stats!.badges.map((b) => (
                     <div
                       key={b.id}
-                      className="flex items-center gap-2.5 rounded-[14px] p-3 pr-4"
-                      style={{
-                        background:
-                          "linear-gradient(150deg, #FDFBF6 0%, #F4ECDA 100%)",
-                        border: "1px solid #E6DFD0",
-                      }}
+                      className="flex items-center gap-2.5 rounded-[14px] p-3 pr-4 border border-life-blue/12 bg-life-blueBg/60"
                       title={b.description}
                     >
                       <span
-                        className="flex items-center justify-center rounded-full text-[15px] shrink-0"
-                        style={{ width: 32, height: 32, background: "#C8941E" }}
+                        className="life-icon"
+                        style={{ width: 32, height: 32, borderRadius: 999 }}
                       >
-                        🏅
+                        <MedalIcon size={17} />
                       </span>
                       <div className="leading-tight">
-                        <div className="font-serif text-bca-ink text-[14px]">
+                        <div className="font-sans font-bold text-life-heading text-[14px]">
                           {b.name}
                         </div>
-                        <div className="text-[10.5px] text-bca-mute">
+                        <div className="text-[10.5px] text-life-body">
                           {b.description}
                         </div>
                       </div>
@@ -349,36 +317,36 @@ export default function ProgressPage() {
             </div>
 
             {/* Focus drills */}
-            <div className="surface-paper rounded-[18px] shadow-paper p-7">
+            <div className="life-card p-7">
               <div className="flex items-center gap-2 mb-1">
-                <span className="smallcaps text-bca-navy">{tr.drillsTitle}</span>
-                <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+                <span className="life-eyebrow">{tr.drillsTitle}</span>
+                <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
               </div>
-              <p className="text-[12.5px] text-bca-mute mb-5">{tr.drillsSubtitle}</p>
+              <p className="text-[12.5px] text-life-body mb-5">{tr.drillsSubtitle}</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 {drills.map((d) => (
                   <div
                     key={d.id}
-                    className="rounded-[14px] border border-bca-rule p-4 flex flex-col gap-3 bg-bca-cream/40"
+                    className="rounded-[14px] border border-life-blue/12 p-4 flex flex-col gap-3 bg-life-card"
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-serif text-bca-ink text-[16px]">
+                        <span className="font-sans font-bold text-life-heading text-[15.5px]">
                           {d.title}
                         </span>
-                        <span className="text-[9px] uppercase tracking-[0.12em] font-bold text-bca-gold">
+                        <span className="text-[9px] uppercase tracking-[0.12em] font-bold text-life-teal">
                           {dimLabel(d.dimension)}
                         </span>
                       </div>
-                      <p className="text-[12.5px] text-bca-mute leading-snug mt-1">
+                      <p className="text-[12.5px] text-life-body leading-snug mt-1">
                         {d.summary}
                       </p>
                     </div>
                     <Link
                       href={`/?drill=${d.id}`}
-                      className="self-start inline-flex items-center gap-2 bg-bca-navy hover:bg-bca-ink text-bca-cream text-[12.5px] font-semibold rounded-full px-4 py-2 shadow-soft transition"
+                      className="self-start inline-flex items-center gap-2 bg-life-blue hover:brightness-110 text-white text-[12.5px] font-semibold rounded-full px-4 py-2 shadow-lifeBlue transition"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-bca-gold" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
                       {tr.startDrill}
                     </Link>
                   </div>
@@ -387,38 +355,38 @@ export default function ProgressPage() {
             </div>
 
             {/* History */}
-            <div className="surface-paper rounded-[18px] shadow-paper p-7">
+            <div className="life-card p-7">
               <div className="flex items-center gap-2 mb-5">
-                <span className="smallcaps text-bca-navy">{tr.historyTitle}</span>
-                <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+                <span className="life-eyebrow">{tr.historyTitle}</span>
+                <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
               </div>
-              <div className="divide-y divide-bca-rule/60">
+              <div className="divide-y divide-life-blue/10">
                 {history.map((h) => (
                   <div
                     key={h.id}
                     className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
                   >
                     <span
-                      className="font-serif text-white rounded-full flex items-center justify-center shrink-0"
+                      className="font-sans font-extrabold text-white rounded-full flex items-center justify-center shrink-0"
                       style={{
                         width: 38,
                         height: 38,
                         background:
                           h.overall_score >= 7
-                            ? "#1E7B47"
+                            ? "#1f9d57"
                             : h.overall_score >= 4
-                            ? "#003D7A"
-                            : "#B23A3A",
+                            ? "#0a55ab"
+                            : "#c0392b",
                         fontSize: 15,
                       }}
                     >
                       {h.overall_score}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[14px] text-bca-ink font-medium truncate">
+                      <div className="text-[14px] text-life-heading font-semibold truncate">
                         {h.persona_name}
                       </div>
-                      <div className="text-[11.5px] text-bca-mute">
+                      <div className="text-[11.5px] text-life-body">
                         {h.turn_count} {tr.reportTurns} · +{h.xp_earned} XP ·{" "}
                         {new Date(h.created_at).toLocaleDateString()}
                       </div>
@@ -441,21 +409,21 @@ function StatCard({
   children,
 }: {
   label: string;
-  value: string | number;
+  value: React.ReactNode;
   accent: string;
   children?: React.ReactNode;
 }) {
   return (
-    <div className="surface-paper rounded-[18px] shadow-paper p-5 relative overflow-hidden">
+    <div className="life-card p-5 relative overflow-hidden">
       <span
         aria-hidden
-        className="absolute top-0 left-0 h-1 w-12"
+        className="absolute top-0 left-0 h-1 w-12 rounded-br"
         style={{ background: accent }}
       />
-      <div className="smallcaps text-bca-mute text-[10px]">{label}</div>
+      <div className="life-eyebrow text-[10px] text-life-body">{label}</div>
       <div
-        className="font-serif text-bca-ink mt-1.5 leading-none"
-        style={{ fontWeight: 400, fontSize: 38, letterSpacing: "-0.03em" }}
+        className="font-sans font-extrabold text-life-heading mt-1.5 leading-none"
+        style={{ fontSize: 38, letterSpacing: "-0.03em" }}
       >
         {value}
       </div>
@@ -481,7 +449,7 @@ function ScoreDelta({
   const last = pts[pts.length - 1].overall_score;
   const delta = last - first;
   const up = delta >= 0;
-  const color = delta > 0 ? "#1E7B47" : delta < 0 ? "#B23A3A" : "#6B7B8F";
+  const color = delta > 0 ? "#1f9d57" : delta < 0 ? "#c0392b" : "#5a6b82";
   return (
     <span
       className="text-[11px] font-bold tabular-nums px-2 py-0.5 rounded-full"
@@ -530,8 +498,12 @@ function ScoreTrend({
       >
         <defs>
           <linearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#003D7A" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#003D7A" stopOpacity="0" />
+            <stop offset="0%" stopColor="#0a55ab" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="#19b8a6" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="scoreLine" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#0a55ab" />
+            <stop offset="100%" stopColor="#19b8a6" />
           </linearGradient>
         </defs>
         {/* gridlines at 5 and 8 */}
@@ -542,7 +514,7 @@ function ScoreTrend({
             x2={w - padX}
             y1={y(g)}
             y2={y(g)}
-            stroke="#E6DFD0"
+            stroke="#d6e0ec"
             strokeWidth="1"
             strokeDasharray="3 4"
           />
@@ -551,8 +523,8 @@ function ScoreTrend({
         <polyline
           points={line}
           fill="none"
-          stroke="#003D7A"
-          strokeWidth="2"
+          stroke="url(#scoreLine)"
+          strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -565,10 +537,10 @@ function ScoreTrend({
             fill="#fff"
             stroke={
               p.overall_score >= 7
-                ? "#1E7B47"
+                ? "#1f9d57"
                 : p.overall_score >= 4
-                ? "#003D7A"
-                : "#B23A3A"
+                ? "#0a55ab"
+                : "#c0392b"
             }
             strokeWidth="2"
           >
@@ -578,7 +550,7 @@ function ScoreTrend({
           </circle>
         ))}
       </svg>
-      <div className="flex justify-between text-[10.5px] text-bca-mute mt-1 px-1">
+      <div className="flex justify-between text-[10.5px] text-life-bodyLight mt-1 px-1">
         <span>
           {lang === "id" ? "Sesi terlama" : "Oldest"} ·{" "}
           {new Date(pts[0].created_at).toLocaleDateString()}
@@ -606,7 +578,7 @@ function Sparkline({ values }: { values: number[] }) {
       <polyline
         points={pts}
         fill="none"
-        stroke="#6B7B8F"
+        stroke="#9db8d6"
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
