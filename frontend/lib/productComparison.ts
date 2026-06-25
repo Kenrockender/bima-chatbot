@@ -44,6 +44,9 @@ export type ProductComparison = {
   name: string;
   shortName: string;
   type: string;
+  /** Seed/file stem of the condensed fact sheet, used by the dynamic
+   * competitor comparator to resolve this product's text on the backend. */
+  factsheetStem: string;
   positioning: string;
   /** Key specs / features the FA should know. */
   features: string[];
@@ -67,6 +70,7 @@ const VALUE_PLUS: ProductComparison = {
   name: "Value Income Assurance (VALUE+)",
   shortName: "VALUE+",
   type: "Asuransi Jiwa Dwiguna Kombinasi · IDR & USD",
+  factsheetStem: "2026 - 06 - 08 Materi TTT VALUE+ 1",
   positioning:
     "Dana multiguna fleksibel untuk masa depan keluarga + proteksi 20 tahun, dengan akseptasi dijamin tanpa pemeriksaan kesehatan.",
   features: [
@@ -193,6 +197,7 @@ const HERITAGE_PLUS: ProductComparison = {
   name: "Heritage Platinum Protection (Heritage+)",
   shortName: "Heritage+",
   type: "Asuransi Jiwa Tradisional Seumur Hidup Kombinasi · IDR & USD",
+  factsheetStem: "heritage-platinum-protection-heritage-1767844421",
   positioning:
     "Warisan & proteksi seumur hidup (hingga usia 99) dengan Uang Pertanggungan yang bertumbuh.",
   features: [
@@ -273,6 +278,7 @@ const STAR: ProductComparison = {
   name: "Safety Guard Critical Cover (STAR)",
   shortName: "STAR",
   type: "Asuransi Kesehatan — Penyakit Kritis · IDR",
+  factsheetStem: "safety-guard-critical-cover-star-1767703972",
   positioning:
     "Proteksi penyakit kritis (minor & major) dengan pengembalian premi via No Claim Bonus.",
   features: [
@@ -347,4 +353,73 @@ const STAR: ProductComparison = {
   script: null,
 };
 
-export const PRODUCTS: ProductComparison[] = [VALUE_PLUS, HERITAGE_PLUS, STAR];
+// ---------------------------------------------------------------------------
+// PROSPER — comparison built; sales script in progress
+// ---------------------------------------------------------------------------
+
+const PROSPER: ProductComparison = {
+  id: "prosper",
+  name: "Prosper Life Guard (PROSPER)",
+  shortName: "PROSPER",
+  type: "Asuransi Jiwa Tradisional Dwiguna Kombinasi · Single Premium · IDR & USD",
+  factsheetStem: "prosper-life-guard-prosper-1767704058",
+  positioning:
+    "Premi sekali bayar (single premium) dengan tingkat imbal hasil tetap & dijamin selama Periode Tingkat Imbal Hasil Tetap, plus proteksi jiwa hingga usia 85.",
+  features: [
+    "Premi sekali bayar (single premium) — tanpa komitmen premi berkala.",
+    "Usia masuk 30 hari – 70 tahun; Masa Pertanggungan hingga usia 85 tahun.",
+    "Premi Dasar min. Rp100 jt / US$10.000; Premi Tambahan (wajib) min. Rp100 jt, maks. 50x Premi Dasar.",
+    "Uang Pertanggungan 150%–500% dari Premi Dasar.",
+    "Tingkat imbal hasil tetap & dijamin selama Periode Tingkat Imbal Hasil Tetap.",
+    "Manfaat Meninggal (sebab apapun): UP + Nilai Tunai; Tambahan Meninggal Kecelakaan (periode 10 tahun).",
+    "Tersedia Rupiah & US Dollar.",
+  ],
+  strengths: [
+    "Imbal hasil tetap & dijamin — kepastian hasil, tidak bergantung kinerja pasar.",
+    "Cukup sekali bayar — tanpa beban premi berkala bertahun-tahun.",
+    "Dwifungsi: penempatan dana lump-sum + proteksi jiwa hingga usia 85.",
+    "Pilihan Rupiah & USD untuk lindung nilai mata uang.",
+    "Nilai Tunai dapat diakses (penarikan sebagian) bila butuh likuiditas.",
+  ],
+  weaknesses: [
+    "Entry besar (min. Rp100 jt Premi Dasar + Rp100 jt Premi Tambahan) — segmen affluent.",
+    "Imbal hasil dijamin hanya selama Periode Tingkat Imbal Hasil Tetap.",
+    "Ada biaya (Awal, Asuransi, Administrasi, Penarikan, Penebusan) yang menggerus Nilai Tunai awal.",
+    "UP terbatas (150%–500% Premi Dasar) — bukan untuk kebutuhan proteksi murni bernilai besar.",
+  ],
+  competitors: [
+    {
+      provider: "Prudential",
+      productName: "PRULife Priority Legacy",
+      headToHead:
+        "Sama-sama solusi penempatan dana lump-sum bernuansa wealth & legacy untuk nasabah affluent.",
+      strengths: [
+        "Fokus warisan/legacy dengan Uang Pertanggungan yang dapat lebih besar.",
+        "Jaringan distribusi & brand awareness yang kuat.",
+      ],
+      weaknessesVsBca: [
+        "Imbal hasil PROSPER tetap & dijamin selama Periode Tingkat Imbal Hasil Tetap — bukan bergantung kinerja.",
+        "PROSPER tersedia Rupiah & USD untuk lindung nilai.",
+        "PROSPER cukup sekali bayar dengan kepastian hasil di muka.",
+      ],
+    },
+    {
+      provider: "MSIG Life",
+      productName: "Smart Wealth Assurance",
+      headToHead:
+        "Sama-sama endowment kombinasi tabungan + proteksi untuk pertumbuhan dana.",
+      strengths: [
+        "Entry premi lebih rendah (skema premi berkala).",
+        "Manfaat Meninggal akibat Kecelakaan pada produk dasar.",
+      ],
+      weaknessesVsBca: [
+        "PROSPER single premium — selesai sekali bayar, tanpa komitmen premi bertahun-tahun.",
+        "Imbal hasil PROSPER tetap & dijamin; pilihan Rupiah & USD.",
+        "Distribusi via jaringan BCA, bukan bank lain.",
+      ],
+    },
+  ],
+  script: null,
+};
+
+export const PRODUCTS: ProductComparison[] = [VALUE_PLUS, HERITAGE_PLUS, STAR, PROSPER];

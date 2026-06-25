@@ -89,8 +89,6 @@ export default function ProgressPage() {
 
   return (
     <main className="min-h-screen bg-life relative overflow-hidden">
-      <div className="life-blob" style={{ width: 380, height: 380, right: -120, top: -140 }} />
-
       <PageHeader
         eyebrow={tr.navProgress}
         tagline="BCA Life · Advisor Cockpit"
@@ -99,14 +97,73 @@ export default function ProgressPage() {
         current="progress"
       />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-10">
-        <SectionTitle
-          className="animate-riseIn mb-8"
-          eyebrow={tr.navProgress}
-          title={tr.progressTitle}
-          subtitle={tr.progressSubtitle}
+      {/* Hero band — blue→teal gradient with the title + key stats */}
+      <section className="life-gradient relative overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{
+            width: 420, height: 420, right: -120, top: -160,
+            background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.16), rgba(255,255,255,0))",
+          }}
         />
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{
+            width: 280, height: 280, left: -90, bottom: -150,
+            background: "radial-gradient(circle at 50% 50%, rgba(25,184,166,0.35), rgba(25,184,166,0))",
+          }}
+        />
+        <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 pt-9 pb-14 animate-riseIn">
+          <div className="flex items-center gap-2.5 mb-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-white/90" />
+            <span className="h-1 w-10 rounded-full bg-white/70" />
+            <span className="ml-1 text-[11.5px] font-bold uppercase tracking-[0.13em] text-white/85">
+              {tr.navProgress}
+            </span>
+          </div>
+          <h2
+            className="font-sans font-extrabold text-white text-[30px] sm:text-[40px] leading-[1.08] tracking-tight"
+            style={{ letterSpacing: "-0.025em" }}
+          >
+            {tr.progressTitle}
+          </h2>
+          <p className="text-[14.5px] leading-[1.6] text-white/80 mt-2.5 max-w-[620px]">
+            {tr.progressSubtitle}
+          </p>
 
+          {hasData && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8">
+              <HeroStat label={tr.statLevel} value={stats!.level}>
+                <div className="mt-2 h-1.5 rounded-full overflow-hidden bg-white/20">
+                  <div
+                    className="h-full rounded-full bg-white"
+                    style={{ width: `${(stats!.xp_into_level / stats!.xp_per_level) * 100}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-white/70 mt-1.5">
+                  {stats!.xp_into_level} / {stats!.xp_per_level} XP
+                </p>
+              </HeroStat>
+              <HeroStat label={tr.statXp} value={stats!.total_xp} />
+              <HeroStat
+                label={tr.statStreak}
+                value={
+                  <span className="inline-flex items-center gap-1.5">
+                    <FlameIcon size={24} className="text-life-amber" />
+                    {stats!.streak}
+                  </span>
+                }
+                sub={tr.daysUnit}
+              />
+              <HeroStat label={tr.statSessions} value={stats!.total_sessions} />
+            </div>
+          )}
+        </div>
+      </section>
+
+      <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-9 -mt-7">
         {loading ? (
           <div className="grid place-items-center py-20">
             <div className="h-7 w-7 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
@@ -121,42 +178,6 @@ export default function ProgressPage() {
           </div>
         ) : (
           <div className="space-y-7">
-            {/* Stat row */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label={tr.statLevel} value={stats!.level} accent="#0a55ab">
-                <div className="mt-2 h-1.5 rounded-full overflow-hidden bg-life-blue/[0.08]">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${(stats!.xp_into_level / stats!.xp_per_level) * 100}%`,
-                      background: "linear-gradient(90deg, #0a55ab, #19b8a6)",
-                    }}
-                  />
-                </div>
-                <p className="text-[10.5px] text-life-body mt-1.5">
-                  {stats!.xp_into_level} / {stats!.xp_per_level} XP
-                </p>
-              </StatCard>
-              <StatCard label={tr.statXp} value={stats!.total_xp} accent="#19b8a6" />
-              <StatCard
-                label={tr.statStreak}
-                value={
-                  <span className="inline-flex items-center gap-1.5">
-                    <FlameIcon size={22} className="text-life-amber" />
-                    {stats!.streak}
-                  </span>
-                }
-                accent="#F9B233"
-              >
-                <p className="text-[10.5px] text-life-body mt-1.5">{tr.daysUnit}</p>
-              </StatCard>
-              <StatCard
-                label={tr.statSessions}
-                value={stats!.total_sessions}
-                accent="#1582b3"
-              />
-            </div>
-
             {/* Daily goal */}
             {(() => {
               const done = stats!.done_today >= stats!.daily_goal;
@@ -402,30 +423,32 @@ export default function ProgressPage() {
   );
 }
 
-function StatCard({
+// Stat tile rendered on the blue→teal hero band (white text on a translucent
+// glass card).
+function HeroStat({
   label,
   value,
-  accent,
+  sub,
   children,
 }: {
   label: string;
   value: React.ReactNode;
-  accent: string;
+  sub?: string;
   children?: React.ReactNode;
 }) {
   return (
-    <div className="life-card p-5 relative overflow-hidden">
-      <span
-        aria-hidden
-        className="absolute top-0 left-0 h-1 w-12 rounded-br"
-        style={{ background: accent }}
-      />
-      <div className="life-eyebrow text-[10px] text-life-body">{label}</div>
+    <div className="rounded-[14px] p-4 bg-white/10 border border-white/15 backdrop-blur-sm">
+      <div className="text-[10px] font-bold uppercase tracking-[0.13em] text-white/70">
+        {label}
+      </div>
       <div
-        className="font-sans font-extrabold text-life-heading mt-1.5 leading-none"
-        style={{ fontSize: 38, letterSpacing: "-0.03em" }}
+        className="font-sans font-extrabold text-white mt-1.5 leading-none flex items-baseline gap-1.5"
+        style={{ fontSize: 32, letterSpacing: "-0.03em" }}
       >
         {value}
+        {sub && (
+          <span className="text-[12px] font-semibold text-white/65">{sub}</span>
+        )}
       </div>
       {children}
     </div>
@@ -514,7 +537,7 @@ function ScoreTrend({
             x2={w - padX}
             y1={y(g)}
             y2={y(g)}
-            stroke="#d6e0ec"
+            stroke="var(--chart-grid)"
             strokeWidth="1"
             strokeDasharray="3 4"
           />
@@ -534,13 +557,13 @@ function ScoreTrend({
             cx={x(i)}
             cy={y(p.overall_score)}
             r="3.4"
-            fill="#fff"
+            fill="var(--surface-1)"
             stroke={
               p.overall_score >= 7
-                ? "#1f9d57"
+                ? "var(--life-pos)"
                 : p.overall_score >= 4
-                ? "#0a55ab"
-                : "#c0392b"
+                ? "var(--life-blue)"
+                : "var(--life-neg)"
             }
             strokeWidth="2"
           >

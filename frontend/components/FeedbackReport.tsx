@@ -77,12 +77,12 @@ export function FeedbackReport({
   return (
     <div className="animate-riseIn space-y-6">
       <div className="flex items-center gap-3">
-        <span className="block w-7 h-px bg-bca-gold" />
-        <span className="smallcaps text-bca-gold">{labels.eyebrow}</span>
+        <span className="block w-7 h-px bg-life-blue" />
+        <span className="life-eyebrow">{labels.eyebrow}</span>
       </div>
       <h2
-        className="font-serif text-bca-ink text-[36px] sm:text-[44px] leading-[1.1] tracking-tight"
-        style={{ fontWeight: 400, letterSpacing: "-0.025em" }}
+        className="font-sans font-extrabold text-life-heading text-[34px] sm:text-[42px] leading-[1.1] tracking-tight"
+        style={{ letterSpacing: "-0.025em" }}
       >
         {labels.title}
       </h2>
@@ -90,17 +90,17 @@ export function FeedbackReport({
       {/* Gamification deltas — XP / streak / level earned this session */}
       {prog && (
         <div className="flex flex-wrap items-center gap-2.5 animate-fadeIn">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-bca-navy text-bca-cream px-3.5 py-1.5 text-[12.5px] font-semibold shadow-soft">
-            <span className="w-1.5 h-1.5 rounded-full bg-bca-gold" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-life-blue text-white px-3.5 py-1.5 text-[12.5px] font-semibold shadow-lifeBlue">
+            <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
             +{prog.xp_earned} {labels.xpEarned}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full surface-paper shadow-paper px-3.5 py-1.5 text-[12.5px] text-bca-ink/85 font-medium">
+          <span className="inline-flex items-center gap-1.5 rounded-full life-card px-3.5 py-1.5 text-[12.5px] text-life-heading/85 font-medium">
             🔥 {prog.streak} {labels.streak}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full surface-paper shadow-paper px-3.5 py-1.5 text-[12.5px] text-bca-ink/85 font-medium">
+          <span className="inline-flex items-center gap-1.5 rounded-full life-card px-3.5 py-1.5 text-[12.5px] text-life-heading/85 font-medium">
             {labels.level} {prog.level}
           </span>
-          <span className="text-[11.5px] text-bca-mute italic ml-auto">
+          <span className="text-[11.5px] text-life-body italic ml-auto">
             {labels.saved}
           </span>
         </div>
@@ -112,24 +112,20 @@ export function FeedbackReport({
           {prog.new_badges.map((b) => (
             <div
               key={b.id}
-              className="flex items-center gap-2.5 rounded-[14px] p-3 pr-4 shadow-paper"
+              className="flex items-center gap-2.5 rounded-[14px] p-3 pr-4 life-card"
               style={{
-                background: "linear-gradient(150deg, #FDFBF6 0%, #F4ECDA 100%)",
-                border: "1px solid #E6DFD0",
+                background: "linear-gradient(150deg, #f4f8fd 0%, #eaf1fa 100%)",
               }}
             >
-              <span
-                className="flex items-center justify-center rounded-full text-[16px] shrink-0"
-                style={{ width: 34, height: 34, background: "#C8941E" }}
-              >
+              <span className="life-icon shrink-0" style={{ width: 34, height: 34, borderRadius: 999, fontSize: 16 }}>
                 🏅
               </span>
               <div className="leading-tight">
-                <div className="smallcaps text-bca-gold text-[9.5px]">
+                <div className="life-eyebrow text-[9.5px]">
                   {labels.newBadge}
                 </div>
-                <div className="font-serif text-bca-ink text-[15px]">{b.name}</div>
-                <div className="text-[11px] text-bca-mute">{b.description}</div>
+                <div className="font-sans font-bold text-life-heading text-[15px]">{b.name}</div>
+                <div className="text-[11px] text-life-body">{b.description}</div>
               </div>
             </div>
           ))}
@@ -160,35 +156,35 @@ export function FeedbackReport({
 
       {/* Overall + persona reminder */}
       <div className="grid sm:grid-cols-[1fr_auto] gap-6 items-stretch">
-        <div className="surface-paper rounded-[18px] shadow-paper p-7 relative overflow-hidden">
+        <div className="life-card p-7 relative overflow-hidden">
           <span
             aria-hidden
             className="absolute top-0 left-0 h-1 w-16"
             style={{ background: report.persona.accent }}
           />
           <div className="flex items-baseline gap-2 mb-2">
-            <span className="smallcaps text-bca-mute">{labels.overall}</span>
-            <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+            <span className="life-eyebrow">{labels.overall}</span>
+            <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
           </div>
           <div className="flex items-baseline gap-3">
             <span
-              className="font-serif text-bca-ink text-[64px] leading-none"
-              style={{ fontWeight: 400, letterSpacing: "-0.04em" }}
+              className="font-sans font-extrabold text-life-heading text-[64px] leading-none"
+              style={{ letterSpacing: "-0.04em" }}
             >
               {report.overall_score}
             </span>
-            <span className="font-serif text-bca-mute text-[28px]">/ 10</span>
+            <span className="font-sans font-bold text-life-body text-[28px]">/ 10</span>
           </div>
-          <p className="text-[13px] text-bca-mute mt-3">
+          <p className="text-[13px] text-life-body mt-3">
             {report.turn_count} {labels.turns} · vs.{" "}
-            <span className="text-bca-ink/85 font-medium">
+            <span className="text-life-heading/85 font-medium">
               {report.persona.name}
             </span>
           </p>
         </div>
 
         <div
-          className="hidden sm:flex items-center justify-center rounded-[18px] surface-paper shadow-paper px-8 min-w-[180px]"
+          className="hidden sm:flex items-center justify-center rounded-[18px] life-card px-8 min-w-[180px]"
         >
           <div
             className="flex items-center justify-center rounded-full font-serif text-white"
@@ -206,10 +202,10 @@ export function FeedbackReport({
       </div>
 
       {/* Score bars */}
-      <div className="surface-paper rounded-[18px] shadow-paper p-7">
+      <div className="life-card p-7">
         <div className="flex items-center gap-2 mb-5">
-          <span className="smallcaps text-bca-navy">{labels.scores}</span>
-          <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+          <span className="life-eyebrow">{labels.scores}</span>
+          <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
         </div>
         <div className="space-y-4">
           {dims.map((d) => {
@@ -217,28 +213,25 @@ export function FeedbackReport({
             return (
               <div key={d.key}>
                 <div className="flex items-baseline justify-between mb-1.5">
-                  <span className="text-[13.5px] text-bca-ink/85">
+                  <span className="text-[13.5px] text-life-heading/85">
                     {d.label}
                   </span>
-                  <span className="font-serif text-bca-ink text-[15px] tabular-nums">
+                  <span className="font-sans font-bold text-life-heading text-[15px] tabular-nums">
                     {score}
-                    <span className="text-bca-mute text-[12px]"> / 10</span>
+                    <span className="text-life-body text-[12px] font-normal"> / 10</span>
                   </span>
                 </div>
-                <div
-                  className="h-1.5 rounded-full overflow-hidden"
-                  style={{ background: "rgba(10, 27, 46, 0.06)" }}
-                >
+                <div className="h-1.5 rounded-full overflow-hidden bg-life-blue/[0.08]">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
                       width: `${(score / 10) * 100}%`,
                       background:
                         score >= 7
-                          ? "linear-gradient(90deg, #C8941E, #E6B85A)"
+                          ? "linear-gradient(90deg, #0a55ab, #19b8a6)"
                           : score >= 4
-                          ? "linear-gradient(90deg, #003D7A, #1B6FC9)"
-                          : "linear-gradient(90deg, #B23A3A, #D86B6B)",
+                          ? "linear-gradient(90deg, #1582b3, #19b8a6)"
+                          : "linear-gradient(90deg, #c0392b, #e8836f)",
                     }}
                   />
                 </div>
@@ -257,7 +250,7 @@ export function FeedbackReport({
         />
         <ListCard
           eyebrow={labels.improvements}
-          accent="#C8941E"
+          accent="#F9B233"
           items={report.improvements}
         />
       </div>
@@ -265,19 +258,18 @@ export function FeedbackReport({
       {/* Next focus */}
       {report.next_focus && (
         <div
-          className="rounded-[18px] p-6 shadow-paper relative overflow-hidden"
+          className="rounded-[16px] p-6 relative overflow-hidden life-card"
           style={{
-            background: "linear-gradient(150deg, #FDFBF6 0%, #F4ECDA 100%)",
-            border: "1px solid #E6DFD0",
+            background: "linear-gradient(150deg, #f4f8fd 0%, #eaf1fa 100%)",
           }}
         >
           <span
             aria-hidden
             className="absolute top-0 left-0 h-1 w-12"
-            style={{ background: "#C8941E" }}
+            style={{ background: "linear-gradient(90deg, #0a55ab, #19b8a6)" }}
           />
-          <span className="smallcaps text-bca-gold">{labels.next}</span>
-          <p className="font-serif text-bca-ink text-[20px] leading-snug mt-2">
+          <span className="life-eyebrow">{labels.next}</span>
+          <p className="font-sans font-bold text-life-heading text-[20px] leading-snug mt-2">
             {report.next_focus}
           </p>
         </div>
@@ -287,20 +279,17 @@ export function FeedbackReport({
         {recommendedPersonaId && onPractice && (
           <button
             onClick={() => onPractice(recommendedPersonaId)}
-            className="inline-flex items-center gap-2 bg-bca-gold hover:brightness-95 transition text-bca-ink text-[14px] font-semibold rounded-full px-6 py-3 shadow-soft"
+            className="btn-life-amber"
           >
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-bca-ink/70" />
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-life-heading/70" />
             {labels.practiceWeakest}
           </button>
         )}
         <button
           onClick={onTryAgain}
-          className="inline-flex items-center gap-2 bg-bca-navy hover:bg-bca-ink transition text-bca-cream text-[14px] font-medium rounded-full px-6 py-3 shadow-soft group"
+          className="btn-life"
         >
-          <span
-            className="inline-block w-1.5 h-1.5 rounded-full"
-            style={{ background: "#C8941E" }}
-          />
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-life-amber" />
           {labels.tryAgain}
         </button>
       </div>
@@ -318,7 +307,7 @@ function ListCard({
   items: string[];
 }) {
   return (
-    <div className="surface-paper rounded-[18px] shadow-paper p-7 relative overflow-hidden">
+    <div className="life-card p-7 relative overflow-hidden">
       <span
         aria-hidden
         className="absolute top-0 left-0 h-1 w-12"
@@ -331,14 +320,14 @@ function ListCard({
         >
           {eyebrow}
         </span>
-        <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+        <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
       </div>
       {items.length === 0 ? (
-        <p className="text-[13.5px] text-bca-mute italic">—</p>
+        <p className="text-[13.5px] text-life-body italic">—</p>
       ) : (
         <ul className="space-y-2.5">
           {items.map((it, i) => (
-            <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-bca-ink/85">
+            <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-life-heading/85">
               <span
                 aria-hidden
                 className="inline-block w-1.5 h-1.5 rounded-full mt-2 shrink-0"

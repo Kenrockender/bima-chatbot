@@ -26,7 +26,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="bg-shell min-h-screen grid place-items-center">
-        <div className="h-8 w-8 rounded-full border-2 border-bca-accentGold border-t-transparent animate-spin" />
+        <div className="h-8 w-8 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -61,22 +61,27 @@ function SignIn({ onSignIn }: { onSignIn: () => Promise<void> }) {
 
   return (
     <div className="bg-shell min-h-screen grid place-items-center px-6">
-      <div className="w-full max-w-sm rounded-bcaLg bg-bca-panel border border-bca-panelStroke shadow-float p-8 text-center backdrop-blur">
-        <div className="text-3xl font-display font-extrabold text-white tracking-tight">
+      <div className="w-full max-w-sm life-card p-8 text-center relative overflow-hidden">
+        <span
+          aria-hidden
+          className="absolute top-0 left-0 right-0 h-1"
+          style={{ background: "linear-gradient(90deg, #0a55ab, #19b8a6)" }}
+        />
+        <div className="text-3xl font-sans font-extrabold text-life-heading tracking-tight">
           BIMA
         </div>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-white/70">
+        <p className="mt-2 text-[13.5px] leading-relaxed text-life-body">
           Masuk untuk mulai latihan dan menyimpan progresmu.
         </p>
         <button
           onClick={go}
           disabled={busy}
-          className="mt-6 w-full inline-flex items-center justify-center gap-3 rounded-full bg-white text-bca-ink font-semibold text-[14px] px-4 py-3 shadow-card hover:shadow-cardHover disabled:opacity-60 transition"
+          className="mt-6 w-full inline-flex items-center justify-center gap-3 rounded-full bg-white text-life-heading border border-life-blue/15 font-semibold text-[14px] px-4 py-3 shadow-life hover:shadow-lifeHover disabled:opacity-60 transition"
         >
           <GoogleMark />
           {busy ? "Membuka…" : "Masuk dengan Google"}
         </button>
-        {err && <div className="mt-3 text-[12px] text-red-300">{err}</div>}
+        {err && <div className="mt-3 text-[12px] text-red-600">{err}</div>}
       </div>
     </div>
   );
@@ -93,7 +98,7 @@ function AccountChip() {
     <div className="fixed top-3 right-3 z-50">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="h-9 w-9 rounded-full overflow-hidden border border-white/30 shadow-float bg-bca-navy grid place-items-center"
+        className="h-9 w-9 rounded-full overflow-hidden border border-life-blue/20 shadow-float bg-life-blue grid place-items-center"
         title={user.displayName || user.email || ""}
         aria-label="Akun"
       >

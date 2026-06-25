@@ -37,7 +37,7 @@ const mdComponents = {
   ),
   a: (props: any) => (
     <a
-      className="underline underline-offset-2 hover:text-bca-accentGoldDeep transition"
+      className="underline underline-offset-2 text-life-blue hover:text-life-teal transition"
       target="_blank"
       rel="noreferrer"
       {...props}
@@ -46,7 +46,7 @@ const mdComponents = {
   blockquote: (props: any) => (
     <blockquote
       className="border-l-[3px] pl-3 my-2 italic"
-      style={{ borderColor: "#F5C518" }}
+      style={{ borderColor: "#19b8a6" }}
       {...props}
     />
   ),

@@ -9,6 +9,7 @@ import { PersonaCard, type Persona } from "@/components/PersonaCard";
 import { FeedbackReport, type Report } from "@/components/FeedbackReport";
 import { CoachChip, type Coach } from "@/components/CoachChip";
 import { VoiceStage } from "@/components/VoiceStage";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSTT, useTTS } from "@/hooks/useSpeech";
 import { authedFetch } from "@/lib/api";
 import { recommendedPersona } from "@/lib/coaching";
@@ -516,33 +517,40 @@ export default function Home() {
     : tr.voiceUnsupported;
 
   return (
-    <main className="min-h-screen bg-shell flex items-stretch justify-center px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <main
+      className="min-h-screen bg-shell flex items-stretch justify-center px-3 sm:px-6 lg:px-8 py-4 sm:py-6"
+      style={{
+        backgroundColor: "#0a55ab",
+        backgroundImage:
+          "radial-gradient(1100px 620px at 90% -12%, rgba(255,255,255,0.18), transparent 60%), radial-gradient(920px 560px at -8% 110%, rgba(25,184,166,0.55), transparent 60%), linear-gradient(125deg, #0a55ab 0%, #1582b3 50%, #19b8a6 100%)",
+      }}
+    >
       <div className="bg-window w-full max-w-[1180px] flex flex-col overflow-hidden">
         {/* ─── HEADER ─── */}
-        <header className="flex items-center gap-4 px-5 sm:px-8 py-4 border-b border-white/5">
+        <header className="flex items-center gap-4 px-5 sm:px-8 py-4 border-b border-life-blue/10">
           {/* BIMA mascot lockup */}
           <div className="flex items-center gap-3 shrink-0">
             <BimaAvatar size={44} />
             <div className="leading-none">
               <div
-                className="text-white font-extrabold tracking-tight"
+                className="text-life-heading font-extrabold tracking-tight"
                 style={{ fontSize: 22, letterSpacing: "0.04em" }}
               >
                 BIMA
               </div>
-              <div className="hidden sm:block text-[9.5px] uppercase tracking-[0.14em] text-white/55 mt-1">
+              <div className="hidden sm:block text-[9.5px] uppercase tracking-[0.14em] text-life-body mt-1">
                 BCA Life Intelligent Mobile Assistant
               </div>
             </div>
           </div>
 
           {/* Sub-context */}
-          <div className="hidden sm:flex items-baseline gap-3 ml-2 pl-4 border-l border-white/10">
+          <div className="hidden sm:flex items-baseline gap-3 ml-2 pl-4 border-l border-life-blue/12">
             <div className="leading-tight">
-              <div className="text-white text-[13.5px] font-semibold">
+              <div className="text-life-heading text-[13.5px] font-semibold">
                 Persona Chat
               </div>
-              <div className="text-[10px] text-white/45 tracking-wide">
+              <div className="text-[10px] text-life-body tracking-wide">
                 BCA Life Sales Companion
               </div>
             </div>
@@ -554,15 +562,15 @@ export default function Home() {
           {stage === "chat" && activePersona && (
             <div className="hidden md:flex items-center gap-3">
               {sessionStart && (
-                <span className="text-[12px] font-mono text-white/60 tabular-nums">
+                <span className="text-[12px] font-mono text-life-body tabular-nums">
                   {fmtTime(sessionElapsed)}
                 </span>
               )}
               <button
                 onClick={endSession}
-                className="inline-flex items-center gap-2 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-white/80 hover:text-white px-3 py-2 rounded-full border border-white/15 hover:border-bca-accentGold/60 transition"
+                className="inline-flex items-center gap-2 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-life-body hover:text-life-blue px-3 py-2 rounded-full border border-life-blue/15 hover:border-life-blue/50 transition"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+                <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
                 {tr.endSession}
               </button>
             </div>
@@ -570,31 +578,31 @@ export default function Home() {
 
           <Link
             href="/progress"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
+            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
           >
             {tr.navProgress}
           </Link>
           <Link
             href="/leaderboard"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
+            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
           >
             {tr.navLeaderboard}
           </Link>
           <Link
             href="/recommend"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
+            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
           >
             {tr.navRecommend}
           </Link>
           <Link
             href="/manager"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
+            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
           >
             Dashboard
           </Link>
           <Link
             href="/admin"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-white/55 hover:text-bca-accentGold px-2 py-1 transition"
+            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
           >
             {tr.admin}
           </Link>
@@ -611,6 +619,8 @@ export default function Home() {
             ))}
           </div>
 
+          <ThemeToggle />
+
           {/* Mobile nav — the desktop links above are hidden below md, so
               phones get a hamburger that opens the same destinations. */}
           <div className="relative md:hidden shrink-0">
@@ -618,7 +628,7 @@ export default function Home() {
               onClick={() => setNavOpen((v) => !v)}
               aria-label="Menu"
               aria-expanded={navOpen}
-              className="flex items-center justify-center w-9 h-9 rounded-full border border-white/15 text-white/80 hover:text-white hover:border-bca-accentGold/60 transition"
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-life-blue/15 text-life-body hover:text-life-blue hover:border-life-blue/50 transition"
             >
               {navOpen ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
@@ -641,11 +651,11 @@ export default function Home() {
                   className="fixed inset-0 z-40"
                   onClick={() => setNavOpen(false)}
                 />
-                <div className="absolute right-0 top-11 z-50 w-52 rounded-2xl border border-white/10 bg-bca-navy shadow-2xl overflow-hidden py-1.5">
+                <div className="absolute right-0 top-11 z-50 w-52 rounded-2xl border border-life-blue/12 bg-white shadow-xl overflow-hidden py-1.5">
                   {stage === "chat" && activePersona && (
                     <>
                       {sessionStart && (
-                        <div className="px-4 py-1.5 text-[11px] font-mono text-white/45 tabular-nums">
+                        <div className="px-4 py-1.5 text-[11px] font-mono text-life-bodyLight tabular-nums">
                           {fmtTime(sessionElapsed)}
                         </div>
                       )}
@@ -654,12 +664,12 @@ export default function Home() {
                           setNavOpen(false);
                           endSession();
                         }}
-                        className="w-full text-left px-4 py-2.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-white/85 hover:bg-white/5 flex items-center gap-2"
+                        className="w-full text-left px-4 py-2.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-life-heading hover:bg-life-blueBg flex items-center gap-2"
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
                         {tr.endSession}
                       </button>
-                      <div className="h-px bg-white/10 my-1" />
+                      <div className="h-px bg-life-blue/10 my-1" />
                     </>
                   )}
                   {[
@@ -674,7 +684,7 @@ export default function Home() {
                       key={it.href}
                       href={it.href}
                       onClick={() => setNavOpen(false)}
-                      className="block px-4 py-2.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-white/70 hover:text-bca-accentGold hover:bg-white/5 transition"
+                      className="block px-4 py-2.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-life-body hover:text-life-blue hover:bg-life-blueBg transition"
                     >
                       {it.label}
                     </Link>
@@ -688,8 +698,8 @@ export default function Home() {
         {/* ─── BODY: sidebar + chat ─── */}
         <div className="flex-1 flex min-h-0">
           {/* Sidebar */}
-          <aside className="hidden md:flex flex-col gap-3 w-[280px] shrink-0 px-4 py-5 border-r border-white/5 overflow-y-auto scroll-stylish">
-            <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-white/40 px-1 mb-1">
+          <aside className="hidden md:flex flex-col gap-3 w-[280px] shrink-0 px-4 py-5 border-r border-life-blue/10 overflow-y-auto scroll-stylish">
+            <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-life-bodyLight px-1 mb-1">
               {tr.pickPersona}
             </div>
             {presetPersonas.map((p) => (
@@ -710,7 +720,7 @@ export default function Home() {
               />
             )}
             {personas.length === 0 && (
-              <div className="text-white/40 text-[12px] px-1 py-3 italic">
+              <div className="text-life-bodyLight text-[12px] px-1 py-3 italic">
                 Loading personas…
               </div>
             )}
@@ -731,13 +741,13 @@ export default function Home() {
                       aria-pressed={isOn}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition ${
                         isOn
-                          ? "bg-bca-shellMid text-white"
-                          : "bg-white/70 text-bca-ink/70"
+                          ? "bg-life-blue text-white"
+                          : "bg-white text-life-body border border-life-blue/12"
                       }`}
                     >
                       <span
                         className="w-1.5 h-1.5 rounded-full shrink-0"
-                        style={{ background: CHALLENGE_DOT[p.challenge] ?? "#C8941E" }}
+                        style={{ background: CHALLENGE_DOT[p.challenge] ?? "#F9B233" }}
                       />
                       {p.name}
                     </button>
@@ -749,8 +759,8 @@ export default function Home() {
                     aria-pressed={(activePersona?.id ?? selectedId) === CUSTOM_ID}
                     className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold border border-dashed transition ${
                       (activePersona?.id ?? selectedId) === CUSTOM_ID
-                        ? "bg-bca-shellMid text-white border-transparent"
-                        : "bg-white/40 text-bca-ink/70 border-bca-ink/25"
+                        ? "bg-life-blue text-white border-transparent"
+                        : "bg-white/60 text-life-body border-life-blue/25"
                     }`}
                   >
                     + {tr.customCardCta}
@@ -903,7 +913,7 @@ export default function Home() {
                               <button
                                 onClick={retry}
                                 disabled={busy}
-                                className="mt-1.5 ml-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-bca-navy hover:text-bca-ink bg-bca-cream hover:bg-bca-shellMid border border-bca-rule rounded-full px-3.5 py-1.5 transition disabled:opacity-50"
+                                className="mt-1.5 ml-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-life-blue hover:text-life-heading bg-life-blueBg hover:bg-life-blue/15 border border-life-blue/15 rounded-full px-3.5 py-1.5 transition disabled:opacity-50"
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
                                 {tr.retry}
@@ -985,8 +995,8 @@ export default function Home() {
                       }
                       className={`inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.14em] font-bold px-3 py-1.5 rounded-full border transition disabled:opacity-40 disabled:cursor-not-allowed ${
                         voiceMode
-                          ? "bg-bca-shellMid text-bca-accentGold border-bca-accentGold/60 shadow-soft"
-                          : "bg-white/60 text-bca-ink/60 border-bca-ink/15 hover:border-bca-shellMid/40"
+                          ? "bg-life-blue text-white border-life-blue shadow-lifeBlue"
+                          : "bg-white/60 text-life-body border-life-blue/15 hover:border-life-blue/40"
                       }`}
                     >
                       <SpeakerIcon active={voiceMode} />
@@ -1002,8 +1012,8 @@ export default function Home() {
                         title={muted ? tr.unmute : tr.mute}
                         className={`inline-flex items-center justify-center w-8 h-8 rounded-full border transition ${
                           muted
-                            ? "bg-white/60 text-bca-ink/55 border-bca-ink/15"
-                            : "bg-bca-shellMid text-bca-accentGold border-bca-accentGold/60"
+                            ? "bg-white/60 text-life-bodyLight border-life-blue/15"
+                            : "bg-life-blue text-white border-life-blue"
                         }`}
                       >
                         {muted ? <MuteIcon /> : <PlayIcon />}
@@ -1046,7 +1056,7 @@ export default function Home() {
                           <span className="eq-bars" aria-hidden>
                             <span /><span /><span /><span /><span /><span /><span />
                           </span>
-                          <span className="text-[11px] font-semibold text-bca-shellMid">
+                          <span className="text-[11px] font-semibold text-life-blue">
                             {tr.speakingNow}
                           </span>
                         </>
@@ -1122,9 +1132,9 @@ export default function Home() {
                           if (p) startSession(p);
                         }}
                         disabled={starting}
-                        className="inline-flex items-center gap-2 bg-bca-shellMid hover:bg-bca-ink text-white text-[12.5px] font-semibold rounded-full px-4 py-2 shadow-soft transition disabled:opacity-60"
+                        className="inline-flex items-center gap-2 bg-life-blue hover:brightness-110 text-white text-[12.5px] font-semibold rounded-full px-4 py-2 shadow-soft transition disabled:opacity-60"
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
                         {starting ? "…" : tr.startSession}
                       </button>
                     </div>
@@ -1156,8 +1166,8 @@ function CustomCta({
       aria-pressed={selected}
       className={`group w-full mt-1 flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-dashed transition ${
         selected
-          ? "bg-bca-accentGold/10 border-bca-accentGold/70 text-white"
-          : "border-white/20 text-white/70 hover:border-bca-accentGold/60 hover:text-white"
+          ? "bg-life-blueBg border-life-blue/50 text-life-heading"
+          : "border-life-blue/25 text-life-body hover:border-life-blue/50 hover:text-life-heading"
       }`}
     >
       <span
@@ -1190,18 +1200,18 @@ function Welcome({
   return (
     <div className="max-w-[640px] mx-auto py-6 animate-fadeIn">
       <div className="inline-flex items-center gap-2 mb-4">
-        <span className="w-6 h-px bg-bca-accentGold" />
-        <span className="text-[10px] uppercase tracking-[0.18em] font-bold text-bca-accentGoldDeep">
+        <span className="w-6 h-px bg-life-amber" />
+        <span className="text-[10px] uppercase tracking-[0.18em] font-bold text-life-amberDark">
           {tr.brandLine}
         </span>
       </div>
       <h2
-        className="font-serif text-bca-ink text-[34px] sm:text-[40px] leading-[1.1] tracking-tight mb-4"
-        style={{ fontWeight: 500, letterSpacing: "-0.02em" }}
+        className="font-sans font-extrabold text-life-heading text-[34px] sm:text-[40px] leading-[1.1] tracking-tight mb-4"
+        style={{ letterSpacing: "-0.025em" }}
       >
         {tr.landingHeadline}
       </h2>
-      <p className="text-[15px] leading-[1.65] text-bca-ink/75 mb-6 max-w-[560px]">
+      <p className="text-[15px] leading-[1.65] text-life-body mb-6 max-w-[560px]">
         {tr.landingSubtitle}
       </p>
 
@@ -1223,9 +1233,9 @@ function Welcome({
             <button
               onClick={() => onStart(selected)}
               disabled={starting}
-              className="inline-flex items-center gap-2 bg-bca-shellMid hover:bg-bca-ink text-white text-[13.5px] font-semibold rounded-full px-5 py-3 shadow-soft transition disabled:opacity-60"
+              className="inline-flex items-center gap-2 bg-life-blue hover:brightness-110 text-white text-[13.5px] font-semibold rounded-full px-5 py-3 shadow-soft transition disabled:opacity-60"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+              <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
               {starting ? "…" : tr.startSession}
             </button>
           </div>
@@ -1262,9 +1272,9 @@ function CustomPersonaForm({
   }
 
   return (
-    <div className="mt-5 rounded-2xl border border-bca-rule bg-white/70 p-5 max-w-[520px] shadow-soft">
+    <div className="mt-5 rounded-2xl border border-life-blue/12 bg-white p-5 max-w-[520px] shadow-life">
       <div className="flex items-center gap-2 mb-4">
-        <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+        <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
         <span className="text-[11px] uppercase tracking-[0.16em] font-bold text-bca-ink/70">
           {tr.customFormTitle}
         </span>
@@ -1333,9 +1343,9 @@ function CustomPersonaForm({
       <button
         onClick={submit}
         disabled={!ready || starting}
-        className="inline-flex items-center gap-2 bg-bca-shellMid hover:bg-bca-ink text-white text-[13.5px] font-semibold rounded-full px-5 py-3 shadow-soft transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-2 bg-life-blue hover:brightness-110 text-white text-[13.5px] font-semibold rounded-full px-5 py-3 shadow-soft transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
+        <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
         {starting ? "…" : tr.customStart}
       </button>
 
@@ -1343,7 +1353,7 @@ function CustomPersonaForm({
         :global(.custom-field) {
           width: 100%;
           background: #ffffff;
-          border: 1px solid #e6dfd0;
+          border: 1px solid #e6eef7;
           border-radius: 10px;
           padding: 0.5rem 0.7rem;
           font-size: 13.5px;
@@ -1355,8 +1365,8 @@ function CustomPersonaForm({
         }
         :global(.custom-field:focus) {
           outline: none;
-          border-color: #c8941e;
-          box-shadow: 0 0 0 4px rgba(200, 148, 30, 0.16);
+          border-color: #0a55ab;
+          box-shadow: 0 0 0 4px rgba(10, 85, 171, 0.16);
         }
       `}</style>
     </div>
@@ -1370,18 +1380,18 @@ function EndingState({ tr }: { tr: any }) {
         <div className="flex justify-center mb-3">
           <span
             className="inline-block w-2.5 h-2.5 rounded-full animate-blink mx-1"
-            style={{ background: "#F5C518" }}
+            style={{ background: "#0a55ab" }}
           />
           <span
             className="inline-block w-2.5 h-2.5 rounded-full animate-blink mx-1"
-            style={{ background: "#F5C518", animationDelay: "200ms" }}
+            style={{ background: "#1582b3", animationDelay: "200ms" }}
           />
           <span
             className="inline-block w-2.5 h-2.5 rounded-full animate-blink mx-1"
-            style={{ background: "#F5C518", animationDelay: "400ms" }}
+            style={{ background: "#19b8a6", animationDelay: "400ms" }}
           />
         </div>
-        <p className="font-serif text-bca-ink text-[22px]">
+        <p className="font-sans font-extrabold text-life-heading text-[22px]">
           {tr.reportEyebrow}…
         </p>
       </div>
@@ -1401,17 +1411,17 @@ function TypingIndicator({ label }: { label: string }) {
             "radial-gradient(120% 120% at 30% 25%, #2E68C6 0%, #0F3C86 55%, #061B45 100%)",
         }}
       >
-        <span className="text-[10px] font-bold text-bca-accentGold">B</span>
+        <span className="text-[10px] font-bold text-life-amber">B</span>
       </div>
       <div className="bubble-bima inline-flex items-center gap-3">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-bca-shellMid animate-blink" />
+          <span className="w-2 h-2 rounded-full bg-life-blue animate-blink" />
           <span
-            className="w-2 h-2 rounded-full bg-bca-shellMid animate-blink"
+            className="w-2 h-2 rounded-full bg-life-blue animate-blink"
             style={{ animationDelay: "200ms" }}
           />
           <span
-            className="w-2 h-2 rounded-full bg-bca-shellMid animate-blink"
+            className="w-2 h-2 rounded-full bg-life-blue animate-blink"
             style={{ animationDelay: "400ms" }}
           />
         </span>
@@ -1567,7 +1577,7 @@ function VoicePicker({
       <select
         value={selectedName ?? ""}
         onChange={(e) => onSelect(e.target.value || null)}
-        className="text-[11px] font-medium px-2 py-1 rounded-full border border-bca-ink/15 bg-white/70 text-bca-ink hover:border-bca-shellMid/40 focus:outline-none focus:ring-1 focus:ring-bca-accentGold max-w-[180px] truncate"
+        className="text-[11px] font-medium px-2 py-1 rounded-full border border-life-blue/15 bg-white text-life-heading hover:border-life-blue/40 focus:outline-none focus:ring-1 focus:ring-life-blue max-w-[180px] truncate"
       >
         <option value="">{autoLabel}</option>
         {inLang.length > 0 && (
@@ -1593,7 +1603,7 @@ function VoicePicker({
         type="button"
         onClick={onTest}
         title={testLabel}
-        className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-bca-ink/15 bg-white/60 text-bca-ink/70 hover:border-bca-shellMid/50 hover:text-bca-shellMid transition"
+        className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-life-blue/15 bg-white/60 text-life-body hover:border-life-blue/50 hover:text-life-blue transition"
       >
         <PlayIcon />
       </button>

@@ -7,30 +7,33 @@ const config: Config = {
       colors: {
         // ── BCA Life brand system (from the official pitch-deck design spec) ──
         // Blue→teal signature, Plus Jakarta Sans, navy headings, amber accent.
+        // NOTE: tokens that must differ between light and dark are wired to CSS
+        // variables (see globals.css :root / html.dark). Pure brand accents that
+        // read fine on either canvas stay literal.
         life: {
-          blue: "#0a55ab",      // primary brand blue, CTAs, gradients
+          blue: "var(--life-blue)",      // primary brand blue, CTAs, gradients
           blueMid: "#1582b3",   // gradient mid
           blueLight: "#1786b1", // icon gradient end
           teal: "#19b8a6",      // gradient end / accent
           tealDark: "#19a594",  // advance phase
           deep: "#0a2240",      // darkest gradient start
-          heading: "#16386b",   // all heading text on light bg
-          sub: "#3f5a86",       // subheadings / overlines
-          body: "#5a6b82",      // body text
-          bodyLight: "#8a93a0", // captions / axis labels
+          heading: "var(--life-heading)",   // all heading text
+          sub: "var(--life-sub)",   // subheadings / overlines
+          body: "var(--life-body)",   // body text
+          bodyLight: "var(--life-bodyLight)", // captions / axis labels
           slate: "#9db8d6",     // muted accent / target bars
           amber: "#F9B233",     // accent dots, highlights, callouts
-          amberDark: "#7a4f00", // amber text on light
-          amberBg: "#fff8e6",   // amber tinted bg
-          card: "#F3F6F4",      // inner card / slide bg
-          page: "#E7EAEE",      // page chrome bg
-          item: "#f0f4f8",      // item row bg
-          blueBg: "#e8f0fb",    // dashed band / tinted bg
-          pos: "#1f9d57",       // positive stat
-          posBg: "#f0faf5",
-          neg: "#c0392b",       // negative stat
-          negBg: "#fdecea",
-          white: "#ffffff",
+          amberDark: "var(--life-amberDark)", // amber text on light
+          amberBg: "var(--life-amberBg)",   // amber tinted bg
+          card: "var(--life-card)",      // inner card / slide bg
+          page: "var(--life-page)",      // page chrome bg
+          item: "var(--life-item)",      // item row bg
+          blueBg: "var(--life-blueBg)",    // dashed band / tinted bg
+          pos: "var(--life-pos)",       // positive stat (themeable)
+          posBg: "var(--life-posBg)",
+          neg: "var(--life-neg)",       // negative stat (themeable)
+          negBg: "var(--life-negBg)",
+          white: "var(--life-surface)",
         },
         bca: {
           // Core BCA Life palette
@@ -49,13 +52,13 @@ const config: Config = {
           cream: "#FDFBF6",      // warm off-white background
           creamDeep: "#F4ECDA",  // warm card gradient end
           rule: "#E6DFD0",       // warm border color
-          // Neutrals
-          ink: "#0F2238",
+          // Neutrals (themeable — see globals.css :root / html.dark)
+          ink: "var(--bca-ink)",
           slate: "#374A63",
-          mute: "#6B7B8F",
-          line: "#E4ECF5",
-          paper: "#FFFFFF",
-          bg: "#F6F9FD",
+          mute: "var(--bca-mute)",
+          line: "var(--bca-line)",
+          paper: "var(--bca-paper)",
+          bg: "var(--bca-bg)",
           // Legacy aliases
           accent: "#0066B3",
           ink2: "#0F2238",

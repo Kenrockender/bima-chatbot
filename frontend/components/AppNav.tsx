@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { type Lang } from "@/lib/i18n";
 
 export type NavKey =
@@ -71,6 +72,9 @@ export function AppNav({
           ))}
         </div>
       )}
+
+      {/* Theme toggle (always visible, both breakpoints) */}
+      <ThemeToggle />
 
       {/* Desktop links */}
       <nav className="hidden md:flex items-center gap-0.5">

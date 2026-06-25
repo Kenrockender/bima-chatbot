@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BimaAvatar } from "@/components/BimaAvatar";
-import { AppNav } from "@/components/AppNav";
+import { PageHeader } from "@/components/PageHeader";
 import { authedFetch } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { t, type Lang } from "@/lib/i18n";
@@ -68,20 +67,20 @@ export default function ManagerPage() {
 
   if (checking) {
     return (
-      <main className="min-h-screen grid place-items-center bg-canvas">
-        <div className="h-8 w-8 rounded-full border-2 border-bca-gold border-t-transparent animate-spin" />
+      <main className="min-h-screen grid place-items-center bg-life">
+        <div className="h-8 w-8 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
       </main>
     );
   }
 
   if (!authed) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-canvas px-4">
-        <div className="surface-paper rounded-[18px] shadow-paper p-8 text-center max-w-md">
-          <h1 className="font-serif text-bca-ink text-[22px]" style={{ fontWeight: 500 }}>
+      <main className="min-h-screen flex items-center justify-center bg-life px-4">
+        <div className="life-card p-8 text-center max-w-md">
+          <h1 className="font-sans font-extrabold text-life-heading text-[22px]">
             {lang === "id" ? "Akses ditolak" : "Access denied"}
           </h1>
-          <p className="text-[13px] text-bca-mute mt-2">
+          <p className="text-[13px] text-life-body mt-2">
             {user
               ? `${user.email ?? ""} ${lang === "id" ? "bukan akun manajer/admin." : "is not a manager/admin account."}`
               : lang === "id"
@@ -89,7 +88,7 @@ export default function ManagerPage() {
                 : "Sign in with an admin account."}
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
-            <Link href="/" className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy">
+            <Link href="/" className="text-[12px] smallcaps text-life-body hover:text-life-blue">
               ← {tr.navTrain}
             </Link>
             {user && (
@@ -109,71 +108,94 @@ export default function ManagerPage() {
   const ov = data;
 
   return (
-    <main className="min-h-screen bg-canvas relative overflow-hidden">
-      <span className="watermark-b">B</span>
+    <main className="min-h-screen bg-life relative overflow-hidden">
+      <PageHeader
+        eyebrow={lang === "id" ? "Dashboard Manajer" : "Manager Dashboard"}
+        tagline="BCA Life · Team Cockpit"
+        lang={lang}
+        onLang={setLang}
+        current="manager"
+      />
 
-      <header className="relative z-40 border-b border-bca-rule/70 bg-bca-cream/70 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 pt-5 pb-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <BimaAvatar size={44} />
-              <div className="leading-tight">
-                <div className="flex items-baseline gap-2">
-                  <h1
-                    className="font-serif text-bca-ink text-[26px] leading-none tracking-tight"
-                    style={{ fontWeight: 500, letterSpacing: "-0.02em" }}
-                  >
-                    BIMA
-                  </h1>
-                  <span className="smallcaps text-bca-gold">
-                    {lang === "id" ? "Dashboard Manajer" : "Manager Dashboard"}
-                  </span>
-                </div>
-                <p className="text-[12.5px] text-bca-mute mt-1 tracking-wide">
-                  BCA Life · Team Cockpit
-                </p>
-              </div>
-            </div>
-            <AppNav lang={lang} onLang={setLang} current="manager" />
+      {/* Hero band */}
+      <section className="life-gradient relative overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{
+            width: 420, height: 420, right: -120, top: -160,
+            background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.16), rgba(255,255,255,0))",
+          }}
+        />
+        <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 pt-9 pb-14 animate-riseIn">
+          <div className="flex items-center gap-2.5 mb-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-white/90" />
+            <span className="h-1 w-10 rounded-full bg-white/70" />
+            <span className="ml-1 text-[11.5px] font-bold uppercase tracking-[0.13em] text-white/85">
+              {lang === "id" ? "Dashboard Manajer" : "Manager Dashboard"}
+            </span>
           </div>
-          <div className="gold-rule mt-4" />
+          <h2
+            className="font-sans font-extrabold text-white text-[30px] sm:text-[38px] leading-[1.08] tracking-tight"
+            style={{ letterSpacing: "-0.025em" }}
+          >
+            {lang === "id" ? "Performa tim Anda" : "Your team at a glance"}
+          </h2>
+          <p className="text-[14.5px] leading-[1.6] text-white/80 mt-2.5 max-w-[560px]">
+            {lang === "id"
+              ? "Pantau aktivitas latihan, rata-rata skor, dan area yang perlu difokuskan tim."
+              : "Track practice activity, average scores, and where the team needs focus."}
+          </p>
         </div>
-      </header>
+      </section>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-10 space-y-8">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-9 -mt-7 space-y-8">
         {/* KPI cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Kpi label={lang === "id" ? "Anggota aktif" : "Active members"} value={ov?.member_count ?? 0} />
-          <Kpi label={lang === "id" ? "Total sesi" : "Total sessions"} value={ov?.sessions_total ?? 0} />
+          <Kpi label={lang === "id" ? "Anggota aktif" : "Active members"} value={ov?.member_count ?? 0} accent="#0a55ab" />
+          <Kpi label={lang === "id" ? "Total sesi" : "Total sessions"} value={ov?.sessions_total ?? 0} accent="#1582b3" />
           <Kpi
             label={lang === "id" ? "Rata-rata tim" : "Team average"}
             value={avgOfAverages(ov?.team_averages)}
             suffix="/10"
+            accent="#19b8a6"
           />
           <Kpi
             label={lang === "id" ? "Perlu fokus" : "Needs focus"}
             text={ov?.team_weakest_dimension ? dimLabel(ov.team_weakest_dimension) : "—"}
+            accent="#F9B233"
           />
         </div>
 
         {/* Team averages per dimension */}
-        <section className="surface-paper rounded-[18px] shadow-paper p-6">
-          <div className="smallcaps text-bca-gold mb-4">
-            {lang === "id" ? "Rata-rata per dimensi" : "Average per dimension"}
+        <section className="life-card p-7">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="life-eyebrow">
+              {lang === "id" ? "Rata-rata per dimensi" : "Average per dimension"}
+            </span>
+            <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             {DIMS.map((d) => {
               const v = ov?.team_averages?.[d] ?? 0;
               return (
                 <div key={d} className="flex items-center gap-3">
-                  <div className="w-40 text-[12.5px] text-bca-ink shrink-0">{dimLabel(d)}</div>
-                  <div className="flex-1 h-2.5 rounded-full bg-bca-line overflow-hidden">
+                  <div className="w-40 text-[12.5px] text-life-heading/90 shrink-0">{dimLabel(d)}</div>
+                  <div className="flex-1 h-2.5 rounded-full bg-life-blue/[0.08] overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-bca-navy"
-                      style={{ width: `${Math.min(100, (v / 10) * 100)}%` }}
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, (v / 10) * 100)}%`,
+                        background:
+                          v >= 7
+                            ? "linear-gradient(90deg, #0a55ab, #19b8a6)"
+                            : v >= 4
+                            ? "linear-gradient(90deg, #1582b3, #19b8a6)"
+                            : "linear-gradient(90deg, #c0392b, #e8836f)",
+                      }}
                     />
                   </div>
-                  <div className="w-10 text-right text-[12.5px] font-semibold text-bca-navy">
+                  <div className="w-10 text-right text-[12.5px] font-bold text-life-heading tabular-nums">
                     {v.toFixed(1)}
                   </div>
                 </div>
@@ -183,13 +205,16 @@ export default function ManagerPage() {
         </section>
 
         {/* Member table */}
-        <section className="surface-paper rounded-[18px] shadow-paper p-6 overflow-x-auto">
-          <div className="smallcaps text-bca-gold mb-4">
-            {lang === "id" ? "Anggota tim" : "Team members"}
+        <section className="life-card p-7 overflow-x-auto">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="life-eyebrow">
+              {lang === "id" ? "Anggota tim" : "Team members"}
+            </span>
+            <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
           </div>
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="text-bca-mute text-[11px] uppercase tracking-wide text-left border-b border-bca-rule">
+              <tr className="text-life-bodyLight text-[11px] uppercase tracking-wide text-left border-b border-life-blue/12">
                 <th className="py-2 pr-3 font-semibold">FA</th>
                 <th className="py-2 px-3 font-semibold">Level</th>
                 <th className="py-2 px-3 font-semibold">XP</th>
@@ -199,10 +224,10 @@ export default function ManagerPage() {
             </thead>
             <tbody>
               {(ov?.members ?? []).map((m) => (
-                <tr key={m.uid} className="border-b border-bca-rule/60">
+                <tr key={m.uid} className="border-b border-life-blue/[0.08]">
                   <td className="py-2.5 pr-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-full overflow-hidden border border-bca-rule bg-bca-navy grid place-items-center shrink-0">
+                      <div className="h-8 w-8 rounded-full overflow-hidden grid place-items-center shrink-0 life-icon">
                         {m.picture ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={m.picture} alt="" className="h-full w-full object-cover" />
@@ -213,22 +238,22 @@ export default function ManagerPage() {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-semibold text-bca-ink truncate">{m.name}</div>
-                        <div className="text-[11px] text-bca-mute truncate">{m.email}</div>
+                        <div className="font-semibold text-life-heading truncate">{m.name}</div>
+                        <div className="text-[11px] text-life-body truncate">{m.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 text-bca-ink">{m.level}</td>
-                  <td className="py-2.5 px-3 font-semibold text-bca-navy">{m.total_xp}</td>
-                  <td className="py-2.5 px-3 text-bca-ink">{m.total_sessions}</td>
-                  <td className="py-2.5 px-3 text-bca-mute">
+                  <td className="py-2.5 px-3 text-life-heading">{m.level}</td>
+                  <td className="py-2.5 px-3 font-bold text-life-blue">{m.total_xp}</td>
+                  <td className="py-2.5 px-3 text-life-heading">{m.total_sessions}</td>
+                  <td className="py-2.5 px-3 text-life-body">
                     {m.weakest_dimension ? dimLabel(m.weakest_dimension) : "—"}
                   </td>
                 </tr>
               ))}
               {(ov?.members ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-bca-mute">
+                  <td colSpan={5} className="py-8 text-center text-life-body">
                     {lang === "id" ? "Belum ada data latihan." : "No training data yet."}
                   </td>
                 </tr>
@@ -253,18 +278,27 @@ function Kpi({
   value,
   text,
   suffix,
+  accent,
 }: {
   label: string;
   value?: number;
   text?: string;
   suffix?: string;
+  accent?: string;
 }) {
   return (
-    <div className="surface-paper rounded-[16px] shadow-soft p-4">
-      <div className="text-[11px] uppercase tracking-wide text-bca-mute font-semibold">{label}</div>
-      <div className="mt-1 font-serif text-bca-ink text-[26px]" style={{ fontWeight: 500 }}>
+    <div className="life-card p-4 relative overflow-hidden">
+      {accent && (
+        <span
+          aria-hidden
+          className="absolute top-0 left-0 h-1 w-12 rounded-br"
+          style={{ background: accent }}
+        />
+      )}
+      <div className="text-[11px] uppercase tracking-wide text-life-body font-semibold">{label}</div>
+      <div className="mt-1.5 font-sans font-extrabold text-life-heading text-[26px] leading-none" style={{ letterSpacing: "-0.02em" }}>
         {text ?? value}
-        {suffix && <span className="text-[14px] text-bca-mute font-sans">{suffix}</span>}
+        {suffix && <span className="text-[14px] text-life-body font-normal">{suffix}</span>}
       </div>
     </div>
   );

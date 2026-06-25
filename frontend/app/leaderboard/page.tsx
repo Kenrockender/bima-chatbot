@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BimaAvatar } from "@/components/BimaAvatar";
-import { AppNav } from "@/components/AppNav";
+import { PageHeader } from "@/components/PageHeader";
 import { authedFetch } from "@/lib/api";
 import { t, type Lang } from "@/lib/i18n";
 
@@ -42,60 +41,62 @@ export default function LeaderboardPage() {
   const meRanked = me && entries.some((e) => e.is_me);
 
   return (
-    <main className="min-h-screen bg-canvas relative overflow-hidden">
-      <span className="watermark-b">B</span>
+    <main className="min-h-screen bg-life relative overflow-hidden">
+      <PageHeader
+        eyebrow={tr.navLeaderboard}
+        tagline="BCA Life · Sales Arena"
+        lang={lang}
+        onLang={setLang}
+        current="leaderboard"
+      />
 
-      <header className="relative z-40 border-b border-bca-rule/70 bg-bca-cream/70 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 pt-5 pb-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <BimaAvatar size={44} />
-              <div className="leading-tight">
-                <div className="flex items-baseline gap-2">
-                  <h1
-                    className="font-serif text-bca-ink text-[26px] leading-none tracking-tight"
-                    style={{ fontWeight: 500, letterSpacing: "-0.02em" }}
-                  >
-                    BIMA
-                  </h1>
-                  <span className="smallcaps text-bca-gold">{tr.navLeaderboard}</span>
-                </div>
-                <p className="text-[12.5px] text-bca-mute mt-1 tracking-wide">
-                  BCA Life · Sales Arena
-                </p>
-              </div>
-            </div>
-            <AppNav lang={lang} onLang={setLang} current="leaderboard" />
-          </div>
-          <div className="gold-rule mt-4" />
-        </div>
-      </header>
-
-      <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8 py-10">
-        <div className="animate-riseIn mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="block w-7 h-px bg-bca-gold" />
-            <span className="smallcaps text-bca-gold">{tr.navLeaderboard}</span>
+      {/* Hero band — blue→teal gradient with the title */}
+      <section className="life-gradient relative overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{
+            width: 420, height: 420, right: -120, top: -160,
+            background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.16), rgba(255,255,255,0))",
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{
+            width: 280, height: 280, left: -90, bottom: -150,
+            background: "radial-gradient(circle at 50% 50%, rgba(25,184,166,0.35), rgba(25,184,166,0))",
+          }}
+        />
+        <div className="relative z-10 max-w-3xl mx-auto px-6 lg:px-8 pt-9 pb-14 animate-riseIn">
+          <div className="flex items-center gap-2.5 mb-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-white/90" />
+            <span className="h-1 w-10 rounded-full bg-white/70" />
+            <span className="ml-1 text-[11.5px] font-bold uppercase tracking-[0.13em] text-white/85">
+              {tr.navLeaderboard}
+            </span>
           </div>
           <h2
-            className="font-serif text-bca-ink text-[30px] tracking-tight"
-            style={{ fontWeight: 500, letterSpacing: "-0.02em" }}
+            className="font-sans font-extrabold text-white text-[30px] sm:text-[38px] leading-[1.08] tracking-tight"
+            style={{ letterSpacing: "-0.025em" }}
           >
             {lang === "id" ? "Papan peringkat tim" : "Team leaderboard"}
           </h2>
-          <p className="text-[13.5px] text-bca-mute mt-1">
+          <p className="text-[14.5px] leading-[1.6] text-white/80 mt-2.5 max-w-[560px]">
             {lang === "id"
               ? "Diurutkan dari total XP. Selesaikan sesi latihan untuk naik peringkat."
               : "Ranked by total XP. Finish practice sessions to climb."}
           </p>
         </div>
+      </section>
 
+      <div className="relative z-10 max-w-3xl mx-auto px-6 lg:px-8 py-9 -mt-7">
         {loading ? (
           <div className="grid place-items-center py-20">
-            <div className="h-7 w-7 rounded-full border-2 border-bca-gold border-t-transparent animate-spin" />
+            <div className="h-7 w-7 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
           </div>
         ) : entries.length === 0 ? (
-          <div className="surface-paper rounded-[18px] shadow-paper p-10 text-center text-bca-mute">
+          <div className="life-card p-10 text-center text-life-body">
             {lang === "id"
               ? "Belum ada yang menyelesaikan sesi. Jadilah yang pertama!"
               : "No one has finished a session yet. Be the first!"}
@@ -108,7 +109,7 @@ export default function LeaderboardPage() {
 
             {me && !meRanked && (
               <>
-                <div className="text-center text-[11px] text-bca-mute py-1">···</div>
+                <div className="text-center text-[11px] text-life-bodyLight py-1">···</div>
                 <Row e={me} lang={lang} />
               </>
             )}
@@ -125,18 +126,18 @@ function Row({ e, lang }: { e: Entry; lang: Lang }) {
     <div
       className={`flex items-center gap-4 rounded-[16px] px-4 py-3 border transition ${
         e.is_me
-          ? "border-bca-gold bg-bca-cream shadow-card"
-          : "border-bca-rule bg-bca-paper hover:shadow-soft"
+          ? "border-life-amber bg-life-amberBg shadow-lifeBlue"
+          : "border-life-blue/12 bg-white hover:shadow-life"
       }`}
     >
       <div
         className={`w-9 text-center font-bold ${
-          top3 ? "text-[20px]" : "text-[15px] text-bca-mute"
+          top3 ? "text-[20px]" : "text-[15px] text-life-bodyLight"
         }`}
       >
         {top3 ? MEDAL[e.rank - 1] : e.rank}
       </div>
-      <div className="h-10 w-10 rounded-full overflow-hidden border border-bca-rule bg-bca-navy grid place-items-center shrink-0">
+      <div className="h-10 w-10 rounded-full overflow-hidden grid place-items-center shrink-0 life-icon">
         {e.picture ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={e.picture} alt="" className="h-full w-full object-cover" />
@@ -147,23 +148,22 @@ function Row({ e, lang }: { e: Entry; lang: Lang }) {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[14.5px] font-semibold text-bca-ink truncate">
+        <div className="text-[14.5px] font-semibold text-life-heading truncate">
           {e.name}
           {e.is_me && (
-            <span className="ml-2 text-[10.5px] uppercase tracking-wide text-bca-gold font-bold">
+            <span className="ml-2 text-[10.5px] uppercase tracking-wide text-life-blue font-bold">
               {lang === "id" ? "Kamu" : "You"}
             </span>
           )}
         </div>
-        <div className="text-[11.5px] text-bca-mute flex items-center gap-1.5 flex-wrap">
+        <div className="text-[11.5px] text-life-body flex items-center gap-1.5 flex-wrap">
           <span>
             {lang === "id" ? "Level" : "Level"} {e.level} · {e.total_sessions}{" "}
             {lang === "id" ? "sesi" : "sessions"}
           </span>
           {e.title && (
             <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.1em] text-bca-gold"
-              style={{ background: "#C8941E18" }}
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.1em] text-life-amberDark bg-life-amber/15"
               title={`${lang === "id" ? "Dimensi terkuat" : "Strongest skill"} · ${e.title.score}/10`}
             >
               ★ {e.title.label}
@@ -172,8 +172,8 @@ function Row({ e, lang }: { e: Entry; lang: Lang }) {
         </div>
       </div>
       <div className="text-right">
-        <div className="text-[16px] font-bold text-bca-navy">{e.total_xp}</div>
-        <div className="text-[10px] uppercase tracking-[0.14em] text-bca-mute font-semibold">
+        <div className="text-[16px] font-bold text-life-blue">{e.total_xp}</div>
+        <div className="text-[10px] uppercase tracking-[0.14em] text-life-bodyLight font-semibold">
           XP
         </div>
       </div>

@@ -62,6 +62,47 @@ def list_ready_products() -> List[Dict]:
     return [{"id": s["id"], "name": s.get("name", "")} for s in db.list_ready_sources()]
 
 
+def _pretty_name(name: str) -> str:
+    """Turn a raw seed/file display name into something FA-friendly for a dropdown."""
+    stem = os.path.splitext(name)[0]
+    return re.sub(r"\s{2,}", " ", stem).strip()
+
+
+def list_competitor_sources() -> List[Dict]:
+    """Ready competitor docs (insurer != BCA Life) for the comparison dropdown,
+    grouped-friendly: each carries its insurer so the UI can section them."""
+    out: List[Dict] = []
+    for s in db.list_ready_sources():
+        insurer = (s.get("insurer") or "").strip()
+        if not insurer or insurer == rag.HOME_INSURER:
+            continue
+        out.append({
+            "id": s["id"],
+            "name": s.get("name", ""),
+            "label": _pretty_name(s.get("name", "")),
+            "insurer": insurer,
+        })
+    out.sort(key=lambda x: (x["insurer"].lower(), x["label"].lower()))
+    return out
+
+
+def _text_for_source(source_id: str = "", name: str = "") -> str:
+    """Best available text for a product: prefer the condensed .md fact sheet,
+    fall back to the cached/extracted full document text."""
+    if name:
+        sheet = _factsheet_for(name)
+        if sheet:
+            return sheet
+    if source_id:
+        doc = rag.get_document(source_id)
+        if doc:
+            sheet = _factsheet_for(doc.get("name", ""))
+            if sheet:
+                return sheet
+            return (doc.get("text") or "").strip()
+    return ""
+
+
 # -----------------------------------------------------------------------------
 # Customer narrative
 # -----------------------------------------------------------------------------
@@ -316,3 +357,151 @@ Berikan rekomendasi JSON sesuai format yang diminta."""
         "sales_script": norm_script,
         "profile_echo": profile,
     }
+
+
+# -----------------------------------------------------------------------------
+# Head-to-head / complementary comparison vs a single competitor document
+# -----------------------------------------------------------------------------
+
+COMPARE_SYSTEM = """Kamu senior product advisor BCA Life yang menyiapkan bahan untuk Financial Advisor (FA) BCA Life membandingkan SATU produk BCA Life dengan SATU produk kompetitor, berdasarkan dokumen (RIPLAY/brosur/fact sheet) yang diberikan.
+
+Ada DUA skenario:
+1. "head_to_head" — kedua produk JENIS yang sama / bersaing langsung (mis. dua asuransi jiwa dwiguna). Tugas: bandingkan spek, ilustrasi, dan manfaat secara apple-to-apple, lalu tonjolkan di mana BCA Life unggul.
+2. "complementary" — kedua produk BEDA jenis (mis. STAR = penyakit kritis vs asuransi kesehatan kompetitor). Tugas: jelaskan bahwa keduanya tidak menggantikan satu sama lain; tonjolkan keunggulan BCA Life DAN bagaimana produk BCA Life MELENGKAPI proteksi yang sudah dimiliki nasabah, serta celah yang ditinggalkan produk kompetitor.
+
+Tentukan "relationship" sendiri dari kedua dokumen KECUALI diberi MODE eksplisit (head_to_head / complementary) — kalau ada MODE, ikuti itu.
+
+Bersikap JUJUR soal kelebihan kompetitor, tapi framing tetap pro-BCA Life (kamu membantu FA BCA Life menang). Hanya gunakan fakta dari dokumen; jika sebuah angka tidak ada di dokumen, tulis "—" dan JANGAN mengarang.
+
+OUTPUT WAJIB JSON valid, struktur PERSIS (tanpa teks lain, tanpa markdown fence):
+{
+  "relationship": "head_to_head" | "complementary",
+  "relationship_reason": "<1 kalimat kenapa>",
+  "bca": {"name": "<nama produk BCA Life>", "type": "<jenis>", "one_liner": "<positioning 1 kalimat>"},
+  "competitor": {"name": "<nama produk kompetitor>", "provider": "<penanggung>", "type": "<jenis>", "one_liner": "<positioning 1 kalimat>"},
+  "spec_rows": [
+    {"dimension": "<aspek, mis. Jenis, Mata uang, Masa Pertanggungan, Premi, UP, Manfaat utama>", "bca": "<nilai BCA Life>", "competitor": "<nilai kompetitor>", "advantage": "bca" | "competitor" | "tie"}
+  ],
+  "bca_advantages": ["<keunggulan konkret BCA Life 1>", "..."],
+  "competitor_advantages": ["<kelebihan jujur kompetitor 1>", "..."],
+  "complement": {
+    "narrative": "<kosong '' kalau head_to_head; kalau complementary: 2-3 kalimat bagaimana BCA Life melengkapi>",
+    "how_bca_completes": ["<cara BCA Life melengkapi proteksi nasabah>", "..."],
+    "gaps_competitor_leaves": ["<celah/risiko yang TIDAK ditutup produk kompetitor>", "..."]
+  },
+  "talking_points": ["<kalimat siap-pakai untuk FA saat menjelaskan ke nasabah>", "..."],
+  "summary": "<rekomendasi ringkas 1-2 kalimat untuk FA>"
+}
+
+Aturan:
+- spec_rows: 5-8 baris paling relevan; untuk head_to_head usahakan apple-to-apple, untuk complementary boleh menyoroti perbedaan cakupan.
+- bca_advantages: 3-5 poin. competitor_advantages: 1-4 poin (jujur).
+- Kalau head_to_head: complement.narrative = "" dan boleh kosongkan how_bca_completes & gaps_competitor_leaves.
+- Kalau complementary: WAJIB isi complement dengan baik.
+- Bahasa Indonesia, kalimat lengkap. JANGAN output di luar JSON."""
+
+
+def _norm_compare(parsed: Dict) -> Dict:
+    def _as_list(v):
+        return [str(x) for x in v] if isinstance(v, list) else []
+
+    rel = parsed.get("relationship")
+    if rel not in ("head_to_head", "complementary"):
+        rel = "head_to_head"
+
+    def _side(d, default_provider=""):
+        d = d if isinstance(d, dict) else {}
+        return {
+            "name": d.get("name", "—"),
+            "provider": d.get("provider", default_provider),
+            "type": d.get("type", "—"),
+            "one_liner": d.get("one_liner", ""),
+        }
+
+    rows = []
+    for r in (parsed.get("spec_rows") or []):
+        if not isinstance(r, dict):
+            continue
+        adv = r.get("advantage")
+        if adv not in ("bca", "competitor", "tie"):
+            adv = "tie"
+        rows.append({
+            "dimension": r.get("dimension", "—"),
+            "bca": r.get("bca", "—"),
+            "competitor": r.get("competitor", "—"),
+            "advantage": adv,
+        })
+
+    comp = parsed.get("complement") if isinstance(parsed.get("complement"), dict) else {}
+    return {
+        "relationship": rel,
+        "relationship_reason": parsed.get("relationship_reason", ""),
+        "bca": _side(parsed.get("bca"), "BCA Life"),
+        "competitor": _side(parsed.get("competitor")),
+        "spec_rows": rows,
+        "bca_advantages": _as_list(parsed.get("bca_advantages")),
+        "competitor_advantages": _as_list(parsed.get("competitor_advantages")),
+        "complement": {
+            "narrative": comp.get("narrative", "") if isinstance(comp, dict) else "",
+            "how_bca_completes": _as_list(comp.get("how_bca_completes")) if isinstance(comp, dict) else [],
+            "gaps_competitor_leaves": _as_list(comp.get("gaps_competitor_leaves")) if isinstance(comp, dict) else [],
+        },
+        "talking_points": _as_list(parsed.get("talking_points")),
+        "summary": parsed.get("summary", ""),
+    }
+
+
+def compare(
+    competitor_id: str,
+    bca_name: str = "",
+    bca_stem: str = "",
+    mode: str = "auto",
+) -> Dict:
+    """Compare one BCA Life product against one competitor document.
+
+    The BCA side is resolved from its condensed fact sheet (by display name or
+    file stem); the competitor side from its ingested source id. Mode "auto"
+    lets the model decide head_to_head vs complementary; otherwise it is forced.
+    """
+    bca_text = _text_for_source(name=bca_name) or _text_for_source(name=bca_stem)
+    comp_doc = rag.get_document(competitor_id)
+    if not comp_doc:
+        return {"error": "Dokumen kompetitor tidak ditemukan. Pastikan sudah di-ingest."}
+    comp_text = _text_for_source(source_id=competitor_id, name=comp_doc.get("name", ""))
+    if not bca_text:
+        return {"error": "Fact sheet produk BCA Life tidak ditemukan."}
+    if not comp_text:
+        return {"error": "Teks dokumen kompetitor kosong."}
+
+    mode_line = ""
+    if mode in ("head_to_head", "complementary"):
+        mode_line = f"\nMODE WAJIB: {mode} (abaikan deteksi otomatis, gunakan skenario ini)."
+
+    user_msg = (
+        f"PRODUK BCA LIFE (PRODUK KAMI):\n{bca_text}\n\n"
+        f"PRODUK KOMPETITOR ({comp_doc.get('insurer', '-')}):\n{comp_text}\n"
+        f"{mode_line}\n\nBuatkan perbandingan JSON sesuai format yang diminta."
+    )
+
+    try:
+        out = rag.get_strict_llm().invoke([
+            SystemMessage(content=COMPARE_SYSTEM),
+            HumanMessage(content=user_msg),
+        ])
+        raw = (out.content or "").strip()
+    except Exception as e:
+        log.exception("compare LLM failed: %s", e)
+        return {"error": str(e)}
+
+    parsed = _extract_json(raw)
+    if not parsed:
+        log.warning("compare JSON parse failed; raw=%r", raw[:300])
+        return {"error": "Gagal parsing output AI. Coba ulangi.", "raw": raw[:600]}
+
+    result = _norm_compare(parsed)
+    result["competitor_source"] = {
+        "id": competitor_id,
+        "insurer": comp_doc.get("insurer", ""),
+        "name": comp_doc.get("name", ""),
+    }
+    return result

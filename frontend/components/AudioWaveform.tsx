@@ -69,7 +69,7 @@ export function AudioWaveform({ active, barCount = 24 }: { active: boolean; barC
       {levels.map((v, i) => (
         <div
           key={i}
-          className="w-[3px] rounded-full bg-bca-accentGold/80"
+          className="w-[3px] rounded-full bg-life-blue/80"
           style={{
             height: `${Math.max(3, v * 28)}px`,
             transition: "height 80ms ease-out",

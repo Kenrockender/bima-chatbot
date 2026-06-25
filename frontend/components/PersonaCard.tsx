@@ -39,8 +39,8 @@ export function PersonaCard({
       aria-pressed={isActive}
       className={`group w-full text-left flex items-center gap-2.5 px-2.5 py-2 rounded-xl border transition ${
         isActive
-          ? "bg-white/10 border-bca-accentGold/70"
-          : "bg-transparent border-transparent hover:bg-white/5"
+          ? "bg-life-blueBg border-life-blue/50"
+          : "bg-transparent border-transparent hover:bg-life-blue/5"
       }`}
     >
       <div
@@ -54,14 +54,14 @@ export function PersonaCard({
           fontSize: 14,
           fontStyle: "italic",
           boxShadow: isActive
-            ? "0 0 0 2px rgba(245,197,24,0.7)"
+            ? "0 0 0 2px rgba(10,85,171,0.45)"
             : "inset 0 1px 0 rgba(255,255,255,0.25)",
         }}
       >
         {persona.name.charAt(0)}
       </div>
 
-      <span className="flex-1 min-w-0 text-[13px] font-semibold text-white/90 truncate">
+      <span className="flex-1 min-w-0 text-[13px] font-semibold text-life-heading truncate">
         {persona.name}
       </span>
 

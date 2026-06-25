@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel, Field, model_validator
 
@@ -76,3 +76,81 @@ class RecommendationResponse(BaseModel):
 @router.post("/recommend", response_model=RecommendationResponse)
 def recommend(profile: CustomerProfile):
     return recommender.recommend(profile.model_dump(exclude_none=False))
+
+
+# ---------------------------------------------------------------------------
+# Single-competitor comparison (head-to-head / complementary)
+# ---------------------------------------------------------------------------
+
+
+class CompetitorSource(BaseModel):
+    id: str
+    name: str
+    label: str
+    insurer: str
+
+
+@router.get("/competitors", response_model=List[CompetitorSource])
+def competitors():
+    """Ingested competitor documents (RIPLAY/brosur) available to compare."""
+    return recommender.list_competitor_sources()
+
+
+class CompareRequest(BaseModel):
+    competitor_id: str
+    # The BCA Life side: pass its fact-sheet display name and/or file stem.
+    bca_name: Optional[str] = None
+    bca_stem: Optional[str] = None
+    mode: Literal["auto", "head_to_head", "complementary"] = "auto"
+
+    @model_validator(mode="after")
+    def need_bca(self):
+        if not (self.bca_name or self.bca_stem):
+            raise ValueError("bca_name or bca_stem is required")
+        return self
+
+
+class SpecRow(BaseModel):
+    dimension: str
+    bca: str
+    competitor: str
+    advantage: Literal["bca", "competitor", "tie"]
+
+
+class CompareSide(BaseModel):
+    name: str
+    provider: str = ""
+    type: str = ""
+    one_liner: str = ""
+
+
+class ComplementInfo(BaseModel):
+    narrative: str = ""
+    how_bca_completes: List[str] = []
+    gaps_competitor_leaves: List[str] = []
+
+
+class CompareResponse(BaseModel):
+    relationship: Optional[Literal["head_to_head", "complementary"]] = None
+    relationship_reason: str = ""
+    bca: Optional[CompareSide] = None
+    competitor: Optional[CompareSide] = None
+    spec_rows: List[SpecRow] = []
+    bca_advantages: List[str] = []
+    competitor_advantages: List[str] = []
+    complement: Optional[ComplementInfo] = None
+    talking_points: List[str] = []
+    summary: str = ""
+    competitor_source: Optional[dict] = None
+    error: Optional[str] = None
+    raw: Optional[str] = None
+
+
+@router.post("/compare", response_model=CompareResponse)
+def compare(req: CompareRequest):
+    return recommender.compare(
+        competitor_id=req.competitor_id,
+        bca_name=req.bca_name or "",
+        bca_stem=req.bca_stem or "",
+        mode=req.mode,
+    )

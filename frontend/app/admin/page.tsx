@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { BimaAvatar } from "@/components/BimaAvatar";
-import { AppNav } from "@/components/AppNav";
+import { PageHeader } from "@/components/PageHeader";
 import { authedFetch } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -140,30 +140,29 @@ export default function AdminPage() {
   // ─────────────────────────── ACCESS GATE ───────────────────────────
   if (checking) {
     return (
-      <main className="min-h-screen grid place-items-center bg-canvas">
-        <div className="h-8 w-8 rounded-full border-2 border-bca-gold border-t-transparent animate-spin" />
+      <main className="min-h-screen grid place-items-center bg-life">
+        <div className="h-8 w-8 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
       </main>
     );
   }
 
   if (!authed) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-canvas relative overflow-hidden px-4">
-        <span className="watermark-b">B</span>
-        <div className="relative z-10 w-full max-w-md surface-paper rounded-[18px] shadow-paper p-8 animate-riseIn text-center">
+      <main className="min-h-screen flex items-center justify-center bg-life relative overflow-hidden px-4">
+        <div className="relative z-10 w-full max-w-md life-card p-8 animate-riseIn text-center overflow-hidden">
           <span
             aria-hidden
-            className="absolute top-0 left-0 h-1 w-16 rounded-tl-[18px]"
-            style={{ background: "#C8941E" }}
+            className="absolute top-0 left-0 right-0 h-1"
+            style={{ background: "linear-gradient(90deg, #0a55ab, #19b8a6)" }}
           />
           <div className="flex items-center justify-center gap-3.5 mb-3">
             <BimaAvatar size={44} />
-            <span className="smallcaps text-bca-gold">Console</span>
+            <span className="life-eyebrow">Console</span>
           </div>
-          <h1 className="font-serif text-bca-ink text-[22px]" style={{ fontWeight: 500 }}>
+          <h1 className="font-sans font-extrabold text-life-heading text-[22px]">
             Akses ditolak
           </h1>
-          <p className="text-[13px] text-bca-mute mt-2">
+          <p className="text-[13px] text-life-body mt-2">
             {user
               ? `Akun ${user.email ?? ""} tidak punya akses admin.`
               : "Kamu perlu masuk dengan akun admin."}
@@ -171,7 +170,7 @@ export default function AdminPage() {
           <div className="mt-6 flex items-center justify-center gap-3">
             <Link
               href="/"
-              className="text-[12px] smallcaps text-bca-mute hover:text-bca-navy transition"
+              className="text-[12px] smallcaps text-life-body hover:text-life-blue transition"
             >
               ← Kembali ke chat
             </Link>
@@ -191,57 +190,47 @@ export default function AdminPage() {
 
   // ─────────────────────────── DASHBOARD ───────────────────────────
   return (
-    <main className="min-h-screen bg-canvas relative overflow-hidden">
-      <span className="watermark-b">B</span>
+    <main className="min-h-screen bg-life relative overflow-hidden">
+      <PageHeader
+        eyebrow="Console"
+        tagline="Knowledge base management"
+        lang="en"
+        current="admin"
+      />
 
-      {/* Header */}
-      <header className="relative z-40 border-b border-bca-rule/70 bg-bca-cream/70 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 pt-5 pb-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <BimaAvatar size={40} />
-              <div className="leading-tight">
-                <div className="flex items-baseline gap-2">
-                  <h1
-                    className="font-serif text-bca-ink text-[22px]"
-                    style={{ fontWeight: 500, letterSpacing: "-0.02em" }}
-                  >
-                    BIMA
-                  </h1>
-                  <span className="smallcaps text-bca-gold">Console</span>
-                </div>
-                <p className="text-[12px] text-bca-mute mt-0.5 tracking-wide">
-                  Knowledge base management
-                </p>
-              </div>
-            </div>
-            <AppNav lang="en" current="admin" />
-          </div>
-          <div className="gold-rule mt-4" />
-        </div>
-      </header>
-
-      <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-10 space-y-10">
-        {/* Eyebrow + Title */}
-        <div className="animate-riseIn">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="block w-7 h-px bg-bca-gold" />
-            <span className="smallcaps text-bca-gold">
+      {/* Hero band */}
+      <section className="life-gradient relative overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{
+            width: 460, height: 460, right: -140, top: -180,
+            background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.16), rgba(255,255,255,0))",
+          }}
+        />
+        <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 pt-9 pb-14 animate-riseIn">
+          <div className="flex items-center gap-2.5 mb-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-white/90" />
+            <span className="h-1 w-10 rounded-full bg-white/70" />
+            <span className="ml-1 text-[11.5px] font-bold uppercase tracking-[0.13em] text-white/85">
               Knowledge base
             </span>
           </div>
           <h2
-            className="font-serif text-bca-ink text-[36px] sm:text-[44px] leading-[1.1] tracking-tight"
-            style={{ fontWeight: 400, letterSpacing: "-0.025em" }}
+            className="font-sans font-extrabold text-white text-[32px] sm:text-[42px] leading-[1.08] tracking-tight"
+            style={{ letterSpacing: "-0.025em" }}
           >
             Curate what BIMA knows.
           </h2>
-          <p className="mt-3 text-[15px] text-bca-ink/70 max-w-2xl leading-relaxed">
+          <p className="mt-2.5 text-[14.5px] leading-[1.6] text-white/80 max-w-[620px]">
             Upload approved BCA Life documents or link to internal pages. BIMA
             answers staff questions strictly from this collection — nothing
             else.
           </p>
         </div>
+      </section>
+
+      <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-9 -mt-7 space-y-10">
 
         {/* Upload + URL */}
         <section className="grid md:grid-cols-2 gap-5 animate-riseIn" style={{ animationDelay: "120ms" }}>
@@ -258,48 +247,35 @@ export default function AdminPage() {
               uploadFiles(e.dataTransfer.files);
             }}
             onClick={() => fileInput.current?.click()}
-            className={`relative surface-paper rounded-[18px] p-7 cursor-pointer transition-all shadow-paper overflow-hidden ${
-              drag ? "ring-4 ring-bca-gold/30 border-bca-gold" : "hover:border-bca-gold"
+            className={`relative life-card p-7 cursor-pointer transition-all overflow-hidden ${
+              drag ? "ring-4 ring-life-blue/20" : "hover:shadow-lifeHover"
             }`}
             style={{
               borderStyle: drag ? "solid" : "dashed",
               borderWidth: "1.5px",
-              borderColor: drag ? "#C8941E" : "#E6DFD0",
+              borderColor: drag ? "#0a55ab" : "#cdd9e6",
             }}
           >
             <span
               aria-hidden
               className="absolute top-0 left-0 h-1 w-12"
-              style={{ background: "#C8941E" }}
+              style={{ background: "linear-gradient(90deg, #0a55ab, #19b8a6)" }}
             />
             <div className="flex items-center gap-2 mb-3">
-              <span className="smallcaps text-bca-gold">PDF / PPTX upload</span>
-              <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+              <span className="life-eyebrow">PDF / PPTX upload</span>
+              <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
             </div>
             <div className="flex items-start gap-4">
-              <div
-                className="flex items-center justify-center rounded-[14px] shrink-0"
-                style={{
-                  width: 48,
-                  height: 48,
-                  background: "linear-gradient(150deg, #FDFBF6 0%, #F4ECDA 100%)",
-                  border: "1px solid #E6DFD0",
-                }}
-              >
-                <span
-                  className="font-serif text-bca-navy text-2xl"
-                  style={{ fontStyle: "italic" }}
-                >
-                  ↑
-                </span>
+              <div className="life-icon shrink-0" style={{ width: 48, height: 48 }}>
+                <span className="text-white text-2xl font-bold">↑</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-serif text-bca-ink text-[18px] leading-snug">
+                <p className="font-sans font-bold text-life-heading text-[17px] leading-snug">
                   {uploading
                     ? "Uploading…"
                     : "Drop PDF or PPTX files here, or click to browse."}
                 </p>
-                <p className="text-[12.5px] text-bca-mute mt-1">
+                <p className="text-[12.5px] text-life-body mt-1">
                   Multiple files supported · processed in the background
                 </p>
               </div>
@@ -317,18 +293,18 @@ export default function AdminPage() {
           {/* URL form */}
           <form
             onSubmit={addUrl}
-            className="relative surface-paper rounded-[18px] p-7 shadow-paper overflow-hidden"
+            className="relative life-card p-7 overflow-hidden"
           >
             <span
               aria-hidden
               className="absolute top-0 left-0 h-1 w-12"
-              style={{ background: "#003D7A" }}
+              style={{ background: "#0a55ab" }}
             />
             <div className="flex items-center gap-2 mb-3">
-              <span className="smallcaps text-bca-navy">Add URL</span>
-              <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+              <span className="life-eyebrow">Add URL</span>
+              <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
             </div>
-            <p className="font-serif text-bca-ink text-[18px] leading-snug mb-4">
+            <p className="font-sans font-bold text-life-heading text-[17px] leading-snug mb-4">
               Index a public or internal page.
             </p>
             <div className="space-y-2.5">
@@ -338,23 +314,20 @@ export default function AdminPage() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://www.bcalife.co.id/produk/…"
-                className="w-full rounded-[12px] border border-bca-rule bg-bca-paper px-4 py-2.5 text-[14px] focus-gold transition placeholder:text-bca-mute"
+                className="w-full rounded-[12px] border border-life-blue/15 bg-white px-4 py-2.5 text-[14px] focus-yellow transition placeholder:text-life-bodyLight"
               />
               <input
                 type="text"
                 value={urlName}
                 onChange={(e) => setUrlName(e.target.value)}
                 placeholder="Display name (optional)"
-                className="w-full rounded-[12px] border border-bca-rule bg-bca-paper px-4 py-2.5 text-[14px] focus-gold transition placeholder:text-bca-mute"
+                className="w-full rounded-[12px] border border-life-blue/15 bg-white px-4 py-2.5 text-[14px] focus-yellow transition placeholder:text-life-bodyLight"
               />
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 bg-bca-navy hover:bg-bca-ink transition text-bca-cream text-[14px] font-medium rounded-full py-2.5 shadow-soft group"
+                className="w-full btn-life justify-center"
               >
-                <span
-                  className="inline-block w-1.5 h-1.5 rounded-full"
-                  style={{ background: "#C8941E" }}
-                />
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-life-amber" />
                 Add to knowledge base
               </button>
             </div>
@@ -363,37 +336,31 @@ export default function AdminPage() {
 
         {/* Sources */}
         <section
-          className="relative surface-paper rounded-[18px] shadow-paper overflow-hidden animate-riseIn"
+          className="relative life-card overflow-hidden animate-riseIn"
           style={{ animationDelay: "220ms" }}
         >
           <span
             aria-hidden
             className="absolute top-0 left-0 h-1 w-16"
-            style={{ background: "#C8941E" }}
+            style={{ background: "linear-gradient(90deg, #0a55ab, #19b8a6)" }}
           />
-          <div className="px-7 pt-6 pb-4 flex items-end justify-between gap-3 border-b border-bca-rule">
+          <div className="px-7 pt-6 pb-4 flex items-end justify-between gap-3 border-b border-life-blue/12">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="smallcaps text-bca-gold">Library</span>
-                <span className="h-px flex-1 max-w-[60px] bg-bca-rule" />
+                <span className="life-eyebrow">Library</span>
+                <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
               </div>
-              <h3 className="font-serif text-bca-ink text-[22px] leading-snug">
+              <h3 className="font-sans font-extrabold text-life-heading text-[22px] leading-snug">
                 Sources
               </h3>
             </div>
-            <span
-              className="inline-flex items-center gap-1.5 text-[12.5px] text-bca-ink/80 px-3 py-1.5 rounded-full"
-              style={{
-                background: "linear-gradient(150deg, #FDFBF6 0%, #F4ECDA 100%)",
-                border: "1px solid #E6DFD0",
-              }}
-            >
+            <span className="inline-flex items-center gap-1.5 text-[12.5px] text-life-heading/80 px-3 py-1.5 rounded-full bg-life-blueBg border border-life-blue/12">
               <span
                 className="inline-block w-1.5 h-1.5 rounded-full"
-                style={{ background: "#003D7A" }}
+                style={{ background: "#0a55ab" }}
               />
               <span className="font-semibold">{sources.length}</span>
-              <span className="text-bca-mute">
+              <span className="text-life-body">
                 {sources.length === 1 ? "source" : "sources"}
               </span>
             </span>
@@ -407,8 +374,7 @@ export default function AdminPage() {
                     (h, i) => (
                       <th
                         key={i}
-                        className="px-7 py-3.5 smallcaps text-bca-mute font-semibold"
-                        style={{ background: "rgba(247, 242, 232, 0.55)" }}
+                        className="px-7 py-3.5 smallcaps text-life-body font-semibold bg-life-blueBg/50"
                       >
                         {h}
                       </th>
@@ -421,9 +387,9 @@ export default function AdminPage() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-7 py-14 text-center text-bca-mute"
+                      className="px-7 py-14 text-center text-life-body"
                     >
-                      <p className="font-serif text-bca-ink/70 text-[18px] mb-1">
+                      <p className="font-sans font-bold text-life-heading/70 text-[18px] mb-1">
                         Nothing here yet.
                       </p>
                       <p className="text-[13px]">
@@ -435,29 +401,29 @@ export default function AdminPage() {
                 {sources.map((s, i) => (
                   <tr
                     key={s.id}
-                    className="border-t border-bca-rule/60 hover:bg-bca-cream/40 transition"
+                    className="border-t border-life-blue/[0.08] hover:bg-life-blueBg/40 transition"
                   >
                     <td className="px-7 py-4 align-top">
-                      <div className="font-medium text-bca-ink leading-snug break-all max-w-[420px]">
+                      <div className="font-medium text-life-heading leading-snug break-all max-w-[420px]">
                         {s.name}
                       </div>
                     </td>
                     <td className="px-7 py-4 align-top">
-                      <span className="smallcaps text-bca-mute">{s.type}</span>
+                      <span className="smallcaps text-life-body">{s.type}</span>
                     </td>
                     <td className="px-7 py-4 align-top">
                       <StatusBadge status={s.status} error={s.error} />
                     </td>
-                    <td className="px-7 py-4 align-top text-bca-ink/80 tabular-nums">
+                    <td className="px-7 py-4 align-top text-life-heading/80 tabular-nums">
                       {s.chunk_count}
                     </td>
-                    <td className="px-7 py-4 align-top text-bca-mute text-[12px] tabular-nums whitespace-nowrap">
+                    <td className="px-7 py-4 align-top text-life-body text-[12px] tabular-nums whitespace-nowrap">
                       {s.created_at}
                     </td>
                     <td className="px-7 py-4 align-top text-right whitespace-nowrap">
                       <button
                         onClick={() => reindex(s.id)}
-                        className="text-[12px] px-3 py-1.5 rounded-full border border-bca-rule bg-bca-paper hover:border-bca-gold hover:text-bca-navy transition mr-1.5"
+                        className="text-[12px] px-3 py-1.5 rounded-full border border-life-blue/15 bg-white hover:border-life-blue hover:text-life-blue transition mr-1.5"
                       >
                         Re-index
                       </button>
@@ -481,15 +447,15 @@ export default function AdminPage() {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className="surface-paper rounded-[14px] shadow-paper px-4 py-3 flex items-center gap-2.5 animate-riseIn min-w-[240px]"
+            className="life-card px-4 py-3 flex items-center gap-2.5 animate-riseIn min-w-[240px]"
           >
             <span
               className="inline-block w-2 h-2 rounded-full shrink-0"
               style={{
-                background: t.kind === "ok" ? "#1E7B47" : "#B23A3A",
+                background: t.kind === "ok" ? "#1f9d57" : "#c0392b",
               }}
             />
-            <span className="text-[13px] text-bca-ink/85">{t.text}</span>
+            <span className="text-[13px] text-life-heading/85">{t.text}</span>
           </div>
         ))}
       </div>
@@ -506,22 +472,22 @@ function StatusBadge({
 }) {
   const map: Record<string, { bg: string; fg: string; border: string; dot: string }> = {
     ready: {
-      bg: "rgba(30, 123, 71, 0.08)",
-      fg: "#1E7B47",
-      border: "rgba(30, 123, 71, 0.25)",
-      dot: "#1E7B47",
+      bg: "rgba(31, 157, 87, 0.10)",
+      fg: "#1f9d57",
+      border: "rgba(31, 157, 87, 0.28)",
+      dot: "#1f9d57",
     },
     processing: {
-      bg: "rgba(200, 148, 30, 0.10)",
-      fg: "#8E6612",
-      border: "rgba(200, 148, 30, 0.30)",
-      dot: "#C8941E",
+      bg: "rgba(249, 178, 51, 0.14)",
+      fg: "#7a4f00",
+      border: "rgba(249, 178, 51, 0.35)",
+      dot: "#F9B233",
     },
     failed: {
-      bg: "rgba(178, 58, 58, 0.08)",
-      fg: "#B23A3A",
-      border: "rgba(178, 58, 58, 0.25)",
-      dot: "#B23A3A",
+      bg: "rgba(192, 57, 43, 0.10)",
+      fg: "#c0392b",
+      border: "rgba(192, 57, 43, 0.28)",
+      dot: "#c0392b",
     },
   };
   const c = map[status] || map.processing;

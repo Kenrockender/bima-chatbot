@@ -115,15 +115,15 @@ export function VoiceStage({
   return (
     <div className="voice-stage">
       {/* Persona indicator pill */}
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 border border-black/5">
-        <span className="w-1.5 h-1.5 rounded-full bg-bca-accentGold" />
-        <span className="text-[11px] font-semibold text-bca-ink/70">{personaName}</span>
-        <span className="text-[10px] text-bca-ink/40">·</span>
-        <span className="text-[10px] text-bca-ink/45">{personaDifficulty}</span>
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-life-blue/12 shadow-life">
+        <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
+        <span className="text-[11px] font-semibold text-life-heading">{personaName}</span>
+        <span className="text-[10px] text-life-bodyLight">·</span>
+        <span className="text-[10px] text-life-body">{personaDifficulty}</span>
         {sessionTimer && (
           <>
-            <span className="text-[10px] text-bca-ink/40">·</span>
-            <span className="text-[10px] font-mono text-bca-ink/50 tabular-nums">{sessionTimer}</span>
+            <span className="text-[10px] text-life-bodyLight">·</span>
+            <span className="text-[10px] font-mono text-life-body tabular-nums">{sessionTimer}</span>
           </>
         )}
       </div>
@@ -159,8 +159,8 @@ export function VoiceStage({
 
       {/* Facts pill */}
       {showFacts && facts && facts.length > 0 && (
-        <div className="animate-fadeIn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bca-cream border border-bca-rule text-[11px] text-bca-ink/65">
-          <span className="font-semibold text-bca-gold text-[10px] uppercase tracking-[0.1em]">
+        <div className="animate-fadeIn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-life-blueBg border border-life-blue/12 text-[11px] text-life-body">
+          <span className="font-semibold text-life-amberDark text-[10px] uppercase tracking-[0.1em]">
             {labels.factsTag}
           </span>
           {facts.map((f, i) => (
@@ -196,8 +196,8 @@ export function VoiceStage({
             onClick={onPauseToggle}
             className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border transition ${
               paused
-                ? "bg-bca-shellMid text-bca-accentGold border-bca-accentGold/60"
-                : "bg-white/60 text-bca-ink/65 border-black/10 hover:border-black/20"
+                ? "bg-life-blue text-white border-life-blue"
+                : "bg-white text-life-body border-life-blue/15 hover:border-life-blue/40"
             }`}
           >
             {paused ? <PlayIcon /> : <PauseIcon />}
@@ -205,7 +205,7 @@ export function VoiceStage({
           </button>
           <button
             onClick={onRedo}
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border bg-white/60 text-bca-ink/65 border-black/10 hover:border-black/20 transition"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border bg-white text-life-body border-life-blue/15 hover:border-life-blue/40 transition"
           >
             <RedoIcon />
             {labels.redoRec}
@@ -217,7 +217,7 @@ export function VoiceStage({
       <div className="flex items-center gap-3">
         <button
           onClick={onSwitchToText}
-          className="inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.12em] font-bold text-bca-ink/50 hover:text-bca-ink/80 px-3 py-1.5 rounded-full border border-black/10 hover:border-black/20 transition"
+          className="inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.12em] font-bold text-life-body hover:text-life-heading px-3 py-1.5 rounded-full border border-life-blue/15 hover:border-life-blue/40 transition"
         >
           <KeyboardIcon />
           {labels.switchToText}
@@ -228,8 +228,8 @@ export function VoiceStage({
           title={muted ? labels.unmute : labels.mute}
           className={`inline-flex items-center justify-center w-8 h-8 rounded-full border transition ${
             muted
-              ? "bg-white/60 text-bca-ink/55 border-black/10"
-              : "bg-bca-shellMid text-bca-accentGold border-bca-accentGold/60"
+              ? "bg-white text-life-bodyLight border-life-blue/15"
+              : "bg-life-blue text-white border-life-blue"
           }`}
         >
           {muted ? <MuteSmIcon /> : <SpeakerSmIcon />}

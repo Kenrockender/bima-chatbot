@@ -27,7 +27,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
+      <head>
+        {/* Apply the saved/system theme before first paint to avoid a flash.
+            Mirrors the logic in components/ThemeToggle.tsx. */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(function(){try{var t=localStorage.getItem("bima-theme");if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";if(t==="dark")document.documentElement.classList.add("dark");}catch(e){}})()`}
+        </Script>
+      </head>
       <body className="font-sans antialiased text-bca-ink">
         <AuthProvider>
           <AuthGate>{children}</AuthGate>
