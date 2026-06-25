@@ -1,4 +1,9 @@
-const CACHE = "bima-v1";
+// Bump CACHE on every deploy that changes caching behaviour. The activate
+// handler purges any cache whose name doesn't match, so an updated value
+// evicts stale assets. skipWaiting + clients.claim make the new worker take
+// over immediately; the page-side registration reloads once on
+// controllerchange so users always land on the freshly deployed build.
+const CACHE = "bima-v2";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/"])));
@@ -11,9 +16,13 @@ self.addEventListener("activate", (e) => {
       .keys()
       .then((keys) =>
         Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))),
-      ),
+      )
+      .then(() => self.clients.claim()),
   );
-  self.clients.claim();
+});
+
+self.addEventListener("message", (e) => {
+  if (e.data === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("fetch", (e) => {
@@ -22,6 +31,8 @@ self.addEventListener("fetch", (e) => {
   if (request.method !== "GET") return;
   if (request.url.includes("/api/")) return;
 
+  // Hashed Next.js build assets are immutable, so cache-first is safe and fast;
+  // a new build produces new filenames that simply miss the cache and fetch.
   if (
     request.destination === "style" ||
     request.destination === "script" ||
@@ -44,6 +55,8 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
+  // Navigations are network-first so fresh HTML (and its new asset refs) always
+  // wins; the precached shell is only a last-resort offline fallback.
   if (request.mode === "navigate") {
     e.respondWith(fetch(request).catch(() => caches.match("/")));
   }

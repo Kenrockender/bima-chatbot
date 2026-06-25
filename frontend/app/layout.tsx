@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthGate>{children}</AuthGate>
         </AuthProvider>
         <Script id="sw-register" strategy="afterInteractive">
-          {`if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")`}
+          {`if("serviceWorker"in navigator){var sw=navigator.serviceWorker;sw.register("/sw.js",{updateViaCache:"none"}).then(function(r){r.update()});var reloaded=false;sw.addEventListener("controllerchange",function(){if(reloaded)return;reloaded=true;location.reload()})}`}
         </Script>
       </body>
     </html>
