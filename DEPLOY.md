@@ -70,7 +70,7 @@ over port 443, which Spaces allows.
    | `ADMIN_EMAILS` | secret | comma-separated admin emails (or set the `admin:true` claim instead) |
    | `CORS_ORIGINS` | variable | leave as `http://localhost:3000` for now — change it to your Vercel URL once section 2 gives you one |
    | `OPENROUTER_BASE_URL` | variable | `https://openrouter.ai/api/v1` |
-   | `OPENROUTER_CHAT_MODEL` | variable | `anthropic/claude-3.5-haiku` |
+   | `OPENROUTER_CHAT_MODEL` | variable | `anthropic/claude-haiku-4.5` (must match a currently-served OpenRouter slug; omit this var to use the code default) |
    | `ALLOWED_EMAIL_DOMAINS` | variable | `bcalife.co.id` |
    | `SEED_DIR` | variable | `/app/seed` |
    | `UPLOAD_DIR` | variable | `/app/data/uploads` |
