@@ -26,7 +26,7 @@ export default function RecommendPage() {
       <span className="watermark-b">B</span>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-bca-rule/70 bg-bca-cream/70 backdrop-blur-md">
+      <header className="relative z-40 border-b border-bca-rule/70 bg-bca-cream/70 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 lg:px-8 pt-5 pb-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
