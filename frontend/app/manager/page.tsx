@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader } from "@/components/PageHeader";
+import { AppShell } from "@/components/AppShell";
+import { FetchError } from "@/components/FetchError";
 import { authedFetch } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { t, type Lang } from "@/lib/i18n";
@@ -42,12 +43,14 @@ export default function ManagerPage() {
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
   const [data, setData] = useState<Overview | null>(null);
+  const [fetchError, setFetchError] = useState(false);
   const tr = t[lang];
   const dimLabel = (d: string) => (tr as Record<string, string>)[d] ?? d;
 
-  useEffect(() => {
-    let alive = true;
+  function loadDashboard() {
     setChecking(true);
+    setFetchError(false);
+    let alive = true;
     authedFetch("/api/admin/overview")
       .then(async (res) => {
         if (!alive) return;
@@ -58,17 +61,26 @@ export default function ManagerPage() {
           setAuthed(false);
         }
       })
-      .catch(() => alive && setAuthed(false))
+      .catch(() => { if (alive) { setAuthed(false); setFetchError(true); } })
       .finally(() => alive && setChecking(false));
-    return () => {
-      alive = false;
-    };
-  }, [user]);
+    return () => { alive = false; };
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { const cleanup = loadDashboard(); return cleanup; }, [user]);
 
   if (checking) {
     return (
-      <main className="min-h-screen grid place-items-center bg-life">
-        <div className="h-8 w-8 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
+      <main className="min-h-screen bg-life px-6 py-10">
+        <div className="max-w-4xl mx-auto space-y-5 animate-fadeIn">
+          <div className="skeleton h-8 w-48 mb-6" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[1,2,3,4].map(i => <div key={i} className="life-card p-5 space-y-2"><div className="skeleton h-3 w-16" /><div className="skeleton h-7 w-12" /></div>)}
+          </div>
+          <div className="life-card p-6 space-y-3">
+            <div className="skeleton h-3 w-32" />
+            {[1,2,3].map(i => <div key={i} className="flex items-center gap-3"><div className="skeleton h-3 w-24" /><div className="skeleton h-2.5 flex-1 rounded-full" /><div className="skeleton h-4 w-8" /></div>)}
+          </div>
+        </div>
       </main>
     );
   }
@@ -76,9 +88,12 @@ export default function ManagerPage() {
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-life px-4">
+        {fetchError ? (
+          <FetchError message={tr.fetchError} onRetry={loadDashboard} />
+        ) : (
         <div className="life-card p-8 text-center max-w-md">
           <h1 className="font-sans font-extrabold text-life-heading text-[22px]">
-            {lang === "id" ? "Akses ditolak" : "Access denied"}
+            {tr.accessDenied}
           </h1>
           <p className="text-[13px] text-life-body mt-2">
             {user
@@ -96,11 +111,12 @@ export default function ManagerPage() {
                 onClick={() => signOut()}
                 className="text-[12px] font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-full px-3 py-1.5"
               >
-                {lang === "id" ? "Ganti akun" : "Switch account"}
+                {tr.switchAccount}
               </button>
             )}
           </div>
         </div>
+        )}
       </main>
     );
   }
@@ -108,14 +124,7 @@ export default function ManagerPage() {
   const ov = data;
 
   return (
-    <main className="min-h-screen bg-life relative overflow-hidden">
-      <PageHeader
-        eyebrow={lang === "id" ? "Dashboard Manajer" : "Manager Dashboard"}
-        tagline="BCA Life · Team Cockpit"
-        lang={lang}
-        onLang={setLang}
-        current="manager"
-      />
+    <AppShell lang={lang} onLang={setLang} current="manager">
 
       {/* Hero band */}
       <section className="life-gradient relative overflow-hidden">
@@ -262,7 +271,7 @@ export default function ManagerPage() {
           </table>
         </section>
       </div>
-    </main>
+    </AppShell>
   );
 }
 

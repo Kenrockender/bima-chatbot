@@ -112,10 +112,7 @@ export function FeedbackReport({
           {prog.new_badges.map((b) => (
             <div
               key={b.id}
-              className="flex items-center gap-2.5 rounded-[14px] p-3 pr-4 life-card"
-              style={{
-                background: "linear-gradient(150deg, #f4f8fd 0%, #eaf1fa 100%)",
-              }}
+              className="flex items-center gap-2.5 rounded-[14px] p-3 pr-4 life-card card-tint-blue"
             >
               <span className="life-icon shrink-0" style={{ width: 34, height: 34, borderRadius: 999, fontSize: 16 }}>
                 🏅
@@ -258,10 +255,7 @@ export function FeedbackReport({
       {/* Next focus */}
       {report.next_focus && (
         <div
-          className="rounded-[16px] p-6 relative overflow-hidden life-card"
-          style={{
-            background: "linear-gradient(150deg, #f4f8fd 0%, #eaf1fa 100%)",
-          }}
+          className="rounded-[16px] p-6 relative overflow-hidden life-card card-tint-blue"
         >
           <span
             aria-hidden

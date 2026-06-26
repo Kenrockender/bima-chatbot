@@ -2,57 +2,100 @@
 
 import { useEffect, useState } from "react";
 
-type Theme = "light" | "dark";
+type ThemePref = "light" | "dark" | "system";
 
-/**
- * Light/dark switch. The actual class is applied pre-paint by the inline
- * script in app/layout.tsx (no flash); this component only reflects and
- * mutates that state, persisting the choice to localStorage.
- */
+function resolveSystem(): "light" | "dark" {
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function applyTheme(pref: ThemePref) {
+  const effective = pref === "system" ? resolveSystem() : pref;
+  document.documentElement.classList.toggle("dark", effective === "dark");
+}
+
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [pref, setPref] = useState<ThemePref>("system");
   const [mounted, setMounted] = useState(false);
 
-  // Read the theme the inline script already resolved.
   useEffect(() => {
-    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
+    try {
+      const saved = localStorage.getItem("bima-theme") as ThemePref | null;
+      setPref(saved === "light" || saved === "dark" ? saved : "system");
+    } catch {}
     setMounted(true);
   }, []);
 
-  function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    document.documentElement.classList.toggle("dark", next === "dark");
+  useEffect(() => {
+    if (!mounted) return;
+    if (pref !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => applyTheme("system");
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [mounted, pref]);
+
+  function cycle() {
+    const order: ThemePref[] = ["light", "dark", "system"];
+    const next = order[(order.indexOf(pref) + 1) % order.length];
+    setPref(next);
+    applyTheme(next);
     try {
       localStorage.setItem("bima-theme", next);
-    } catch {
-      /* private mode / storage disabled — choice just won't persist */
-    }
+    } catch {}
   }
 
-  const isDark = theme === "dark";
+  const effective = pref === "system" ? resolveSystem() : pref;
+  const isDark = effective === "dark";
+
+  const label = pref === "system"
+    ? "System theme"
+    : isDark ? "Switch to system" : "Switch to dark mode";
 
   return (
     <button
-      onClick={toggle}
+      onClick={cycle}
       type="button"
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      title={isDark ? "Light mode" : "Dark mode"}
-      className={`flex items-center justify-center w-9 h-9 rounded-full border border-life-blue/15 bg-white text-life-body hover:text-life-blue hover:border-life-blue/40 transition shrink-0 ${className}`}
+      aria-label={label}
+      title={label}
+      className={`flex items-center justify-center w-9 h-9 rounded-full border border-life-blue/15 bg-life-white text-life-body hover:text-life-blue hover:border-life-blue/40 transition shrink-0 ${className}`}
     >
-      {/* Render a stable icon until mounted to keep SSR/CSR markup aligned */}
-      {!mounted || isDark ? (
-        // Sun — shown in dark mode (click → go light)
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <circle cx="12" cy="12" r="4" />
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-        </svg>
+      {!mounted ? (
+        <SunIcon />
+      ) : pref === "system" ? (
+        <MonitorIcon />
+      ) : isDark ? (
+        <SunIcon />
       ) : (
-        // Moon — shown in light mode (click → go dark)
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
+        <MoonIcon />
       )}
     </button>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
+function MonitorIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <line x1="8" y1="21" x2="16" y2="21" />
+      <line x1="12" y1="17" x2="12" y2="21" />
+    </svg>
   );
 }

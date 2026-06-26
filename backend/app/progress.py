@@ -268,6 +268,29 @@ def get_history(fa_id: str, limit: int = 20) -> List[Dict]:
     return out
 
 
+def get_attempt(fa_id: str, attempt_id: str) -> Optional[Dict]:
+    """Return a single attempt with its full transcript."""
+    doc = _attempts_col(fa_id).document(attempt_id).get()
+    if not doc.exists:
+        return None
+    d = doc.to_dict() or {}
+    d.setdefault("id", doc.id)
+    return {
+        "id": d["id"],
+        "persona_id": d.get("persona_id", ""),
+        "persona_name": d.get("persona_name", ""),
+        "overall_score": int(d.get("overall_score", 0) or 0),
+        "scores": {dim: int(d.get(dim, 0) or 0) for dim in DIMENSIONS},
+        "strengths": d.get("strengths", []),
+        "improvements": d.get("improvements", []),
+        "next_focus": d.get("next_focus", ""),
+        "turn_count": int(d.get("turn_count", 0) or 0),
+        "xp_earned": int(d.get("xp_earned", 0) or 0),
+        "transcript": d.get("transcript", []),
+        "created_at": d.get("created_at", ""),
+    }
+
+
 def recommend_next(fa_id: str) -> Optional[Dict]:
     """Turn the weakest dimension into a concrete next-session suggestion."""
     stats = get_stats(fa_id)

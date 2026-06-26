@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader } from "@/components/PageHeader";
+import { AppShell } from "@/components/AppShell";
+import { FetchError } from "@/components/FetchError";
 import { SectionTitle } from "@/components/SectionTitle";
 import { FlameIcon, MedalIcon, CheckIcon, ClockIcon } from "@/components/icons";
 import { authedFetch } from "@/lib/api";
@@ -59,11 +60,14 @@ export default function ProgressPage() {
   const [drills, setDrills] = useState<Drill[]>([]);
   const [next, setNext] = useState<NextRec | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const tr = t[lang];
 
   const dimLabel = (d: string) => (tr as Record<string, string>)[d] ?? d;
 
-  useEffect(() => {
+  function loadProgress() {
+    setLoading(true);
+    setFetchError(false);
     Promise.all([
       authedFetch("/api/training/progress").then((r) =>
         r.ok ? r.json() : null,
@@ -82,20 +86,16 @@ export default function ProgressPage() {
         setDrills(dr || []);
         setNext(nx && nx.dimension ? nx : null);
       })
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadProgress(); }, []);
 
   const hasData = stats && stats.total_sessions > 0;
 
   return (
-    <main className="min-h-screen bg-life relative overflow-hidden">
-      <PageHeader
-        eyebrow={tr.navProgress}
-        tagline="BCA Life · Advisor Cockpit"
-        lang={lang}
-        onLang={setLang}
-        current="progress"
-      />
+    <AppShell lang={lang} onLang={setLang} current="progress">
 
       {/* Hero band — blue→teal gradient with the title + key stats */}
       <section className="life-gradient relative overflow-hidden">
@@ -165,9 +165,37 @@ export default function ProgressPage() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-9 -mt-7">
         {loading ? (
-          <div className="grid place-items-center py-20">
-            <div className="h-7 w-7 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
+          <div className="space-y-5 animate-fadeIn">
+            {/* Daily goal skeleton */}
+            <div className="life-card p-5 flex items-center gap-4">
+              <div className="skeleton w-11 h-11 rounded-[13px]" />
+              <div className="flex-1 space-y-2">
+                <div className="skeleton h-3 w-24" />
+                <div className="skeleton h-5 w-48" />
+              </div>
+            </div>
+            {/* Next rec skeleton */}
+            <div className="life-card p-6 flex items-center justify-between gap-4">
+              <div className="space-y-2 flex-1">
+                <div className="skeleton h-3 w-32" />
+                <div className="skeleton h-6 w-56" />
+              </div>
+              <div className="skeleton h-10 w-32 rounded-full" />
+            </div>
+            {/* Skill breakdown skeleton */}
+            <div className="life-card p-7 space-y-4">
+              <div className="skeleton h-3 w-28 mb-4" />
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="skeleton h-3 w-28" />
+                  <div className="skeleton h-2.5 flex-1 rounded-full" />
+                  <div className="skeleton h-4 w-8" />
+                </div>
+              ))}
+            </div>
           </div>
+        ) : fetchError ? (
+          <FetchError message={tr.fetchError} onRetry={loadProgress} />
         ) : !hasData ? (
           <div className="life-card p-10 text-center max-w-[460px]">
             <p className="text-life-body text-[15px] mb-5">{tr.noHistory}</p>
@@ -183,12 +211,7 @@ export default function ProgressPage() {
               const done = stats!.done_today >= stats!.daily_goal;
               return (
                 <div
-                  className="life-card p-5 flex items-center gap-4"
-                  style={{
-                    background: done
-                      ? "linear-gradient(150deg, #f0faf5 0%, #dcefe3 100%)"
-                      : "linear-gradient(150deg, #eef5fc 0%, #e3eef9 100%)",
-                  }}
+                  className={`life-card card-goal p-5 flex items-center gap-4 ${done ? "is-done" : ""}`}
                 >
                   <span
                     className="life-icon"
@@ -419,7 +442,7 @@ export default function ProgressPage() {
           </div>
         )}
       </div>
-    </main>
+    </AppShell>
   );
 }
 

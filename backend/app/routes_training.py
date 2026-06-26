@@ -1,12 +1,17 @@
 import json
+import logging
+import httpx
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
 from . import personas, training, drills, progress
 from .auth import get_current_user
+from .config import settings
+
+log = logging.getLogger("bima.routes_training")
 
 
 router = APIRouter(prefix="/api/training", tags=["training"])
@@ -175,6 +180,14 @@ def get_progress(user: dict = Depends(get_current_user)):
     return progress.get_stats(user["uid"])
 
 
+@router.get("/attempt/{attempt_id}")
+def get_attempt(attempt_id: str, user: dict = Depends(get_current_user)):
+    result = progress.get_attempt(user["uid"], attempt_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Attempt not found")
+    return result
+
+
 @router.get("/history")
 def get_history(user: dict = Depends(get_current_user)):
     return progress.get_history(user["uid"])
@@ -189,3 +202,49 @@ def get_next(user: dict = Depends(get_current_user)):
 @router.get("/leaderboard")
 def get_leaderboard(user: dict = Depends(get_current_user)):
     return progress.leaderboard(user["uid"])
+
+
+# -----------------------------------------------------------------------------
+# Server-side speech-to-text (iOS/Safari fallback)
+# -----------------------------------------------------------------------------
+
+_STT_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
+@router.get("/stt/available")
+def stt_available():
+    return {"available": bool(settings.stt_api_key)}
+
+
+@router.post("/stt/transcribe")
+async def stt_transcribe(
+    audio: UploadFile = File(...),
+    language: str = Form("id"),
+):
+    if not settings.stt_api_key:
+        raise HTTPException(status_code=501, detail="Server-side STT not configured")
+
+    data = await audio.read()
+    if len(data) > _STT_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Audio too large (max 10 MB)")
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                f"{settings.stt_base_url}/audio/transcriptions",
+                headers={"Authorization": f"Bearer {settings.stt_api_key}"},
+                files={"file": (audio.filename or "audio.webm", data, audio.content_type or "audio/webm")},
+                data={"model": settings.stt_model, "language": language},
+            )
+        if resp.status_code != 200:
+            log.warning("STT error %s: %s", resp.status_code, resp.text[:200])
+            raise HTTPException(status_code=502, detail="STT service error")
+        result = resp.json()
+        return {"text": result.get("text", "")}
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="STT timeout")
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error("STT failed: %s", e)
+        raise HTTPException(status_code=500, detail="STT internal error")

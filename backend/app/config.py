@@ -47,6 +47,13 @@ class Settings(BaseSettings):
 
     seed_dir: str = ""
 
+    # Server-side speech-to-text (for iOS/Safari where Web Speech API is
+    # unavailable). Uses Groq's free Whisper endpoint by default; set
+    # stt_api_key to enable. Leave empty to disable the /transcribe endpoint.
+    stt_api_key: str = ""
+    stt_base_url: str = "https://api.groq.com/openai/v1"
+    stt_model: str = "whisper-large-v3"
+
     def admin_email_set(self) -> set[str]:
         return {e.strip().lower() for e in self.admin_emails.split(",") if e.strip()}
 

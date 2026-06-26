@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, type DragEvent } from "react";
-import { PageHeader } from "@/components/PageHeader";
+import { AppShell } from "@/components/AppShell";
+import { authedFetch } from "@/lib/api";
 import { t, type Lang } from "@/lib/i18n";
 import {
   PRODUCTS,
@@ -19,23 +20,20 @@ const COMPARE_UPLOAD_EXTS = [".pdf", ".pptx"];
 
 // The customer-profile analysis flow is hidden for now (kept in git history at
 // commit 4179c3d for easy restore). Flip to true to bring it back.
-const SHOW_PROFILE_ANALYSIS = false;
+const SHOW_PROFILE_ANALYSIS = true;
+
+type RecoView = "compare" | "profile";
 
 export default function RecommendPage() {
   const [lang, setLang] = useState<Lang>("id");
   const [activeId, setActiveId] = useState<string>(PRODUCTS[0].id);
+  const [view, setView] = useState<RecoView>("compare");
   const tr = t[lang];
   const product = PRODUCTS.find((p) => p.id === activeId) ?? PRODUCTS[0];
+  const profileView = SHOW_PROFILE_ANALYSIS && view === "profile";
 
   return (
-    <main className="min-h-screen bg-life relative overflow-hidden">
-      <PageHeader
-        eyebrow={tr.compareEyebrow}
-        tagline="BCA Life · Advisor Cockpit"
-        lang={lang}
-        onLang={setLang}
-        current="recommend"
-      />
+    <AppShell lang={lang} onLang={setLang} current="recommend">
 
       {/* Hero band */}
       <section className="life-gradient relative overflow-hidden">
@@ -60,69 +58,104 @@ export default function RecommendPage() {
             <span className="w-2.5 h-2.5 rounded-full bg-white/90" />
             <span className="h-1 w-10 rounded-full bg-white/70" />
             <span className="ml-1 text-[11.5px] font-bold uppercase tracking-[0.13em] text-white/85">
-              {tr.compareEyebrow}
+              {profileView ? tr.recoEyebrow : tr.compareEyebrow}
             </span>
           </div>
           <h2
             className="font-sans font-extrabold text-white text-[32px] sm:text-[42px] leading-[1.08] tracking-tight"
             style={{ letterSpacing: "-0.025em" }}
           >
-            {tr.compareTitle}
+            {profileView ? tr.recoTitle : tr.compareTitle}
           </h2>
           <p className="text-[14.5px] leading-[1.6] text-white/80 mt-2.5 max-w-[620px]">
-            {tr.compareSubtitle}
+            {profileView ? tr.recoSubtitle : tr.compareSubtitle}
           </p>
-          {SHOW_PROFILE_ANALYSIS && (
-            <p className="text-[12px] text-white/65 mt-3">{tr.recoSubtitle}</p>
-          )}
         </div>
       </section>
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-9 -mt-7">
-        {/* Product selector */}
-        <div className="mb-8 animate-riseIn">
-          <span className="life-eyebrow block mb-2.5">
-            {tr.selectProductLabel}
-          </span>
-          <div className="flex flex-wrap gap-2.5">
-            {PRODUCTS.map((p) => {
-              const active = p.id === activeId;
+        {/* Sub-page tabs */}
+        {SHOW_PROFILE_ANALYSIS && (
+          <div
+            role="tablist"
+            aria-label={tr.recoEyebrow}
+            className="inline-flex gap-1 p-1 rounded-full bg-life-white border border-life-blue/12 shadow-life mb-7 animate-riseIn"
+          >
+            {([
+              ["compare", tr.tabCompare],
+              ["profile", tr.tabProfile],
+            ] as const).map(([key, label]) => {
+              const active = view === key;
               return (
                 <button
-                  key={p.id}
-                  onClick={() => setActiveId(p.id)}
-                  className={`group inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13.5px] font-medium transition-all ${
+                  key={key}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setView(key)}
+                  className={`rounded-full px-5 py-2 text-[13px] font-semibold transition-all ${
                     active
                       ? "btn-life"
-                      : "bg-white text-life-heading border border-life-blue/15 hover:border-life-blue shadow-life"
+                      : "text-life-body hover:text-life-heading"
                   }`}
                 >
-                  <span
-                    className="inline-block w-1.5 h-1.5 rounded-full"
-                    style={{ background: active ? "#F9B233" : "#9db8d6" }}
-                  />
-                  {p.shortName}
-                  {p.prototype && (
-                    <span
-                      className={`smallcaps text-[8.5px] px-1.5 py-0.5 rounded-full ${
-                        active
-                          ? "bg-white/25 text-white"
-                          : "bg-life-amber/15 text-life-amberDark"
-                      }`}
-                    >
-                      {tr.prototypeBadge}
-                    </span>
-                  )}
+                  {label}
                 </button>
               );
             })}
           </div>
-        </div>
+        )}
 
-        {/* Comparison + script */}
-        <ComparisonView key={product.id} product={product} tr={tr} />
+        {profileView ? (
+          /* Customer profile analysis */
+          <ProfileAnalysis tr={tr} />
+        ) : (
+          <>
+            {/* Product selector */}
+            <div className="mb-8 animate-riseIn">
+              <span className="life-eyebrow block mb-2.5">
+                {tr.selectProductLabel}
+              </span>
+              <div className="flex flex-wrap gap-2.5">
+                {PRODUCTS.map((p) => {
+                  const active = p.id === activeId;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setActiveId(p.id)}
+                      className={`group inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13.5px] font-medium transition-all ${
+                        active
+                          ? "btn-life"
+                          : "bg-white text-life-heading border border-life-blue/15 hover:border-life-blue shadow-life"
+                      }`}
+                    >
+                      <span
+                        className="inline-block w-1.5 h-1.5 rounded-full"
+                        style={{ background: active ? "#F9B233" : "#9db8d6" }}
+                      />
+                      {p.shortName}
+                      {p.prototype && (
+                        <span
+                          className={`smallcaps text-[8.5px] px-1.5 py-0.5 rounded-full ${
+                            active
+                              ? "bg-white/25 text-white"
+                              : "bg-life-amber/15 text-life-amberDark"
+                          }`}
+                        >
+                          {tr.prototypeBadge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Comparison + script */}
+            <ComparisonView key={product.id} product={product} tr={tr} />
+          </>
+        )}
       </div>
-    </main>
+    </AppShell>
   );
 }
 
@@ -283,13 +316,7 @@ function BCAProductCard({
 
 function CompetitorCard({ comp, tr }: { comp: Competitor; tr: any }) {
   return (
-    <div
-      className="rounded-[16px] p-6 relative overflow-hidden"
-      style={{
-        background: "linear-gradient(150deg, #f3f6fa 0%, #e8edf3 100%)",
-        border: "1px solid #dbe3ec",
-      }}
-    >
+    <div className="card-competitor rounded-[16px] p-6 relative overflow-hidden">
       <span
         aria-hidden
         className="absolute top-0 left-0 h-1 w-16"
@@ -307,10 +334,7 @@ function CompetitorCard({ comp, tr }: { comp: Competitor; tr: any }) {
         </h3>
       </div>
 
-      <div
-        className="rounded-[10px] px-3 py-2 mb-4"
-        style={{ background: "rgba(22, 56, 107, 0.05)", border: "1px solid #d6e0ec" }}
-      >
+      <div className="inset-soft rounded-[10px] px-3 py-2 mb-4">
         <span className="smallcaps text-[9px] text-life-body block mb-0.5">
           {tr.headToHeadLabel}
         </span>
@@ -448,14 +472,7 @@ function SalesScriptPanel({
           <ScriptSection label={tr.scriptObjections} accent="#c0392b">
             <div className="space-y-3">
               {script.objectionHandling.map((oh, i) => (
-                <div
-                  key={i}
-                  className="rounded-[12px] p-3.5"
-                  style={{
-                    background: "rgba(22, 56, 107, 0.04)",
-                    border: "1px solid #dbe3ec",
-                  }}
-                >
+                <div key={i} className="inset-soft rounded-[12px] p-3.5">
                   <div className="flex items-start gap-2 mb-2">
                     <span className="smallcaps text-[10px] text-life-neg/90 shrink-0 mt-0.5">
                       {tr.objectionLabel}:
@@ -1005,6 +1022,151 @@ function ScriptSection({
         </span>
       </div>
       {children}
+    </div>
+  );
+}
+
+// ─────────────────────────── Profile Analysis ───────────────────────────
+
+type Profile = {
+  name: string; age: string; gender: string; marital: string;
+  dependents: string; income_per_month: string; health_notes: string;
+  budget_premium_per_month: string; goal: string; horizon_years: string; notes: string;
+};
+
+const EMPTY_PROFILE: Profile = {
+  name: "", age: "", gender: "laki-laki", marital: "", dependents: "",
+  income_per_month: "", health_notes: "", budget_premium_per_month: "",
+  goal: "", horizon_years: "", notes: "",
+};
+
+type Recommendation = {
+  customer_summary: string;
+  bca_recommendations: {
+    product_name: string; fit_score: number; suggested_up: string;
+    suggested_premium: string; suggested_tenor: string;
+    rationale: string[]; concerns: string[];
+  }[];
+  competitor_comparisons: {
+    provider: string; product_name: string; similar_to: string;
+    fit_score: number; strengths: string[]; weaknesses_vs_bca: string[];
+  }[];
+  error?: string;
+};
+
+function ProfileAnalysis({ tr }: { tr: any }) {
+  const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<Recommendation | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const set = (k: keyof Profile) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setProfile((p) => ({ ...p, [k]: e.target.value }));
+
+  const ready = profile.age && parseInt(profile.age) > 0 && parseInt(profile.age) <= 120;
+
+  async function submit() {
+    if (!ready || loading) return;
+    setLoading(true); setError(null); setResult(null);
+    try {
+      const body: any = { age: parseInt(profile.age), gender: profile.gender };
+      if (profile.name) body.name = profile.name;
+      if (profile.marital) body.marital = profile.marital;
+      if (profile.dependents) body.dependents = parseInt(profile.dependents);
+      if (profile.income_per_month) body.income_per_month = parseFloat(profile.income_per_month);
+      if (profile.health_notes) body.health_notes = profile.health_notes;
+      if (profile.budget_premium_per_month) body.budget_premium_per_month = parseFloat(profile.budget_premium_per_month);
+      if (profile.goal) body.goal = profile.goal;
+      if (profile.horizon_years) body.horizon_years = parseInt(profile.horizon_years);
+      if (profile.notes) body.notes = profile.notes;
+      const res = await authedFetch("/api/recommender/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json();
+      if (data.error) setError(data.error); else setResult(data);
+    } catch { setError(tr.fetchError); }
+    finally { setLoading(false); }
+  }
+
+  const inputCls = "w-full rounded-[10px] border border-life-blue/15 bg-life-white px-3 py-2 text-[13.5px] text-life-heading placeholder:text-life-bodyLight transition focus:outline-none focus:border-life-blue focus:ring-2 focus:ring-life-blue/15";
+  const labelCls = "text-[11px] uppercase tracking-[0.12em] font-semibold text-life-body block mb-1";
+
+  return (
+    <div className="life-card p-6 relative overflow-hidden animate-fadeIn">
+      <span aria-hidden className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, #F9B233, #0a55ab)" }} />
+      <div className="flex items-center gap-2 mb-1 mt-1">
+        <span className="life-eyebrow">{tr.recoFormTitle}</span>
+        <span className="h-px flex-1 max-w-[80px] bg-life-blue/15" />
+      </div>
+      <p className="text-[12.5px] text-life-body leading-relaxed mb-5 max-w-[640px]">{tr.recoSubtitle}</p>
+
+      {!result ? (
+        <>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+            <label><span className={labelCls}>{tr.fieldName}</span><input type="text" value={profile.name} onChange={set("name")} placeholder="Budi" className={inputCls} /></label>
+            <label><span className={labelCls}>{tr.fieldAge} *</span><input type="number" min={0} max={120} value={profile.age} onChange={set("age")} placeholder="35" className={inputCls} /></label>
+            <label><span className={labelCls}>{tr.fieldGender} *</span><select value={profile.gender} onChange={set("gender")} className={inputCls}><option value="laki-laki">{tr.fieldGenderM}</option><option value="perempuan">{tr.fieldGenderF}</option></select></label>
+            <label><span className={labelCls}>{tr.fieldMarital}</span><select value={profile.marital} onChange={set("marital")} className={inputCls}><option value="">—</option><option value="lajang">{tr.maritalSingle}</option><option value="menikah">{tr.maritalMarried}</option><option value="cerai">{tr.maritalDivorced}</option></select></label>
+            <label><span className={labelCls}>{tr.fieldDependents}</span><input type="number" min={0} max={20} value={profile.dependents} onChange={set("dependents")} placeholder="2" className={inputCls} /></label>
+            <label><span className={labelCls}>{tr.fieldIncome}</span><input type="number" min={0} step={0.5} value={profile.income_per_month} onChange={set("income_per_month")} placeholder="15" className={inputCls} /></label>
+            <label><span className={labelCls}>{tr.fieldBudget}</span><input type="number" min={0} step={0.1} value={profile.budget_premium_per_month} onChange={set("budget_premium_per_month")} placeholder="1.5" className={inputCls} /></label>
+            <label><span className={labelCls}>{tr.fieldGoal}</span><input type="text" value={profile.goal} onChange={set("goal")} placeholder={tr.goalProtection} className={inputCls} /></label>
+            <label><span className={labelCls}>{tr.fieldHorizon}</span><input type="number" min={1} max={99} value={profile.horizon_years} onChange={set("horizon_years")} placeholder="20" className={inputCls} /></label>
+          </div>
+          <label className="block mb-4"><span className={labelCls}>{tr.fieldNotes}</span><textarea rows={2} value={profile.notes} onChange={set("notes")} placeholder={tr.fieldNotesPh} className={inputCls + " resize-none"} /></label>
+          <div className="flex items-center gap-3">
+            <button onClick={submit} disabled={!ready || loading} className="btn-life disabled:opacity-50 disabled:cursor-not-allowed">{loading ? tr.submitting : tr.submitReco}</button>
+            <button onClick={() => setProfile(EMPTY_PROFILE)} type="button" className="text-[12px] text-life-body hover:text-life-blue transition">{tr.resetForm}</button>
+          </div>
+          {error && <div className="mt-4 rounded-xl border border-life-neg/30 bg-life-negBg px-4 py-3 text-[13px] text-life-neg">{error}</div>}
+        </>
+      ) : (
+        <ProfileResult result={result} tr={tr} onBack={() => setResult(null)} />
+      )}
+    </div>
+  );
+}
+
+function ProfileResult({ result, tr, onBack }: { result: Recommendation; tr: any; onBack: () => void }) {
+  return (
+    <div className="space-y-5 animate-fadeIn">
+      {result.customer_summary && (
+        <div className="rounded-xl bg-life-blueBg/60 border border-life-blue/15 px-4 py-3">
+          <span className="smallcaps text-[9.5px] text-life-blue block mb-1">{tr.recoEyebrow}</span>
+          <p className="text-[13.5px] text-life-heading/90 leading-relaxed">{result.customer_summary}</p>
+        </div>
+      )}
+      {result.bca_recommendations.map((rec, i) => (
+        <div key={i} className="life-card p-5 relative overflow-hidden">
+          <span aria-hidden className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, #0a55ab, #19b8a6)" }} />
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h3 className="font-sans font-bold text-life-heading text-[18px]">{rec.product_name}</h3>
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold bg-life-posBg text-life-pos">Fit: {rec.fit_score}/10</span>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-3 mb-4">
+            {[["UP", rec.suggested_up], [tr.fieldBudget, rec.suggested_premium], ["Tenor", rec.suggested_tenor]].map(([lbl, val], j) => (
+              <div key={j} className="rounded-lg bg-life-item p-3">
+                <span className="smallcaps text-[9px] text-life-body block mb-0.5">{lbl}</span>
+                <span className="text-[14px] font-semibold text-life-heading">{val}</span>
+              </div>
+            ))}
+          </div>
+          {rec.rationale.length > 0 && (
+            <Section label={tr.rationaleLabel} dot="#1f9d57"><ul className="space-y-1.5">{rec.rationale.map((r, j) => (
+              <li key={j} className="flex gap-2 text-[13px] text-life-heading/85 leading-relaxed"><span className="mt-0.5 shrink-0" style={{ color: "#1f9d57" }}>✓</span><span>{r}</span></li>
+            ))}</ul></Section>
+          )}
+          {rec.concerns.length > 0 && (
+            <Section label={tr.concernsLabel} dot="#c0392b"><ul className="space-y-1.5">{rec.concerns.map((c, j) => (
+              <li key={j} className="flex gap-2 text-[13px] text-life-heading/80 leading-relaxed"><span className="mt-0.5 shrink-0" style={{ color: "#c0392b" }}>▼</span><span>{c}</span></li>
+            ))}</ul></Section>
+          )}
+        </div>
+      ))}
+      <button onClick={onBack} className="inline-flex items-center gap-2 text-[13px] font-semibold text-life-blue hover:text-life-heading transition">← {tr.backToForm}</button>
     </div>
   );
 }

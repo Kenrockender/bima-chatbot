@@ -18,10 +18,17 @@ export function MicButton({
           ? "is-idle"
           : "";
 
+  const ariaLabel =
+    state === "recording" ? "Stop recording"
+    : state === "processing" ? "Processing"
+    : state === "speaking" ? "Tap to interrupt"
+    : "Start recording";
+
   return (
     <button
       onClick={onClick}
       disabled={disabled || state === "processing"}
+      aria-label={ariaLabel}
       className={`mic-large ${stateClass}`}
     >
       {state === "speaking" ? <SpeakerWaveIcon /> : <MicLargeIcon />}

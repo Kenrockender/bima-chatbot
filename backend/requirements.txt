@@ -12,3 +12,4 @@ beautifulsoup4==4.15.0
 requests==2.34.2
 langdetect==1.0.9
 python-dotenv==1.2.2
+httpx==0.28.1

@@ -494,6 +494,17 @@ body {
   z-index: 0;
 }
 
+/* ── Skeleton pulse (loading placeholders) ── */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 0.2; }
+}
+.skeleton {
+  background: var(--life-item);
+  border-radius: 8px;
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+}
+
 /* ── Blink animation (typing dots, status indicators) ── */
 @keyframes blink {
   0%, 100% { opacity: 0.25; }
@@ -809,3 +820,64 @@ html.dark ::selection {
   background: rgba(245, 197, 24, 0.32);
   color: #fff;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   THEME-AWARE SURFACES — these replace inline hardcoded light gradients
+   that previously stayed bright in dark mode (which left light text
+   unreadable on a light card). Each has a light base + dark override so
+   the whole card re-themes with `html.dark`.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Shared page-header bar — keeps Tailwind's bg-white/80 in light mode, swaps
+   to a translucent dark surface in dark mode. (Dark-only override so it never
+   collides with the generated bg-white/80 utility.) */
+html.dark .appbar-dark {
+  background-color: rgba(16, 28, 45, 0.82);
+}
+
+/* Daily-goal card (progress page) — blue tint pending, green tint when done. */
+.card-goal {
+  background: linear-gradient(150deg, #eef5fc 0%, #e3eef9 100%);
+}
+.card-goal.is-done {
+  background: linear-gradient(150deg, #f0faf5 0%, #dcefe3 100%);
+}
+html.dark .card-goal {
+  background: linear-gradient(150deg, rgba(94, 162, 232, 0.14) 0%, rgba(94, 162, 232, 0.06) 100%);
+}
+html.dark .card-goal.is-done {
+  background: linear-gradient(150deg, rgba(52, 211, 153, 0.16) 0%, rgba(52, 211, 153, 0.06) 100%);
+}
+
+/* Competitor comparison card (recommend page). */
+.card-competitor {
+  background: linear-gradient(150deg, #f3f6fa 0%, #e8edf3 100%);
+  border: 1px solid #dbe3ec;
+}
+html.dark .card-competitor {
+  background: linear-gradient(150deg, var(--surface-3) 0%, var(--surface-2) 100%);
+  border-color: var(--border-1);
+}
+
+/* Inset translucent panel (head-to-head, objection-handling boxes). */
+.inset-soft {
+  background: rgba(22, 56, 107, 0.05);
+  border: 1px solid #d6e0ec;
+}
+html.dark .inset-soft {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-1);
+}
+
+/* Soft blue tint card (feedback report panels). */
+.card-tint-blue {
+  background: linear-gradient(150deg, #f4f8fd 0%, #eaf1fa 100%);
+}
+html.dark .card-tint-blue {
+  background: linear-gradient(150deg, var(--surface-3) 0%, var(--surface-2) 100%);
+}
+
+/* Eyebrow / marker labels carry hardcoded navy — brighten on dark canvas. */
+html.dark .life-eyebrow { color: var(--life-sub); }
+html.dark .life-marker::before,
+html.dark .life-marker::after { background: var(--life-heading); }

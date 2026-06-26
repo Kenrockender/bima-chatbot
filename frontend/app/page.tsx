@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { BimaAvatar } from "@/components/BimaAvatar";
 import { ChatBubble } from "@/components/ChatBubble";
 import { EscalationCard } from "@/components/EscalationCard";
 import { PersonaCard, type Persona } from "@/components/PersonaCard";
 import { FeedbackReport, type Report } from "@/components/FeedbackReport";
 import { CoachChip, type Coach } from "@/components/CoachChip";
 import { VoiceStage } from "@/components/VoiceStage";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppShell } from "@/components/AppShell";
+import { useConfirm } from "@/components/ConfirmModal";
 import { useSTT, useTTS } from "@/hooks/useSpeech";
+import { useServerSTT } from "@/hooks/useServerSTT";
 import { authedFetch } from "@/lib/api";
 import { recommendedPersona } from "@/lib/coaching";
 import { t, type Lang } from "@/lib/i18n";
@@ -58,17 +58,19 @@ function sortByDifficulty(list: Persona[]): Persona[] {
 }
 
 export default function Home() {
+  const [confirmModal, askConfirm] = useConfirm();
   const [lang, setLang] = useState<Lang>("id");
   const [stage, setStage] = useState<Stage>("pick");
   const [personas, setPersonas] = useState<Persona[]>([]);
+  const [personaError, setPersonaError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activePersona, setActivePersona] = useState<Persona | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState(false);
   const [report, setReport] = useState<Report | null>(null);
   const [inputMode, setInputMode] = useState<"voice" | "text">(() => {
     if (typeof window === "undefined") return "text";
@@ -88,6 +90,7 @@ export default function Home() {
   const [sessionElapsed, setSessionElapsed] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const voiceInitRef = useRef(false);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tr = t[lang];
@@ -99,10 +102,22 @@ export default function Home() {
   const speechLang = lang === "id" ? "id-ID" : "en-US";
   const stt = useSTT({ lang: speechLang });
   const tts = useTTS({ lang: speechLang });
+  const serverSTT = useServerSTT({ lang: speechLang });
+  const hasVoice = stt.supported || serverSTT.available;
 
   useEffect(() => {
     if (stt.listening) setInput((stt.transcript + " " + stt.interim).trim());
   }, [stt.transcript, stt.interim, stt.listening]);
+
+  // Server STT fallback: when transcription completes, populate input and auto-send.
+  useEffect(() => {
+    if (serverSTT.transcript && !serverSTT.processing) {
+      setInput(serverSTT.transcript);
+      send(serverSTT.transcript);
+      serverSTT.reset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverSTT.transcript, serverSTT.processing]);
 
   useEffect(() => {
     if (stt.listening) {
@@ -118,12 +133,50 @@ export default function Home() {
     setListenSeconds(0);
   }, [stt.listening]);
 
-  useEffect(() => {
+  function loadPersonas() {
+    setPersonaError(false);
+    try {
+      const cached = sessionStorage.getItem("bima.personas");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPersonas(sortByDifficulty(parsed));
+          return;
+        }
+      }
+    } catch {}
     authedFetch("/api/training/personas")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then(sortByDifficulty)
-      .then(setPersonas)
-      .catch(() => setPersonas([]));
+      .then((sorted) => {
+        setPersonas(sorted);
+        try { sessionStorage.setItem("bima.personas", JSON.stringify(sorted)); } catch {}
+      })
+      .catch(() => { setPersonas([]); setPersonaError(true); });
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadPersonas(); }, []);
+
+  // Restore an in-progress session after page refresh.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (stage !== "pick" || sessionId) return;
+    try {
+      const raw = sessionStorage.getItem("bima.session");
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved.session_id && saved.persona) {
+          setSessionId(saved.session_id);
+          setActivePersona(saved.persona);
+          setSelectedId(saved.persona.id);
+          setMessages([{ role: "assistant", content: saved.opening ?? "", timestamp: new Date(saved.started) }]);
+          setStage("chat");
+          setSessionStart(saved.started);
+          return;
+        }
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Deep-link auto-start: the progress dashboard links here with ?persona=…
@@ -146,13 +199,13 @@ export default function Home() {
   }, [personas]);
 
   useEffect(() => {
-    if (!voiceInitRef.current && stt.supported && !stt.isIOS) {
+    if (!voiceInitRef.current && hasVoice) {
       voiceInitRef.current = true;
       try {
         if (!localStorage.getItem("bima.inputMode")) setInputMode("voice");
       } catch { setInputMode("voice"); }
     }
-  }, [stt.supported, stt.isIOS]);
+  }, [hasVoice]);
 
   useEffect(() => {
     try { localStorage.setItem("bima.inputMode", inputMode); } catch {}
@@ -212,6 +265,7 @@ export default function Home() {
   ) {
     if (starting) return;
     setStarting(true);
+    setStartError(false);
     try {
       const res = await authedFetch("/api/training/start", {
         method: "POST",
@@ -236,14 +290,23 @@ export default function Home() {
       ]);
       setStage("chat");
       setSessionStart(Date.now());
+      setTimeout(() => inputRef.current?.focus(), 100);
       setAiSubtitle(data.opening_message);
+      try {
+        sessionStorage.setItem("bima.session", JSON.stringify({
+          session_id: data.session_id,
+          persona: data.persona,
+          opening: data.opening_message,
+          started: Date.now(),
+        }));
+      } catch {}
       setLastCoach(null);
       setLastFacts(null);
       if (inputMode === "voice" && !muted && tts.supported) {
         setTimeout(() => tts.speak(data.opening_message), 250);
       }
     } catch {
-      alert("Gagal memulai sesi. Coba lagi sebentar.");
+      setStartError(true);
     } finally {
       setStarting(false);
     }
@@ -286,6 +349,9 @@ export default function Home() {
   // mid-stream break we keep whatever streamed — never re-submit, to avoid
   // duplicating the turn in the server-side session.
   async function streamReply(text: string): Promise<boolean> {
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     let res: Response;
     try {
       res = await authedFetch("/api/training/chat/stream", {
@@ -295,6 +361,7 @@ export default function Home() {
           Accept: "text/event-stream",
         },
         body: JSON.stringify({ session_id: sessionId, message: text }),
+        signal: ctrl.signal,
       });
     } catch {
       return false;
@@ -358,10 +425,12 @@ export default function Home() {
 
   // Non-streaming fallback. Patches the placeholder assistant bubble.
   async function jsonReply(text: string): Promise<void> {
+    const signal = abortRef.current?.signal;
     const res = await authedFetch("/api/training/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId, message: text }),
+      signal,
     });
     if (!res.ok) throw new Error();
     const data = await res.json();
@@ -388,9 +457,7 @@ export default function Home() {
       setMessages((prev) =>
         patchLastAssistant(prev, {
           content:
-            lang === "id"
-              ? "Maaf, koneksi terputus. Jika masalah berlanjut, hubungi tim kami."
-              : "Connection error. If this persists, reach out to our team.",
+            tr.connectionError,
           escalation: true,
           streaming: false,
         }),
@@ -410,7 +477,12 @@ export default function Home() {
 
   async function endSession() {
     if (!sessionId) return;
-    if (!confirm(tr.endSessionConfirm)) return;
+    const ok = await askConfirm(tr.endSessionConfirm, {
+      confirmLabel: tr.endSession,
+      cancelLabel: lang === "id" ? "Batal" : "Cancel",
+      destructive: true,
+    });
+    if (!ok) return;
     setStage("ending");
     try {
       const res = await authedFetch("/api/training/end", {
@@ -422,8 +494,9 @@ export default function Home() {
       const data = await res.json();
       setReport(data);
       setStage("report");
+      try { sessionStorage.removeItem("bima.session"); } catch {}
     } catch {
-      alert("Gagal mengambil feedback. Coba lagi.");
+      setStartError(true);
       setStage("chat");
     }
   }
@@ -437,14 +510,25 @@ export default function Home() {
     setMessages([]);
     setReport(null);
     setInput("");
+    try { sessionStorage.removeItem("bima.session"); } catch {}
+    abortRef.current?.abort();
     if (stt.listening || stt.paused) stt.stop();
     if (tts.speaking) tts.cancel();
   }
 
   function toggleMic() {
+    // Server STT fallback (iOS/Safari)
+    if (!stt.supported && serverSTT.available) {
+      if (serverSTT.recording) {
+        serverSTT.stop();
+      } else {
+        if (tts.speaking) tts.cancel();
+        serverSTT.start();
+      }
+      return;
+    }
     if (!stt.supported) return;
     if (stt.listening || stt.paused) {
-      // finish the turn and send whatever was captured
       stt.stop();
       const finalText = (stt.transcript + " " + stt.interim).trim();
       if (finalText) {
@@ -489,7 +573,7 @@ export default function Home() {
         : "idle" as const;
 
   const placeholder =
-    voiceMode && stt.supported ? tr.tapToSpeak : tr.placeholder;
+    voiceMode && (stt.supported || serverSTT.available) ? tr.tapToSpeak : tr.placeholder;
 
   const sttErrorMessage = (() => {
     if (!stt.error) return null;
@@ -517,50 +601,57 @@ export default function Home() {
     : tr.voiceUnsupported;
 
   return (
-    <main
-      className="min-h-screen bg-shell flex items-stretch justify-center px-3 sm:px-6 lg:px-8 py-4 sm:py-6"
-      style={{
-        backgroundColor: "#0a55ab",
-        backgroundImage:
-          "radial-gradient(1100px 620px at 90% -12%, rgba(255,255,255,0.18), transparent 60%), radial-gradient(920px 560px at -8% 110%, rgba(25,184,166,0.55), transparent 60%), linear-gradient(125deg, #0a55ab 0%, #1582b3 50%, #19b8a6 100%)",
-      }}
-    >
-      <div className="bg-window w-full max-w-[1180px] flex flex-col overflow-hidden">
-        {/* ─── HEADER ─── */}
-        <header className="flex items-center gap-4 px-5 sm:px-8 py-4 border-b border-life-blue/10">
-          {/* BIMA mascot lockup */}
-          <div className="flex items-center gap-3 shrink-0">
-            <BimaAvatar size={44} />
-            <div className="leading-none">
-              <div
-                className="text-life-heading font-extrabold tracking-tight"
-                style={{ fontSize: 22, letterSpacing: "0.04em" }}
-              >
-                BIMA
-              </div>
-              <div className="hidden sm:block text-[9.5px] uppercase tracking-[0.14em] text-life-body mt-1">
-                BCA Life Intelligent Mobile Assistant
-              </div>
-            </div>
+    <AppShell lang={lang} onLang={setLang} current="home" fill>
+      {confirmModal}
+      {/* Accent band — blue→teal BCA Life gradient, same signature as every page */}
+      <section className="life-gradient relative overflow-hidden shrink-0">
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{
+            width: 420, height: 420, right: -120, top: -180,
+            background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.16), rgba(255,255,255,0))",
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{
+            width: 280, height: 280, left: -90, bottom: -150,
+            background: "radial-gradient(circle at 50% 50%, rgba(25,184,166,0.35), rgba(25,184,166,0))",
+          }}
+        />
+        <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 pt-7 pb-12 animate-riseIn">
+          <div className="flex items-center gap-2.5 mb-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-white/90" />
+            <span className="h-1 w-10 rounded-full bg-white/70" />
+            <span className="ml-1 text-[11.5px] font-bold uppercase tracking-[0.13em] text-white/85">
+              {tr.brandLine}
+            </span>
           </div>
+          <h2
+            className="font-sans font-extrabold text-white text-[27px] sm:text-[34px] leading-[1.08] tracking-tight"
+            style={{ letterSpacing: "-0.025em" }}
+          >
+            {tr.navTrain}
+          </h2>
+        </div>
+      </section>
 
-          {/* Sub-context */}
-          <div className="hidden sm:flex items-baseline gap-3 ml-2 pl-4 border-l border-life-blue/12">
-            <div className="leading-tight">
-              <div className="text-life-heading text-[13.5px] font-semibold">
-                Persona Chat
-              </div>
-              <div className="text-[10px] text-life-body tracking-wide">
-                BCA Life Sales Companion
-              </div>
+      <div className="relative z-10 -mt-7 flex-1 w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pb-4 sm:pb-6 flex flex-col min-h-0">
+        {/* Active-session context bar (persona, timer, end session) */}
+        {stage === "chat" && activePersona && (
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-life-amber shrink-0" />
+              <span className="text-[13.5px] font-semibold text-life-heading truncate">
+                {activePersona.name}
+              </span>
+              <span className="hidden sm:inline text-[11px] text-life-body shrink-0">
+                · {tr.challengeLabel}: {activePersona.challenge}
+              </span>
             </div>
-          </div>
-
-          <div className="flex-1" />
-
-          {/* Right side: end-session, links, language */}
-          {stage === "chat" && activePersona && (
-            <div className="hidden md:flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               {sessionStart && (
                 <span className="text-[12px] font-mono text-life-body tabular-nums">
                   {fmtTime(sessionElapsed)}
@@ -574,129 +665,11 @@ export default function Home() {
                 {tr.endSession}
               </button>
             </div>
-          )}
-
-          <Link
-            href="/progress"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
-          >
-            {tr.navProgress}
-          </Link>
-          <Link
-            href="/leaderboard"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
-          >
-            {tr.navLeaderboard}
-          </Link>
-          <Link
-            href="/recommend"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
-          >
-            {tr.navRecommend}
-          </Link>
-          <Link
-            href="/manager"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/admin"
-            className="hidden md:inline text-[11px] uppercase tracking-[0.14em] font-semibold text-life-body hover:text-life-blue px-2 py-1 transition"
-          >
-            {tr.admin}
-          </Link>
-
-          <div className="lang-switch shrink-0">
-            {(["en", "id"] as const).map((l) => (
-              <button
-                key={l}
-                onClick={() => setLang(l)}
-                className={lang === l ? "is-on" : ""}
-              >
-                {l.toUpperCase()}
-              </button>
-            ))}
           </div>
+        )}
 
-          <ThemeToggle />
-
-          {/* Mobile nav — the desktop links above are hidden below md, so
-              phones get a hamburger that opens the same destinations. */}
-          <div className="relative md:hidden shrink-0">
-            <button
-              onClick={() => setNavOpen((v) => !v)}
-              aria-label="Menu"
-              aria-expanded={navOpen}
-              className="flex items-center justify-center w-9 h-9 rounded-full border border-life-blue/15 text-life-body hover:text-life-blue hover:border-life-blue/50 transition"
-            >
-              {navOpen ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-              )}
-            </button>
-
-            {navOpen && (
-              <>
-                {/* tap-away backdrop */}
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setNavOpen(false)}
-                />
-                <div className="absolute right-0 top-11 z-50 w-52 rounded-2xl border border-life-blue/12 bg-white shadow-xl overflow-hidden py-1.5">
-                  {stage === "chat" && activePersona && (
-                    <>
-                      {sessionStart && (
-                        <div className="px-4 py-1.5 text-[11px] font-mono text-life-bodyLight tabular-nums">
-                          {fmtTime(sessionElapsed)}
-                        </div>
-                      )}
-                      <button
-                        onClick={() => {
-                          setNavOpen(false);
-                          endSession();
-                        }}
-                        className="w-full text-left px-4 py-2.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-life-heading hover:bg-life-blueBg flex items-center gap-2"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
-                        {tr.endSession}
-                      </button>
-                      <div className="h-px bg-life-blue/10 my-1" />
-                    </>
-                  )}
-                  {[
-                    { href: "/", label: tr.navTrain ?? "Train" },
-                    { href: "/progress", label: tr.navProgress },
-                    { href: "/leaderboard", label: tr.navLeaderboard },
-                    { href: "/recommend", label: tr.navRecommend },
-                    { href: "/manager", label: "Dashboard" },
-                    { href: "/admin", label: tr.admin },
-                  ].map((it) => (
-                    <Link
-                      key={it.href}
-                      href={it.href}
-                      onClick={() => setNavOpen(false)}
-                      className="block px-4 py-2.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-life-body hover:text-life-blue hover:bg-life-blueBg transition"
-                    >
-                      {it.label}
-                    </Link>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </header>
-
-        {/* ─── BODY: sidebar + chat ─── */}
-        <div className="flex-1 flex min-h-0">
+        {/* ─── Chat surface: persona sidebar + chat, in a card like every other page ─── */}
+        <div className="life-card flex-1 flex min-h-0 overflow-hidden">
           {/* Sidebar */}
           <aside className="hidden md:flex flex-col gap-3 w-[280px] shrink-0 px-4 py-5 border-r border-life-blue/10 overflow-y-auto scroll-stylish">
             <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-life-bodyLight px-1 mb-1">
@@ -720,9 +693,25 @@ export default function Home() {
               />
             )}
             {personas.length === 0 && (
-              <div className="text-life-bodyLight text-[12px] px-1 py-3 italic">
-                Loading personas…
-              </div>
+              personaError ? (
+                <button
+                  onClick={loadPersonas}
+                  className="text-[12px] px-1 py-3 text-life-neg hover:text-life-blue transition"
+                >
+                  {tr.fetchError}{" "}
+                  <span className="underline">{tr.retry}</span>
+                </button>
+              ) : (
+                <div className="space-y-3 animate-fadeIn">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="tile-persona p-3 space-y-2">
+                      <div className="skeleton h-4 w-24" />
+                      <div className="skeleton h-3 w-36" />
+                      <div className="skeleton h-3 w-16" />
+                    </div>
+                  ))}
+                </div>
+              )
             )}
           </aside>
 
@@ -730,7 +719,7 @@ export default function Home() {
           <section className="flex-1 flex flex-col min-w-0 p-4 sm:p-5">
             <div className="flex-1 bg-chatpanel flex flex-col min-h-0 overflow-hidden">
               {/* Mobile persona picker — wraps so every persona is visible at once (no horizontal scroll) */}
-              <div className="md:hidden flex flex-wrap gap-2 px-3 py-3 border-b border-black/5">
+              <div className="md:hidden flex flex-wrap gap-2 px-3 py-3 border-b border-life-blue/8">
                 {presetPersonas.map((p) => {
                   const isOn = (activePersona?.id ?? selectedId) === p.id;
                   return (
@@ -760,7 +749,7 @@ export default function Home() {
                     className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold border border-dashed transition ${
                       (activePersona?.id ?? selectedId) === CUSTOM_ID
                         ? "bg-life-blue text-white border-transparent"
-                        : "bg-white/60 text-life-body border-life-blue/25"
+                        : "bg-life-white/60 text-life-body border-life-blue/25"
                     }`}
                   >
                     + {tr.customCardCta}
@@ -771,12 +760,16 @@ export default function Home() {
               {/* Scrolling messages or welcome / report */}
               <div
                 ref={scrollRef}
+                role="log"
+                aria-live="polite"
+                aria-relevant="additions"
                 className="flex-1 overflow-y-auto scroll-stylish px-4 sm:px-7 py-6"
               >
                 {stage === "pick" && <Welcome
                   tr={tr}
                   selected={personas.find((x) => x.id === selectedId) ?? null}
                   starting={starting}
+                  error={startError}
                   onStart={startSession}
                   onStartCustom={(cfg) =>
                     startSession({ id: CUSTOM_ID } as Persona, undefined, cfg)
@@ -896,16 +889,8 @@ export default function Home() {
                             <EscalationCard
                               whatsapp="+62 812-1234-5678"
                               email="hr-it@bcalife.co.id"
-                              title={
-                                lang === "id"
-                                  ? "Butuh bantuan langsung?"
-                                  : "Need direct help?"
-                              }
-                              body={
-                                lang === "id"
-                                  ? "Tim kami siap membantu kamu melalui WhatsApp atau email."
-                                  : "Our team is ready to help via WhatsApp or email."
-                              }
+                              title={tr.needDirectHelp}
+                              body={tr.teamReady}
                               whatsappLabel="WhatsApp"
                               emailLabel="Email"
                             />
@@ -939,9 +924,9 @@ export default function Home() {
 
               {/* Footer input bar — hidden in voice mode during chat */}
               {((stage === "chat" && !voiceMode) || stage === "pick") && (
-                <div className="border-t border-black/5 px-3 sm:px-4 py-3 bg-white/30 backdrop-blur-sm">
+                <div className="border-t border-life-blue/8 px-3 sm:px-4 py-3 bg-life-white/30 backdrop-blur-sm">
                   {/* Voice error banner */}
-                  {(sttErrorMessage || (voiceMode && !stt.supported)) && (
+                  {(sttErrorMessage || (voiceMode && !stt.supported && !serverSTT.available)) && (
                     <div
                       role="alert"
                       className="mb-2 flex items-start gap-2 rounded-lg border border-red-300/60 bg-red-50/90 px-3 py-2 text-[12px] text-red-800"
@@ -987,7 +972,7 @@ export default function Home() {
                           if (tts.speaking) tts.cancel();
                         }
                       }}
-                      disabled={!stt.supported && !tts.supported}
+                      disabled={!hasVoice && !tts.supported}
                       title={
                         !stt.supported && !tts.supported
                           ? unsupportedMessage
@@ -996,7 +981,7 @@ export default function Home() {
                       className={`inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.14em] font-bold px-3 py-1.5 rounded-full border transition disabled:opacity-40 disabled:cursor-not-allowed ${
                         voiceMode
                           ? "bg-life-blue text-white border-life-blue shadow-lifeBlue"
-                          : "bg-white/60 text-life-body border-life-blue/15 hover:border-life-blue/40"
+                          : "bg-life-white/60 text-life-body border-life-blue/15 hover:border-life-blue/40"
                       }`}
                     >
                       <SpeakerIcon active={voiceMode} />
@@ -1012,7 +997,7 @@ export default function Home() {
                         title={muted ? tr.unmute : tr.mute}
                         className={`inline-flex items-center justify-center w-8 h-8 rounded-full border transition ${
                           muted
-                            ? "bg-white/60 text-life-bodyLight border-life-blue/15"
+                            ? "bg-life-white/60 text-life-bodyLight border-life-blue/15"
                             : "bg-life-blue text-white border-life-blue"
                         }`}
                       >
@@ -1093,7 +1078,7 @@ export default function Home() {
                       <button
                         onClick={() => {
                           if (stage !== "chat") return;
-                          if (!stt.supported) {
+                          if (!hasVoice) {
                             setInputMode(inputMode === "voice" ? "text" : "voice");
                             return;
                           }
@@ -1101,8 +1086,8 @@ export default function Home() {
                           toggleMic();
                         }}
                         disabled={stage !== "chat" || busy}
-                        title={stt.listening ? tr.listening : tr.tapToSpeak}
-                        className={`btn-gold-circle shrink-0 ${stt.listening ? "ring-4 ring-red-500/40" : ""}`}
+                        title={stt.listening || serverSTT.recording ? tr.listening : tr.tapToSpeak}
+                        className={`btn-gold-circle shrink-0 ${stt.listening || serverSTT.recording ? "ring-4 ring-red-500/40" : ""}`}
                         style={{ width: 38, height: 38 }}
                       >
                         <MicIcon />
@@ -1114,6 +1099,7 @@ export default function Home() {
                       onClick={() => send()}
                       disabled={stage !== "chat" || busy || !input.trim()}
                       title={tr.send}
+                      aria-label={tr.send}
                       className="btn-gold-circle shrink-0"
                     >
                       <SendIcon />
@@ -1145,7 +1131,7 @@ export default function Home() {
           </section>
         </div>
       </div>
-    </main>
+    </AppShell>
   );
 }
 
@@ -1187,12 +1173,14 @@ function Welcome({
   tr,
   selected,
   starting,
+  error,
   onStart,
   onStartCustom,
 }: {
   tr: (typeof t)["en"] | (typeof t)["id"];
   selected: Persona | null;
   starting: boolean;
+  error?: boolean;
   onStart: (p: Persona) => void;
   onStartCustom: (cfg: CustomConfig) => void;
 }) {
@@ -1224,6 +1212,12 @@ function Welcome({
             : tr.pickPersonaHint}
         </p>
       </div>
+
+      {error && (
+        <div className="mt-4 rounded-xl border border-life-neg/30 bg-life-negBg px-4 py-3 text-[13px] text-life-neg max-w-[460px]">
+          {tr.fetchError}
+        </div>
+      )}
 
       {isCustom ? (
         <CustomPersonaForm tr={tr} starting={starting} onStart={onStartCustom} />
@@ -1352,20 +1346,20 @@ function CustomPersonaForm({
       <style jsx>{`
         :global(.custom-field) {
           width: 100%;
-          background: #ffffff;
-          border: 1px solid #e6eef7;
+          background: var(--life-surface);
+          border: 1px solid var(--border-1);
           border-radius: 10px;
           padding: 0.5rem 0.7rem;
           font-size: 13.5px;
-          color: #0a1b2e;
+          color: var(--life-heading);
           transition: border-color 0.15s, box-shadow 0.15s;
         }
         :global(.custom-field::placeholder) {
-          color: #9aa3b0;
+          color: var(--life-bodyLight);
         }
         :global(.custom-field:focus) {
           outline: none;
-          border-color: #0a55ab;
+          border-color: var(--life-blue);
           box-shadow: 0 0 0 4px rgba(10, 85, 171, 0.16);
         }
       `}</style>
@@ -1603,7 +1597,7 @@ function VoicePicker({
         type="button"
         onClick={onTest}
         title={testLabel}
-        className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-life-blue/15 bg-white/60 text-life-body hover:border-life-blue/50 hover:text-life-blue transition"
+        className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-life-blue/15 bg-life-white/60 text-life-body hover:border-life-blue/50 hover:text-life-blue transition"
       >
         <PlayIcon />
       </button>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PageHeader } from "@/components/PageHeader";
+import { AppShell } from "@/components/AppShell";
+import { FetchError } from "@/components/FetchError";
 import { authedFetch } from "@/lib/api";
 import { t, type Lang } from "@/lib/i18n";
 
@@ -27,28 +28,27 @@ export default function LeaderboardPage() {
   const [lang, setLang] = useState<Lang>("id");
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const tr = t[lang];
 
-  useEffect(() => {
+  function loadBoard() {
+    setLoading(true);
+    setFetchError(false);
     authedFetch("/api/training/leaderboard")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then(setBoard)
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadBoard(); }, []);
 
   const entries = board?.entries ?? [];
   const me = board?.me ?? null;
   const meRanked = me && entries.some((e) => e.is_me);
 
   return (
-    <main className="min-h-screen bg-life relative overflow-hidden">
-      <PageHeader
-        eyebrow={tr.navLeaderboard}
-        tagline="BCA Life · Sales Arena"
-        lang={lang}
-        onLang={setLang}
-        current="leaderboard"
-      />
+    <AppShell lang={lang} onLang={setLang} current="leaderboard">
 
       {/* Hero band — blue→teal gradient with the title */}
       <section className="life-gradient relative overflow-hidden">
@@ -92,9 +92,20 @@ export default function LeaderboardPage() {
 
       <div className="relative z-10 max-w-3xl mx-auto px-6 lg:px-8 py-9 -mt-7">
         {loading ? (
-          <div className="grid place-items-center py-20">
-            <div className="h-7 w-7 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
+          <div className="life-card overflow-hidden animate-fadeIn">
+            {[1,2,3,4,5,6].map(i => (
+              <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-life-blue/8 last:border-0">
+                <div className="skeleton w-7 h-7 rounded-full" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="skeleton h-4 w-32" />
+                  <div className="skeleton h-3 w-20" />
+                </div>
+                <div className="skeleton h-5 w-16" />
+              </div>
+            ))}
           </div>
+        ) : fetchError ? (
+          <FetchError message={tr.fetchError} onRetry={loadBoard} />
         ) : entries.length === 0 ? (
           <div className="life-card p-10 text-center text-life-body">
             {lang === "id"
@@ -116,7 +127,7 @@ export default function LeaderboardPage() {
           </div>
         )}
       </div>
-    </main>
+    </AppShell>
   );
 }
 

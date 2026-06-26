@@ -3,7 +3,9 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { BimaAvatar } from "@/components/BimaAvatar";
-import { PageHeader } from "@/components/PageHeader";
+import { AppShell } from "@/components/AppShell";
+import { useConfirm } from "@/components/ConfirmModal";
+import { FetchError } from "@/components/FetchError";
 import { authedFetch } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -22,6 +24,7 @@ type Source = {
 type Toast = { id: number; kind: "ok" | "err"; text: string };
 
 export default function AdminPage() {
+  const [confirmModal, askConfirm] = useConfirm();
   const { user, signOut } = useAuth();
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -35,17 +38,20 @@ export default function AdminPage() {
 
   // Verify admin rights via the bearer token. Re-runs when the signed-in user
   // changes (e.g. after the auth state resolves on first load).
-  useEffect(() => {
-    let alive = true;
+  const [fetchError, setFetchError] = useState(false);
+
+  function loadAuth() {
     setChecking(true);
+    setFetchError(false);
+    let alive = true;
     authedFetch("/api/admin/verify", { method: "POST" })
       .then((res) => alive && setAuthed(res.ok))
-      .catch(() => alive && setAuthed(false))
+      .catch(() => { if (alive) { setAuthed(false); setFetchError(true); } })
       .finally(() => alive && setChecking(false));
-    return () => {
-      alive = false;
-    };
-  }, [user]);
+    return () => { alive = false; };
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { const cleanup = loadAuth(); return cleanup; }, [user]);
 
   function toast(kind: "ok" | "err", text: string) {
     const id = Date.now() + Math.random();
@@ -113,7 +119,11 @@ export default function AdminPage() {
   }
 
   async function deleteSource(id: string) {
-    if (!confirm("Delete this source from the knowledge base?")) return;
+    const ok = await askConfirm("Delete this source from the knowledge base?", {
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     const res = await authedFetch(`/api/admin/sources/${id}`, {
       method: "DELETE",
     });
@@ -140,8 +150,14 @@ export default function AdminPage() {
   // ─────────────────────────── ACCESS GATE ───────────────────────────
   if (checking) {
     return (
-      <main className="min-h-screen grid place-items-center bg-life">
-        <div className="h-8 w-8 rounded-full border-2 border-life-blue border-t-transparent animate-spin" />
+      <main className="min-h-screen bg-life px-6 py-10">
+        <div className="max-w-3xl mx-auto space-y-5 animate-fadeIn">
+          <div className="skeleton h-8 w-32 mb-4" />
+          <div className="life-card p-6 space-y-3">
+            <div className="skeleton h-3 w-40" />
+            {[1,2,3].map(i => <div key={i} className="flex items-center gap-3"><div className="skeleton h-10 w-10 rounded-lg" /><div className="skeleton h-4 flex-1" /><div className="skeleton h-8 w-16 rounded-full" /></div>)}
+          </div>
+        </div>
       </main>
     );
   }
@@ -149,6 +165,9 @@ export default function AdminPage() {
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-life relative overflow-hidden px-4">
+        {fetchError ? (
+          <FetchError message="Failed to load. Please try again." onRetry={loadAuth} />
+        ) : (
         <div className="relative z-10 w-full max-w-md life-card p-8 animate-riseIn text-center overflow-hidden">
           <span
             aria-hidden
@@ -184,19 +203,15 @@ export default function AdminPage() {
             )}
           </div>
         </div>
+        )}
       </main>
     );
   }
 
   // ─────────────────────────── DASHBOARD ───────────────────────────
   return (
-    <main className="min-h-screen bg-life relative overflow-hidden">
-      <PageHeader
-        eyebrow="Console"
-        tagline="Knowledge base management"
-        lang="en"
-        current="admin"
-      />
+    <AppShell lang="en" current="admin">
+      {confirmModal}
 
       {/* Hero band */}
       <section className="life-gradient relative overflow-hidden">
@@ -459,7 +474,7 @@ export default function AdminPage() {
           </div>
         ))}
       </div>
-    </main>
+    </AppShell>
   );
 }
 
