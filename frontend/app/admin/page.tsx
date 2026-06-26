@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { useConfirm } from "@/components/ConfirmModal";
 import { FetchError } from "@/components/FetchError";
 import { authedFetch } from "@/lib/api";
+import { readCache, writeCache } from "@/lib/swr";
 import { useAuth } from "@/components/AuthProvider";
 
 type Source = {
@@ -41,12 +42,21 @@ export default function AdminPage() {
   const [fetchError, setFetchError] = useState(false);
 
   function loadAuth() {
-    setChecking(true);
+    // If we already verified as admin this tab session, skip the gate spinner
+    // and revalidate in the background. The token is still re-checked on every
+    // real API call, so this only affects the loading UX, not security.
+    const cachedAuth = readCache<boolean>("admin.authed") === true;
+    if (cachedAuth) { setAuthed(true); setChecking(false); }
+    else setChecking(true);
     setFetchError(false);
     let alive = true;
     authedFetch("/api/admin/verify", { method: "POST" })
-      .then((res) => alive && setAuthed(res.ok))
-      .catch(() => { if (alive) { setAuthed(false); setFetchError(true); } })
+      .then((res) => {
+        if (!alive) return;
+        setAuthed(res.ok);
+        writeCache("admin.authed", res.ok);
+      })
+      .catch(() => { if (alive && !cachedAuth) { setAuthed(false); setFetchError(true); } })
       .finally(() => alive && setChecking(false));
     return () => { alive = false; };
   }
@@ -61,11 +71,18 @@ export default function AdminPage() {
 
   const loadSources = useCallback(async () => {
     const res = await authedFetch("/api/admin/sources");
-    if (res.ok) setSources(await res.json());
+    if (res.ok) {
+      const d: Source[] = await res.json();
+      setSources(d);
+      writeCache("admin.sources", d);
+    }
   }, []);
 
   useEffect(() => {
     if (!authed) return;
+    // Paint last-known sources instantly; the poll below refreshes them.
+    const cached = readCache<Source[]>("admin.sources");
+    if (cached) setSources(cached);
     loadSources();
     const i = setInterval(loadSources, 4000);
     return () => clearInterval(i);
