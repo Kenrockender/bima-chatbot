@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { FetchError } from "@/components/FetchError";
 import { authedFetch } from "@/lib/api";
+import { readCache, writeCache } from "@/lib/swr";
 import { useAuth } from "@/components/AuthProvider";
 import { t, type Lang } from "@/lib/i18n";
 
@@ -48,20 +49,27 @@ export default function ManagerPage() {
   const dimLabel = (d: string) => (tr as Record<string, string>)[d] ?? d;
 
   function loadDashboard() {
-    setChecking(true);
+    // Paint cached overview instantly (if any) so a revisit doesn't block on
+    // the backend cold start; then revalidate in the background.
+    const cached = readCache<Overview>("manager.overview");
+    const bg = !!cached;
+    if (cached) { setAuthed(true); setData(cached); setChecking(false); }
+    else setChecking(true);
     setFetchError(false);
     let alive = true;
     authedFetch("/api/admin/overview")
       .then(async (res) => {
         if (!alive) return;
         if (res.ok) {
+          const d: Overview = await res.json();
           setAuthed(true);
-          setData(await res.json());
+          setData(d);
+          writeCache("manager.overview", d);
         } else {
           setAuthed(false);
         }
       })
-      .catch(() => { if (alive) { setAuthed(false); setFetchError(true); } })
+      .catch(() => { if (alive && !bg) { setAuthed(false); setFetchError(true); } })
       .finally(() => alive && setChecking(false));
     return () => { alive = false; };
   }

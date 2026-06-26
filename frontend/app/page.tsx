@@ -12,6 +12,7 @@ import { useConfirm } from "@/components/ConfirmModal";
 import { useSTT, useTTS } from "@/hooks/useSpeech";
 import { useServerSTT } from "@/hooks/useServerSTT";
 import { authedFetch } from "@/lib/api";
+import { clearCache } from "@/lib/swr";
 import { recommendedPersona } from "@/lib/coaching";
 import { t, type Lang } from "@/lib/i18n";
 
@@ -495,6 +496,10 @@ export default function Home() {
       setReport(data);
       setStage("report");
       try { sessionStorage.removeItem("bima.session"); } catch {}
+      // Stats just changed — drop cached dashboards so a visit to Progress/
+      // Leaderboard reflects the new XP immediately instead of stale numbers.
+      clearCache("progress");
+      clearCache("leaderboard");
     } catch {
       setStartError(true);
       setStage("chat");

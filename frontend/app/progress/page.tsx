@@ -7,6 +7,7 @@ import { FetchError } from "@/components/FetchError";
 import { SectionTitle } from "@/components/SectionTitle";
 import { FlameIcon, MedalIcon, CheckIcon, ClockIcon } from "@/components/icons";
 import { authedFetch } from "@/lib/api";
+import { readCache, writeCache } from "@/lib/swr";
 import { t, type Lang } from "@/lib/i18n";
 
 type Badge = { id: string; name: string; description: string };
@@ -65,8 +66,24 @@ export default function ProgressPage() {
 
   const dimLabel = (d: string) => (tr as Record<string, string>)[d] ?? d;
 
-  function loadProgress() {
-    setLoading(true);
+  type ProgressData = {
+    stats: Stats | null;
+    history: HistoryItem[];
+    drills: Drill[];
+    next: NextRec | null;
+  };
+
+  function apply(d: ProgressData) {
+    setStats(d.stats);
+    setHistory(d.history || []);
+    setDrills(d.drills || []);
+    setNext(d.next && d.next.dimension ? d.next : null);
+  }
+
+  // `bg` = background revalidation: we already painted cached data, so don't
+  // flip the skeleton on and don't surface transient errors over good data.
+  function loadProgress(bg = false) {
+    if (!bg) setLoading(true);
     setFetchError(false);
     Promise.all([
       authedFetch("/api/training/progress").then((r) =>
@@ -81,16 +98,29 @@ export default function ProgressPage() {
       ),
     ])
       .then(([s, hist, dr, nx]) => {
-        setStats(s);
-        setHistory(hist || []);
-        setDrills(dr || []);
-        setNext(nx && nx.dimension ? nx : null);
+        const d: ProgressData = {
+          stats: s,
+          history: hist || [],
+          drills: dr || [],
+          next: nx || null,
+        };
+        apply(d);
+        writeCache("progress", d);
       })
-      .catch(() => setFetchError(true))
+      .catch(() => { if (!bg) setFetchError(true); })
       .finally(() => setLoading(false));
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { loadProgress(); }, []);
+  useEffect(() => {
+    const cached = readCache<ProgressData>("progress");
+    if (cached) {
+      apply(cached);
+      setLoading(false);
+      loadProgress(true); // revalidate silently in the background
+    } else {
+      loadProgress();
+    }
+  }, []);
 
   const hasData = stats && stats.total_sessions > 0;
 

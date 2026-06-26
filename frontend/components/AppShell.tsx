@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { AppSidebar, type NavKey } from "@/components/AppSidebar";
+import { warmBackend } from "@/lib/swr";
 import { type Lang } from "@/lib/i18n";
 
 /**
@@ -21,6 +23,12 @@ export function AppShell({
   fill?: boolean;
   children: React.ReactNode;
 }) {
+  // Wake the (sleep-prone) backend container as early as possible so the first
+  // data fetch on any page doesn't block behind a cold start. Self-dedupes.
+  useEffect(() => {
+    warmBackend();
+  }, []);
+
   return (
     <div className="min-h-screen md:flex bg-life">
       <AppSidebar lang={lang} onLang={onLang} current={current} />

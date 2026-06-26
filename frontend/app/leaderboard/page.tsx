@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FetchError } from "@/components/FetchError";
 import { authedFetch } from "@/lib/api";
+import { readCache, writeCache } from "@/lib/swr";
 import { t, type Lang } from "@/lib/i18n";
 
 type Title = { dimension: string; label: string; score: number };
@@ -31,17 +32,27 @@ export default function LeaderboardPage() {
   const [fetchError, setFetchError] = useState(false);
   const tr = t[lang];
 
-  function loadBoard() {
-    setLoading(true);
+  // `bg` = background revalidation over already-painted cached data.
+  function loadBoard(bg = false) {
+    if (!bg) setLoading(true);
     setFetchError(false);
     authedFetch("/api/training/leaderboard")
       .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
-      .then(setBoard)
-      .catch(() => setFetchError(true))
+      .then((d: Board) => { setBoard(d); writeCache("leaderboard", d); })
+      .catch(() => { if (!bg) setFetchError(true); })
       .finally(() => setLoading(false));
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { loadBoard(); }, []);
+  useEffect(() => {
+    const cached = readCache<Board>("leaderboard");
+    if (cached) {
+      setBoard(cached);
+      setLoading(false);
+      loadBoard(true); // revalidate silently
+    } else {
+      loadBoard();
+    }
+  }, []);
 
   const entries = board?.entries ?? [];
   const me = board?.me ?? null;
