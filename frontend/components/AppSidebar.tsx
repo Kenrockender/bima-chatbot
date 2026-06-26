@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BimaAvatar } from "@/components/BimaAvatar";
+import { prefetchPage } from "@/lib/swr";
 import { type Lang } from "@/lib/i18n";
 
 export type NavKey =
@@ -117,6 +118,8 @@ export function AppSidebar({
           key={d.key}
           href={d.href}
           onClick={onClick}
+          onMouseEnter={() => prefetchPage(d.key)}
+          onFocus={() => prefetchPage(d.key)}
           aria-current={active ? "page" : undefined}
           title={compact ? d.label : undefined}
           className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition ${

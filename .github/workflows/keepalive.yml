@@ -1,0 +1,46 @@
+name: Keep backend warm
+
+# Pings the backend on a schedule so the (sleep-prone) Hugging Face Space stays
+# awake and the first user request of the day doesn't pay a cold start.
+#
+# Setup (one time): add a repository *variable* named WARM_URL with the backend
+# base URL, e.g. https://<your-hf-user>-bima-backend.hf.space
+#   GitHub repo → Settings → Secrets and variables → Actions → Variables → New
+# Without it, the job exits cleanly and does nothing.
+
+on:
+  schedule:
+    # Every 10 minutes. GitHub may delay scheduled runs under load; that's fine
+    # for a keep-alive. Cron is UTC.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {} # allow manual "Run workflow" from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping /health
+        env:
+          WARM_URL: ${{ vars.WARM_URL }}
+        run: |
+          if [ -z "$WARM_URL" ]; then
+            echo "WARM_URL repository variable is not set — skipping."
+            exit 0
+          fi
+          base="${WARM_URL%/}"
+          echo "Waking $base/health ..."
+          # Retry a few times: a sleeping Space cold-starts on the first hit and
+          # may take a while to answer 200.
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$base/health" || echo 000)
+            echo "attempt $i -> HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "Backend is awake."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Backend did not return 200 after retries (it may still be waking)."
+          # Don't fail the workflow — a transient cold start shouldn't spam alerts.
+          exit 0
