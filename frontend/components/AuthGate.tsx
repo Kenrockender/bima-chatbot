@@ -87,7 +87,22 @@ function SignIn({ onSignIn }: { onSignIn: () => Promise<void> }) {
   );
 }
 
+// Global floating chip — desktop only. On mobile the same menu lives inline in
+// the AppSidebar top bar (see AccountMenu) so it never covers the theme toggle.
 function AccountChip() {
+  return (
+    <div className="hidden md:block fixed top-3 right-3 z-50">
+      <AccountMenu />
+    </div>
+  );
+}
+
+/**
+ * Avatar button + account dropdown. Position-agnostic: the dropdown is anchored
+ * to this wrapper, so it can be dropped into a fixed corner (desktop) or inline
+ * in the mobile top bar. `align` controls which edge the dropdown opens from.
+ */
+export function AccountMenu({ align = "right" }: { align?: "left" | "right" }) {
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   if (!user) return null;
@@ -95,7 +110,7 @@ function AccountChip() {
   const initial = (user.displayName || user.email || "?").charAt(0).toUpperCase();
 
   return (
-    <div className="fixed top-3 right-3 z-50">
+    <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
         className="h-9 w-9 rounded-full overflow-hidden border border-life-blue/20 shadow-float bg-life-blue grid place-items-center"
@@ -110,7 +125,9 @@ function AccountChip() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-56 rounded-bca bg-white shadow-cardHover border border-bca-line p-3 text-left">
+        <div
+          className={`absolute ${align === "right" ? "right-0" : "left-0"} mt-2 w-56 rounded-bca bg-white shadow-cardHover border border-bca-line p-3 text-left z-50`}
+        >
           <div className="text-[13px] font-semibold text-bca-ink truncate">
             {user.displayName || "—"}
           </div>

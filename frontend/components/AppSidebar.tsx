@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AccountMenu } from "@/components/AuthGate";
 import { BimaAvatar } from "@/components/BimaAvatar";
 import { prefetchPage } from "@/lib/swr";
 import { type Lang } from "@/lib/i18n";
@@ -236,6 +237,7 @@ export function AppSidebar({
         <div className="flex-1" />
         {onLang && langSwitch}
         <ThemeToggle />
+        <AccountMenu />
       </header>
 
       {/* ── Mobile drawer ── */}
