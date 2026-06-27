@@ -325,8 +325,11 @@ export function useTTS(opts: { lang?: string } = {}) {
     const utter = new SpeechSynthesisUtterance(next);
     if (voiceRef.current) utter.voice = voiceRef.current;
     utter.lang = lang;
-    utter.rate = 1.15;
-    utter.pitch = 1.05;
+    // Natural defaults. Raising pitch above 1.0 is the main thing that makes a
+    // browser voice sound robotic/chipmunky; a hair under 1.0 reads warmer.
+    // Slightly under real-time pacing avoids the rushed, clipped TTS cadence.
+    utter.rate = 1.0;
+    utter.pitch = 0.95;
     utter.volume = 1.0;
     utter.onend = () => speakNext();
     utter.onerror = () => speakNext();
