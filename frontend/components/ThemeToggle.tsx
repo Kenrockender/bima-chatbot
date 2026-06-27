@@ -63,7 +63,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       {!mounted ? (
         <SunIcon />
       ) : pref === "system" ? (
-        <MonitorIcon />
+        <AutoIcon />
       ) : isDark ? (
         <SunIcon />
       ) : (
@@ -90,12 +90,16 @@ function MoonIcon() {
   );
 }
 
-function MonitorIcon() {
+/**
+ * "Auto / follow system" glyph — a circle whose left half is filled. Reads as
+ * an automatic light/dark contrast switch on any device, unlike the old desktop
+ * monitor icon which looked out of place on mobile.
+ */
+function AutoIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="2" y="3" width="20" height="14" rx="2" />
-      <line x1="8" y1="21" x2="16" y2="21" />
-      <line x1="12" y1="17" x2="12" y2="21" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor" stroke="none" />
     </svg>
   );
 }

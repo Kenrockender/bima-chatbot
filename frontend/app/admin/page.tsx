@@ -398,7 +398,49 @@ export default function AdminPage() {
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile: stacked source cards (no horizontal scroll) */}
+          <div className="md:hidden divide-y divide-life-blue/[0.08]">
+            {sources.length === 0 && (
+              <div className="px-6 py-12 text-center text-life-body">
+                <p className="font-sans font-bold text-life-heading/70 text-[17px] mb-1">
+                  Nothing here yet.
+                </p>
+                <p className="text-[13px]">
+                  Upload a PDF/PPTX or add a URL above to start the library.
+                </p>
+              </div>
+            )}
+            {sources.map((s) => (
+              <div key={s.id} className="px-5 py-4">
+                <div className="font-medium text-life-heading leading-snug break-all">
+                  {s.name}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-life-body">
+                  <span className="smallcaps">{s.type}</span>
+                  <StatusBadge status={s.status} error={s.error} />
+                  <span className="tabular-nums">{s.chunk_count} chunks</span>
+                  <span className="tabular-nums">{s.created_at}</span>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    onClick={() => reindex(s.id)}
+                    className="text-[12px] px-3 py-1.5 rounded-full border border-life-blue/15 bg-white hover:border-life-blue hover:text-life-blue transition"
+                  >
+                    Re-index
+                  </button>
+                  <button
+                    onClick={() => deleteSource(s.id)}
+                    className="text-[12px] px-3 py-1.5 rounded-full border border-red-200 text-red-700 hover:bg-red-50 transition"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: full table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-[13.5px]">
               <thead>
                 <tr className="text-left">

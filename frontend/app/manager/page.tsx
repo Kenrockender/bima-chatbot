@@ -222,14 +222,68 @@ export default function ManagerPage() {
         </section>
 
         {/* Member table */}
-        <section className="life-card p-7 overflow-x-auto">
+        <section className="life-card p-5 sm:p-7">
           <div className="flex items-center gap-2 mb-5">
             <span className="life-eyebrow">
               {lang === "id" ? "Anggota tim" : "Team members"}
             </span>
             <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
           </div>
-          <table className="w-full text-[13px]">
+
+          {/* Mobile: stacked member cards (no horizontal scroll) */}
+          <div className="md:hidden space-y-3">
+            {(ov?.members ?? []).map((m) => (
+              <div
+                key={m.uid}
+                className="rounded-2xl border border-life-blue/12 bg-life-item/60 p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full overflow-hidden grid place-items-center shrink-0 life-icon">
+                    {m.picture ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.picture} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-white text-[13px] font-bold">
+                        {(m.name || "?").charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-life-heading truncate">{m.name}</div>
+                    <div className="text-[11px] text-life-body truncate">{m.email}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-lg bg-white/50 py-1.5">
+                    <div className="text-[10px] uppercase tracking-wide text-life-bodyLight">Level</div>
+                    <div className="text-[15px] font-bold text-life-heading">{m.level}</div>
+                  </div>
+                  <div className="rounded-lg bg-white/50 py-1.5">
+                    <div className="text-[10px] uppercase tracking-wide text-life-bodyLight">XP</div>
+                    <div className="text-[15px] font-bold text-life-blue">{m.total_xp}</div>
+                  </div>
+                  <div className="rounded-lg bg-white/50 py-1.5">
+                    <div className="text-[10px] uppercase tracking-wide text-life-bodyLight">{lang === "id" ? "Sesi" : "Sessions"}</div>
+                    <div className="text-[15px] font-bold text-life-heading">{m.total_sessions}</div>
+                  </div>
+                </div>
+                <div className="mt-2.5 flex items-center gap-1.5 text-[12px]">
+                  <span className="text-life-bodyLight">{lang === "id" ? "Perlu fokus:" : "Needs focus:"}</span>
+                  <span className="font-medium text-life-body">
+                    {m.weakest_dimension ? dimLabel(m.weakest_dimension) : "—"}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {(ov?.members ?? []).length === 0 && (
+              <div className="py-8 text-center text-life-body">
+                {lang === "id" ? "Belum ada data latihan." : "No training data yet."}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop: full table */}
+          <table className="hidden md:table w-full text-[13px]">
             <thead>
               <tr className="text-life-bodyLight text-[11px] uppercase tracking-wide text-left border-b border-life-blue/12">
                 <th className="py-2 pr-3 font-semibold">FA</th>
