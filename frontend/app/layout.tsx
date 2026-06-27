@@ -20,8 +20,11 @@ export const metadata: Metadata = {
     title: "BIMA",
   },
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: "/api/pwa-icon?size=180",
+    icon: [
+      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/bima-icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: "/bima-apple.png",
   },
 };
 

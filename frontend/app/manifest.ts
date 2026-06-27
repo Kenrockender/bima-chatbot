@@ -13,19 +13,19 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#061330",
     icons: [
       {
-        src: "/bima-mark.svg",
-        sizes: "any",
-        type: "image/svg+xml",
-        purpose: "any",
-      },
-      {
-        src: "/api/pwa-icon?size=192",
+        src: "/bima-icon-192.png",
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/api/pwa-icon?size=512",
+        src: "/bima-icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/bima-icon-maskable.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
