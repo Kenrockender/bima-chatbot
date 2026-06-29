@@ -193,7 +193,7 @@ function Row({ e, lang }: { e: Entry; lang: Lang }) {
       </div>
       <div className="text-right">
         <div className="text-[16px] font-bold text-life-blue tabular-nums">
-          {e.avg_score.toFixed(1)}
+          {(e.avg_score ?? 0).toFixed(1)}
         </div>
         <div className="text-[10px] uppercase tracking-[0.14em] text-life-bodyLight font-semibold">
           {lang === "id" ? "Rata-rata" : "Avg"}
