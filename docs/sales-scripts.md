@@ -4,12 +4,33 @@ Salin-tempel ke chat http://localhost:3000 setelah pilih persona. Tujuannya buka
 
 > **Tip umum:** jangan langsung jualan. 2–3 turn pertama bangun rapport & gali kebutuhan dulu. Persona realistis akan kasih sinyal kapan boleh mulai pitch produk.
 
+> **Akurasi produk:** semua angka di skrip ini mengikuti fact sheet produk yang dimuat di app (lihat boks di bawah). Saat kamu menyebut nama produk, BIMA akan **uji** angkamu lewat FAKTA_PRODUK — jadi pakai angka yang benar, dan kalau ragu lebih baik bilang *"saya cek dulu ya"* daripada mengarang.
+
+---
+
+## Produk BCA Life (in-branch) — ringkasan akurat
+
+Hanya tiga produk ini yang ada di katalog roleplay. Jangan menjanjikan produk lain (unit-link, asuransi rawat inap cashless, term life murni murah) — produk itu **tidak ada** di sini, dan BIMA akan menegur kalau kamu mengklaimnya.
+
+| Produk | Jenis | Untuk siapa | Premi & UP | Manfaat inti |
+|---|---|---|---|---|
+| **Heritage Platinum Protection** (Heritage+) | Jiwa tradisional **seumur hidup** (warisan), IDR/USD | Proteksi jiwa jangka panjang + warisan; affluent | Premi **min Rp4.515.000/tahun** (boleh bulanan/kuartalan/dll); UP **min Rp500 juta**; bayar Sekaligus/2/5/10/15 thn | Meninggal: UP naik tiap 5 thn s/d **200% UP**; +100% UP karena kecelakaan; Terminal Illness 20% UP; Manfaat Hidup 50% premi (Plan Secure, usia 60 / thn ke-15); pertanggungan s/d usia 99 |
+| **Safety Guard Critical Cover** (STAR) | Asuransi **penyakit kritis**, IDR | Proteksi penyakit kritis + santunan tunai | Premi **mulai Rp475.500/bln**; UP **Rp500 juta – Rp2 miliar**; usia masuk 1–65, perpanjang otomatis s/d usia 84 | CI Minor 25% UP (berlaku 2x), CI Major 100% UP, Angioplasti 25% UP (maks Rp250 jt), ICU 50% UP (maks Rp250 jt), Meninggal 100% UP; **No Claim Bonus 100% premi** per periode 10 tahun; 58 Minor + 77 Major CI |
+| **Prosper Life Guard** (PROSPER) | Jiwa dwiguna **single premium**, IDR/USD | Punya dana lump-sum, mau **imbal hasil dijamin** + proteksi jiwa | Premi **sekaligus**, Premi Dasar **min Rp100 juta**; UP 150%–500% premi dasar; usia masuk 30 hari–70, pertanggungan s/d usia 85 | Meninggal: **UP + Nilai Tunai**; akhir kontrak: Nilai Tunai; imbal hasil **tetap & dijamin** selama Periode Tingkat Imbal Hasil Tetap |
+
+**Pemetaan cepat persona → produk:**
+- Proteksi jiwa + warisan jangka panjang → **Heritage+**
+- Takut biaya penyakit kritis (kanker/stroke/jantung) → **Safety Guard**
+- Punya dana lump-sum, cari imbal hasil dijamin / wealth transfer → **Prosper**
+
 ---
 
 ## 1. Ibu Sari — Ibu rumah tangga, 42 th  (Tingkat: Mudah)
 
 **Apa yang ia butuhkan FA dengarkan dulu:**
 proteksi anak · kekhawatiran "kalau ada apa-apa dengan suami" · keluhan budget pas-pasan
+
+**Produk yang relevan:** Heritage+ Plan Essential — proteksi jiwa + warisan; UP turun ke anak kalau terjadi sesuatu pada Tertanggung. Jujur: ini produk **proteksi + warisan**, bukan tabungan pendidikan; premi min Rp4.515.000/tahun (bisa diangsur bulanan).
 
 ### Pembuka — bangun kepercayaan
 
@@ -32,13 +53,17 @@ Misalnya anak ibu yang besar 11 tahun, 7 tahun lagi sudah masuk kuliah. Sudah ad
 ```
 
 ```
+Kalau — amit-amit — penghasilan suami berhenti, kira-kira tabungan keluarga cukup untuk berapa bulan ke depan, Bu? Ini yang biasanya jadi alasan utama orang ambil proteksi jiwa.
+```
+
+```
 Ibu sudah pernah punya asuransi sebelumnya, atau ini pertama kali pertimbangkan?
 ```
 
 ### Memperkenalkan produk (setelah tahu kebutuhan)
 
 ```
-Bu, dari yang Ibu ceritakan tadi — proteksi pendidikan anak yang utama, budget juga tidak bisa terlalu besar — sebenarnya ada satu produk yang dirancang untuk situasi seperti Ibu, namanya Heritage Platinum Protection. Boleh saya jelaskan singkat?
+Bu, dari yang Ibu ceritakan tadi — proteksi pendidikan anak yang utama, budget juga tidak bisa terlalu besar — ada satu produk proteksi jiwa namanya Heritage Platinum Protection. Intinya: kalau terjadi sesuatu dengan pencari nafkah, ada Uang Pertanggungan yang bisa dipakai anak-anak untuk biaya hidup dan sekolah. Boleh saya jelaskan singkat?
 ```
 
 ### Latihan handle objection
@@ -54,7 +79,7 @@ Saya paham banget Bu, keputusan begini memang harus didiskusikan sama suami. Bol
 ```
 
 ```
-Ibu, premi paling rendah untuk Heritage Platinum mulai dari [angka]/bulan. Tapi sebelum kita bicara angka, saya mau pastikan dulu — Uang Pertanggungan yang masuk akal untuk keluarga Ibu itu sekitar berapa? Biasanya kita pakai patokan 5–10x penghasilan tahunan suami.
+Untuk Heritage Platinum, preminya mulai dari Rp4.515.000 setahun, dan bisa diangsur bulanan supaya lebih ringan. Tapi sebelum kita bicara angka, saya mau pastikan dulu — Uang Pertanggungan yang masuk akal untuk keluarga Ibu itu sekitar berapa? Biasanya kita pakai patokan 5–10x penghasilan tahunan suami.
 ```
 
 ---
@@ -64,14 +89,16 @@ Ibu, premi paling rendah untuk Heritage Platinum mulai dari [angka]/bulan. Tapi 
 **Apa yang ia hargai:**
 angka konkret · perbandingan vs investasi sendiri · efisiensi pajak · jawaban tanpa basa-basi
 
+**Produk yang relevan:** Prosper Life Guard — **single premium** (Premi Dasar min Rp100 juta), imbal hasil **tetap & dijamin** + proteksi jiwa. Pas untuk argumen "lock-in cash flow" dan "instrumen yang tidak bisa di-panic-sell". Jangan tawarkan unit-link — produk itu tidak ada di katalog.
+
 ### Pembuka — langsung ke substansi
 
 ```
-Hi Andi. Saya tidak akan bilang asuransi lebih bagus dari saham — kita sama-sama tahu itu bukan apple-to-apple. Yang saya mau tunjukkan adalah satu use case di mana produk BCA Life punya tax treatment yang menarik untuk profil seperti kamu. Bisa kasih waktu 5 menit?
+Hi Andi. Saya tidak akan bilang asuransi lebih bagus dari saham — kita sama-sama tahu itu bukan apple-to-apple. Yang saya mau tunjukkan adalah satu use case di mana produk BCA Life punya imbal hasil yang dijamin dan tax treatment yang menarik untuk profil seperti kamu. Bisa kasih waktu 5 menit?
 ```
 
 ```
-Andi, kalau target kamu memang capital appreciation, BCA Life bukan tempat yang tepat. Tapi kalau kamu cari instrumen untuk tax planning atau lock-in cash flow untuk milestone tertentu (misal DP rumah, atau prep nikah dalam 5 tahun), ada beberapa opsi yang worth dibahas. Mana yang lebih relate?
+Andi, kalau target kamu memang capital appreciation maksimal, BCA Life bukan tempat yang tepat. Tapi kalau kamu cari instrumen untuk lock-in dana milestone tertentu (DP rumah, prep nikah 5 tahun) dengan return yang dijamin — bukan fluktuatif seperti saham — ada satu opsi yang worth dibahas. Relate gak?
 ```
 
 ### Discovery — angka & tujuan
@@ -87,7 +114,7 @@ Kamu sudah punya proteksi jiwa, baik dari kantor atau pribadi? Kalau dari kantor
 ### Pitch teknis
 
 ```
-Untuk single executive dengan profile kamu, biasanya yang masuk akal bukan asuransi jiwa tradisional — tapi unit-linked dengan rider critical illness. Alasannya: (1) leverage proteksi penyakit kritis di umur muda preminya rendah, (2) komponen unit-link bisa di-redeem partial setelah 5 tahun. Mau saya kasih komposisi alokasi dan proyeksi 10 tahunnya?
+Untuk profil seperti kamu, yang masuk akal adalah Prosper Life Guard — single premium, jadi kamu setor sekali (Premi Dasar mulai Rp100 juta) dan dapat dua hal: imbal hasil yang dijamin selama periode tertentu, plus proteksi jiwa sampai usia 85. Bedanya dengan reksa dana: return-nya fixed dan kamu tidak tergoda jual saat market crash. Mau saya kasih ilustrasi Nilai Tunai-nya?
 ```
 
 ### Latihan handle objection
@@ -100,7 +127,11 @@ Andi biasanya bilang:
 Coba jawab:
 
 ```
-Setuju, IRR murni vs reksa dana saham aktif, asuransi tradisional kalah. Tapi yang saya tawarkan ini bukan jualan IRR — saya jualan instrumen yang (a) UP-nya bebas pajak warisan, (b) preminya dapat tax credit, dan (c) memorable buat lock-in karena kamu tidak bisa "panic sell" di market crash. Kalau ketiga itu tidak relevan buat kamu, oke saya stop. Tapi kalau salah satunya kena, kita lanjut.
+Setuju, kalau dibanding reksa dana saham aktif yang lagi bull, return-nya kalah. Tapi yang saya tawarkan bukan jualan IRR tertinggi — ini instrumen dengan imbal hasil yang dijamin (bukan harapan), plus UP proteksi jiwa yang langsung berlaku, dan disiplin lock-in supaya kamu tidak panic-sell. Kalau ketiga itu tidak relevan buat kamu, oke saya stop. Tapi kalau salah satunya kena, kita lanjut.
+```
+
+```
+Be specific, fair. Prosper itu single premium minimal Premi Dasar Rp100 juta, UP-nya 150%–500% dari premi dasar tergantung pilihan, dan imbal hasilnya dijamin selama Periode Tingkat Imbal Hasil Tetap. Angka pasti return-nya saya ambilkan dari ilustrasi resmi ya, biar tidak salah sebut — boleh saya kirim simulasinya?
 ```
 
 ---
@@ -109,6 +140,8 @@ Setuju, IRR murni vs reksa dana saham aktif, asuransi tradisional kalah. Tapi ya
 
 **Apa yang ia butuhkan:**
 empati dulu, jualan terakhir · acknowledge trauma klaim · detail proses klaim BCA Life yang jelas
+
+**Produk yang relevan:** kalau Pak Budi mau "ada nilainya kalau dicairkan", arahkan ke yang punya Nilai Tunai — **Heritage+** (ada Nilai Tunai/surrender, Manfaat Hidup di Plan Secure) atau **Prosper** (single premium, Nilai Tunai, cocok kalau ada dana lump-sum dari bisnis). Jangan janjikan "pasti cair cepat" — fokus pada proses yang transparan.
 
 ### Pembuka — JANGAN langsung jualan
 
@@ -123,7 +156,7 @@ Selamat siang Pak. Sebelum saya cerita apa-apa tentang BCA Life, saya mau bilang
 ### Acknowledge & build trust
 
 ```
-Dipersulit 6 bulan dokumen — itu memang nightmare, Pak. Apalagi sambil mikirin istri yang lagi butuh operasi. Wajar kalau setelah itu Bapak trust dengan tabungan dan emas. Saya tidak akan bilang BCA Life pasti beda — tapi saya bisa tunjukkan secara konkret bagaimana proses klaim kami berjalan, plus contoh real case kalau Bapak mau. Boleh?
+Dipersulit 6 bulan dokumen — itu memang nightmare, Pak. Apalagi sambil mikirin istri yang lagi butuh operasi. Wajar kalau setelah itu Bapak trust dengan tabungan dan emas. Saya tidak akan bilang BCA Life pasti beda — tapi saya bisa tunjukkan secara konkret bagaimana prosedur klaim & syarat dokumennya hitam di atas putih, supaya tidak ada kejutan. Boleh?
 ```
 
 ### Discovery yang halus
@@ -135,7 +168,7 @@ Pak, bisnis percetakan sekarang masih jalan terus? Pertanyaan ini relate ke prot
 ### Pitch + bukti
 
 ```
-Untuk profile seperti Bapak, sebenarnya yang paling sering kami rekomendasikan bukan asuransi proteksi penuh — tapi produk dengan komponen tabungan, supaya kalau di tahun ke-5 atau ke-10 Bapak butuh cair, masih ada nilai. Heritage Platinum Protection misalnya, ada Nilai Tunai yang Bapak bisa lihat dari tahun pertama. Mau saya jelaskan proses klaim & surrender-nya langkah per langkah?
+Untuk profil seperti Bapak, saya tidak akan dorong produk yang "hangus kalau tidak klaim". Heritage Platinum Protection misalnya punya Nilai Tunai — jadi ada nilai yang terbentuk dan bisa Bapak lihat di ilustrasi, dan Plan Secure malah mengembalikan 50% premi sebagai Manfaat Hidup di usia 60. Kalau Bapak ada dana lebih dari bisnis, ada juga Prosper yang sekali setor dengan imbal hasil dijamin. Mau saya jelaskan prosedur klaim & penebusannya langkah per langkah?
 ```
 
 ### Latihan handle objection
@@ -152,7 +185,11 @@ Maaf Pak, betul saya yang salah. Tolong cerita dulu — kapan Bapak ajukan klaim
 ```
 
 ```
-Pertanyaan yang sangat bagus, Pak. Untuk perlindungan kalau-kalau perusahaan asuransi gagal bayar, di Indonesia ada Lembaga Penjamin Polis (LPP) yang sedang dibentuk. Khusus BCA Life, RBC (rasio solvabilitas) kami terakhir di [angka]% — jauh di atas batas OJK 120%. Saya bisa kirim laporan keuangan tahunan kalau Bapak mau review.
+Pertanyaan yang sangat bagus, Pak. Untuk perlindungan kalau-kalau perusahaan asuransi gagal bayar, di Indonesia sedang dibentuk Lembaga Penjamin Polis (LPP). Selain itu OJK mewajibkan rasio solvabilitas (RBC) minimal 120% — saya bisa kirim laporan keuangan tahunan BCA Life supaya Bapak bisa cek sendiri angkanya.
+```
+
+```
+Emas dan tabungan itu bagus, Pak, saya setuju. Bedanya: kalau terjadi risiko besar besok, tabungan baru terkumpul sebagian — tapi Uang Pertanggungan langsung berlaku penuh sejak hari pertama polis aktif. Jadi ini pelengkap tabungan Bapak, bukan pengganti.
 ```
 
 ---
@@ -162,6 +199,8 @@ Pertanyaan yang sangat bagus, Pak. Untuk perlindungan kalau-kalau perusahaan asu
 **Apa yang ia hargai:**
 ketepatan teknis · kejujuran ("saya cek dulu" lebih dihormati dari ngarang) · relevansi ke legacy goal
 
+**Produk yang relevan:** **Heritage+** dibayar Sekaligus (jiwa seumur hidup, UP penuh untuk warisan) dan/atau **Prosper** (single premium, imbal hasil dijamin) untuk wealth transfer. Keduanya mendukung setoran sekaligus.
+
 ### Pembuka — formal, langsung ke goal
 
 ```
@@ -169,7 +208,7 @@ Selamat siang Pak Hendra. Terima kasih atas waktunya. Sebelum saya tawarkan apa-
 ```
 
 ```
-Pak Hendra, untuk profile seperti Bapak biasanya kami diskusi dalam konteks 3 hal: (1) wealth transfer ke ahli waris, (2) efisiensi pajak warisan, (3) likuiditas instan untuk ahli waris saat estate dalam proses pengurusan. Yang mana yang paling urgent untuk dibahas dulu, Pak?
+Pak Hendra, untuk profil seperti Bapak biasanya kami diskusi dalam konteks 3 hal: (1) wealth transfer ke ahli waris, (2) efisiensi pajak warisan, (3) likuiditas instan untuk ahli waris saat estate dalam proses pengurusan. Yang mana yang paling urgent untuk dibahas dulu, Pak?
 ```
 
 ### Discovery teknis
@@ -181,7 +220,7 @@ Beberapa pertanyaan teknis, Pak: (1) Apakah ahli waris Bapak yang di luar negeri
 ### Pitch produk + transparency
 
 ```
-Untuk single-premium dengan tujuan wealth transfer, BCA Life punya produk yang preminya bisa di-set sekaligus, dan UP-nya langsung berlaku penuh. Komposisi biayanya: biaya akuisisi tahun pertama [%], biaya administrasi tahunan [%], surrender penalty di 3 tahun pertama. Bapak ingin saya kirim term sheet detail dulu sebelum kita diskusi lebih lanjut?
+Untuk tujuan wealth transfer, ada dua opsi yang relevan, Pak. Heritage Platinum Protection bisa dibayar Sekaligus, jiwa seumur hidup, UP-nya berlaku penuh dan bertumbuh tiap 5 tahun. Atau Prosper Life Guard — single premium dengan imbal hasil dijamin plus proteksi jiwa sampai usia 85. Untuk struktur biaya detail dan ilustrasinya saya ambilkan dari term sheet resmi supaya angkanya presisi — Bapak ingin saya kirim itu dulu sebelum kita diskusi lebih lanjut?
 ```
 
 ### Latihan handle objection
@@ -198,7 +237,7 @@ Anda benar Pak, terima kasih koreksinya. Saya akan konfirmasi internal dulu dan 
 ```
 
 ```
-Tentu Pak, saya kirim proposal lengkap plus polis specimen via email malam ini. Setelah Bapak review, saya available untuk diskusi via Zoom kapan saja minggu depan. Boleh saya lampirkan juga simulasi 10 tahun untuk 3 skenario UP yang berbeda?
+Tentu Pak, saya kirim proposal lengkap plus polis specimen via email malam ini. Setelah Bapak review, saya available untuk diskusi via Zoom kapan saja minggu depan. Boleh saya lampirkan juga simulasi untuk beberapa skenario UP yang berbeda?
 ```
 
 ---
@@ -206,7 +245,9 @@ Tentu Pak, saya kirim proposal lengkap plus polis specimen via email malam ini. 
 ## 5. Mbak Dina — Wanita karir, 30 th, baru menikah  (Tingkat: Mudah)
 
 **Apa yang ia butuhkan:**
-penjelasan simpel tanpa jargon · perbandingan dengan BPJS · info coverage kehamilan & melahirkan
+penjelasan simpel tanpa jargon · perbandingan dengan BPJS · kejelasan apa yang ter-cover
+
+**Produk yang relevan:** **Safety Guard Critical Cover** (proteksi penyakit kritis; premi muda relatif murah) + proteksi jiwa **Heritage+** kalau perlu. Jujur: biaya persalinan normal itu ranah BPJS — jangan janjikan produk maternity, karena tidak ada di katalog. Posisikan Safety Guard sebagai jaring kalau ada penyakit kritis/komplikasi besar.
 
 ### Pembuka — ringan & relatable
 
@@ -221,7 +262,7 @@ Hai Mbak Dina. Saya paham banget, pertama kali cari asuransi memang overwhelming
 ### Discovery — kebutuhan kesehatan & keluarga
 
 ```
-Mbak, kalau rencana punya anak dalam 1-2 tahun, ada beberapa hal yang penting dipertimbangkan dari sisi proteksi: biaya melahirkan, rawat inap kalau ada komplikasi, dan proteksi untuk baby-nya nanti. BPJS memang cover persalinan, tapi ada batasan. Mau saya jelaskan gap-nya?
+Mbak, BPJS itu sudah bagus untuk biaya persalinan normal dan rawat dasar. Yang biasanya bikin keluarga muda kewalahan justru kejadian besar yang jarang tapi mahal — misalnya penyakit kritis di usia produktif. Boleh saya tanya, di keluarga Mbak atau suami ada riwayat penyakit serius?
 ```
 
 ```
@@ -231,7 +272,7 @@ Suami Mbak kerja di bidang apa? Alasan saya tanya — kalau dua-duanya kerja, pr
 ### Pitch produk
 
 ```
-Untuk pasangan muda seperti Mbak dan suami, biasanya kami rekomendasikan kombinasi: proteksi kesehatan tambahan (di luar BPJS) plus asuransi jiwa dasar. Di usia 30, premi masih sangat terjangkau. Mau saya kasih simulasi dengan 2-3 opsi budget yang berbeda?
+Untuk pasangan muda, sambil tetap andalkan BPJS untuk yang dasar, biasanya kami sarankan satu lapis proteksi penyakit kritis — namanya Safety Guard Critical Cover. Kalau salah satu dari Mbak/suami kena penyakit kritis seperti kanker atau jantung, ada santunan tunai (bisa 100% UP) yang bisa dipakai untuk apa saja, termasuk menutup penghasilan yang berhenti. Di usia 30 preminya masih ringan, mulai Rp475.500/bulan. Bonusnya: kalau tidak ada klaim, 100% premi dikembalikan tiap periode 10 tahun. Mau saya kasih simulasi?
 ```
 
 ### Latihan handle objection
@@ -244,7 +285,11 @@ Mbak Dina biasanya bilang:
 Coba jawab:
 
 ```
-BPJS memang hebat untuk coverage dasar, Mbak. Tapi ada beberapa hal yang BPJS tidak cover atau terbatas: pilihan RS & dokter, kamar rawat inap kelas atas, dan beberapa prosedur tertentu saat melahirkan. Asuransi tambahan itu fungsinya melengkapi, bukan menggantikan BPJS.
+BPJS memang hebat untuk coverage dasar dan persalinan, Mbak — itu tetap andalan. Bedanya Safety Guard: ini santunan tunai sekaligus kalau kena penyakit kritis, uangnya bebas dipakai (cicilan, biaya hidup, cari opinion kedua), dan tidak terbatas RS rujukan. Jadi fungsinya melengkapi BPJS untuk skenario besar, bukan menggantikan.
+```
+
+```
+Bisa, Mbak. UP dan preminya fleksibel — kita bisa mulai dari UP yang paling kecil dulu (Rp500 juta) supaya preminya seringan mungkin, lalu naikkan nanti kalau sudah ada anak. Mau saya hitung yang paling pas dengan budget Mbak berdua sekarang?
 ```
 
 ```
@@ -256,16 +301,18 @@ Tentu Mbak, keputusan begini memang lebih enak didiskusikan berdua. Saya buatkan
 ## 6. Mas Riko — Karyawan swasta, 37 th  (Tingkat: Sedang)
 
 **Apa yang ia butuhkan:**
-bukti konkret gap BPJS · opsi premi terjangkau · skenario real-life yang relate
+bukti konkret gap BPJS · opsi yang sepadan dengan budget · skenario real-life yang relate
+
+**Produk yang relevan:** **Safety Guard Critical Cover** — bingkai sebagai pelindung **income** kalau kena penyakit kritis (santunan tunai, bukan reimbursement rawat inap). Premi **mulai Rp475.500/bln**. Jangan janjikan "rawat inap cashless tanpa antre" — itu produk yang berbeda dan tidak ada di katalog.
 
 ### Pembuka — acknowledge BPJS dulu
 
 ```
-Siang Mas Riko. Pertanyaan Mas sangat valid — BPJS memang sudah cover banyak hal. Saya bukan mau bilang BPJS jelek. Yang mau saya tunjukkan adalah: ada beberapa situasi spesifik di mana BPJS punya batasan, dan di situ asuransi tambahan bisa bantu. Boleh saya kasih contoh konkret?
+Siang Mas Riko. Pertanyaan Mas sangat valid — BPJS memang sudah cover banyak hal. Saya bukan mau bilang BPJS jelek. Yang mau saya tunjukkan adalah satu hal yang BPJS tidak tutup: penghasilan yang hilang saat Mas sakit berat dan tidak bisa kerja. Boleh saya kasih contoh konkret?
 ```
 
 ```
-Halo Mas Riko. Sebelum bicara produk, saya mau tanya dulu — kalau Mas sakit dan harus rawat inap seminggu, apa yang paling bikin khawatir? Biaya RS-nya, atau penghasilan yang berhenti selama tidak kerja?
+Halo Mas Riko. Sebelum bicara produk, saya mau tanya dulu — kalau Mas kena penyakit berat dan harus istirahat berbulan-bulan, apa yang paling bikin khawatir? Biaya pengobatannya, atau gaji yang berhenti selama tidak kerja?
 ```
 
 ### Discovery — situasi finansial
@@ -275,13 +322,13 @@ Mas, kalau boleh tahu, BPJS dari kantor itu kelas berapa? Dan istri sama anak ik
 ```
 
 ```
-Kalau misalnya — amit-amit ya — Mas harus rawat inap 2 minggu dan tidak bisa kerja, apakah gaji tetap jalan penuh? Atau ada potongan? Itu penting karena biaya RS itu satu hal, tapi income yang hilang sering kali lebih berat.
+Kalau misalnya — amit-amit ya — Mas didiagnosis penyakit kritis dan harus berhenti kerja beberapa bulan, apakah gaji tetap jalan penuh? Atau berhenti? BPJS bantu biaya berobat, tapi gaji yang hilang itu yang sering bikin keluarga goyah.
 ```
 
 ### Pitch dengan angka konkret
 
 ```
-Mas, saya kasih gambaran real: kalau anak Mas kena DBD dan harus rawat inap 5 hari di RS swasta, biaya bisa Rp 15-25 juta. BPJS cover, tapi harus di RS rujukan dan antre. Dengan tambahan proteksi kesehatan dari BCA Life, Mas bisa langsung ke RS pilihan sendiri tanpa antre. Preminya? Mulai dari sekitar Rp 300rb/bulan untuk sekeluarga. Mau saya hitung yang pas untuk budget Mas?
+Mas, saya kasih gambaran real: BPJS bantu biaya berobat kanker atau jantung, tapi dia tidak ganti gaji Mas yang berhenti, dan tidak nutup biaya non-medis (transport, makan keluarga, cicilan). Safety Guard Critical Cover kasih santunan tunai sekaligus — misalnya 100% UP saat diagnosis penyakit kritis major — uangnya bebas Mas pakai untuk apa saja. Preminya mulai Rp475.500/bulan, dan kalau sampai 10 tahun tidak ada klaim, 100% premi dikembalikan. Mau saya hitung UP yang pas untuk budget Mas?
 ```
 
 ### Latihan handle objection
@@ -294,11 +341,11 @@ Mas Riko biasanya bilang:
 Coba jawab:
 
 ```
-Betul Mas, Rp 300rb/bulan kalau ditabung setahun jadi Rp 3,6 juta. Tapi kalau sekali rawat inap anak saja bisa Rp 20 juta — tabungan 5 tahun habis dalam seminggu. Asuransi itu fungsinya bukan investasi, tapi tameng supaya tabungan Mas tidak jebol karena satu kejadian.
+Betul Mas, kalau ditabung memang terkumpul pelan-pelan. Tapi penyakit kritis tidak nunggu tabungan penuh — sekali diagnosis, biaya dan kehilangan income bisa puluhan sampai ratusan juta. Safety Guard kasih santunan penuh sejak polis aktif, dan kalau tidak pernah klaim, premi Mas balik 100% tiap 10 tahun. Jadi ini bukan uang hilang.
 ```
 
 ```
-Soal PHK, pertanyaan bagus. Di produk BCA Life ada opsi grace period — kalau Mas berhenti bayar, polis tidak langsung hangus. Plus, kalau sudah bayar beberapa tahun, ada nilai tunai yang bisa dicairkan. Jadi uangnya tidak hilang.
+Soal PHK, pertanyaan bagus. Polis ini perpanjang otomatis tiap tahun dan preminya bulanan, jadi kalau penghasilan berubah kita bisa sesuaikan UP-nya. Dan karena ada No Claim Bonus, premi yang sudah Mas bayar tidak hangus begitu saja kalau Mas tidak klaim.
 ```
 
 ---
@@ -307,6 +354,8 @@ Soal PHK, pertanyaan bagus. Di produk BCA Life ada opsi grace period — kalau M
 
 **Apa yang ia butuhkan:**
 value-add yang tidak bisa didapat dari tabungan · perspektif business continuity · pendekatan tanpa fear-mongering
+
+**Produk yang relevan:** **Heritage+** dengan UP besar — jiwa seumur hidup untuk "jembatan likuiditas" & wealth transfer ke 3 anak. UP berlaku penuh sejak hari pertama dan cair ke ahli waris di luar proses pembekuan aset.
 
 ### Pembuka — hormat waktu, langsung ke blind spot
 
@@ -331,7 +380,7 @@ Dari 3 anak Bapak, ada yang ikut kelola bisnis? Atau semuanya punya karir sendir
 ### Pitch — angle yang tidak terduga
 
 ```
-Pak, saya kasih satu perspektif yang mungkin belum kepikiran: saat pemilik bisnis meninggal, rekening bisa dibekukan sampai proses waris selesai — bisa 6-12 bulan. Selama itu, bisnis tetap perlu modal operasional. Asuransi jiwa dengan UP yang tepat bisa jadi "jembatan likuiditas" — cair dalam 14 hari kerja, langsung ke ahli waris, tanpa menunggu proses pengadilan. Ini bukan soal butuh uang, tapi soal timing.
+Pak, saya kasih satu perspektif yang mungkin belum kepikiran: saat pemilik bisnis meninggal, rekening bisa dibekukan sampai proses waris selesai — bisa 6-12 bulan. Selama itu, bisnis tetap perlu modal operasional. Heritage Platinum Protection dengan UP yang tepat bisa jadi "jembatan likuiditas" — Uang Pertanggungan cair ke ahli waris yang ditunjuk, di luar aset yang sedang dalam proses pengurusan. Ini bukan soal butuh uang, tapi soal timing dan kepastian.
 ```
 
 ### Latihan handle objection
@@ -344,15 +393,15 @@ Pak Teguh biasanya bilang:
 Coba jawab:
 
 ```
-Betul Pak, tabungan Bapak pasti cukup. Tapi tabungan bisa dibekukan bersama aset lain saat proses waris. UP asuransi jiwa itu satu-satunya aset yang langsung cair ke penerima manfaat tanpa melalui proses probate. Itu bedanya.
+Betul Pak, tabungan Bapak pasti cukup. Tapi tabungan dan deposito bisa ikut dibekukan bersama aset lain saat proses waris. UP asuransi jiwa membayar ke penerima manfaat yang Bapak tunjuk dan berlaku penuh sejak polis aktif — itu yang membedakannya dari sekadar saldo rekening.
 ```
 
 ```
-Pak, justru karena Bapak sudah mapan, instrumen yang Bapak butuh bukan asuransi proteksi biasa — tapi asuransi sebagai wealth transfer tool. Fungsinya beda: bukan untuk proteksi penghasilan, tapi untuk memastikan transisi aset ke anak-anak berjalan mulus dan efisien pajak.
+Pak, justru karena Bapak sudah mapan, instrumen yang Bapak butuh bukan asuransi proteksi penghasilan biasa — tapi asuransi sebagai wealth transfer tool. Fungsinya: memastikan transisi aset ke anak-anak berjalan mulus dan efisien, bukan menambal kekurangan.
 ```
 
 ```
-Tentu Pak. Saya kirim proposal ringkas — 2 halaman saja, langsung ke poin: (1) simulasi UP vs biaya, (2) proses klaim, (3) komparasi dengan alternatif wealth transfer lain. Nomor WA Bapak yang ini ya?
+Tentu Pak. Saya kirim proposal ringkas — 2 halaman saja, langsung ke poin: (1) simulasi UP vs premi, (2) proses klaim, (3) komparasi dengan alternatif wealth transfer lain. Nomor WA Bapak yang ini ya?
 ```
 
 ---
@@ -361,6 +410,8 @@ Tentu Pak. Saya kirim proposal ringkas — 2 halaman saja, langsung ke poin: (1)
 
 **Apa yang ia butuhkan:**
 empati tulus (bukan kasihan) · solusi realistis sesuai budget · kejelasan manfaat untuk anak
+
+**Produk yang relevan & catatan jujur:** prioritas Ratna adalah "kalau saya kenapa-kenapa, anak tetap terlindungi" → proteksi jiwa/penyakit kritis. Tapi **entry premi produk in-branch tidak murah** (Safety Guard mulai Rp475.500/bln; Heritage+ min Rp4,5 juta/tahun). Persona ini melatih **empati + jujur soal ekspektasi**: jangan janjikan premi Rp150rb yang tidak ada produknya. Kalau budget belum cukup, akui dengan hormat dan tawarkan opsi terkecil / bertahap.
 
 ### Pembuka — empati tanpa exploitasi
 
@@ -375,7 +426,7 @@ Mbak Ratna, saya tidak mau jualan dengan cara nakut-nakutin. Yang mau saya bantu
 ### Discovery — budget & prioritas
 
 ```
-Mbak, kalau boleh tahu, dari gaji bulanan, setelah kebutuhan pokok dan sekolah anak, biasanya sisa berapa yang bisa dialokasikan untuk hal lain? Tidak harus besar — saya mau cari opsi yang benar-benar masuk budget Mbak.
+Mbak, kalau boleh tahu, dari gaji bulanan, setelah kebutuhan pokok dan sekolah anak, biasanya sisa berapa yang bisa dialokasikan untuk hal lain? Tidak harus besar — saya mau cari opsi yang benar-benar masuk budget Mbak, dan kalau memang belum pas, saya akan jujur.
 ```
 
 ```
@@ -385,7 +436,7 @@ Anak-anak sekarang sekolahnya di mana, Mbak? Dan untuk BPJS, sudah aktif? Itu pe
 ### Pitch — realistis & jujur
 
 ```
-Mbak, dengan budget sekitar Rp 200-300rb/bulan, ada opsi asuransi jiwa murni (term life) dari BCA Life. Ini bukan asuransi mahal yang ada investasinya — ini murni proteksi. Kalau amit-amit terjadi sesuatu dengan Mbak, anak-anak dapat Uang Pertanggungan yang bisa dipakai untuk biaya hidup dan sekolah. Preminya terjangkau karena tidak ada komponen tabungan. Mau saya jelaskan?
+Mbak, saya mau jujur soal angka supaya Mbak tidak kaget. Produk proteksi kami yang paling ringan, Safety Guard Critical Cover, preminya mulai sekitar Rp475 ribu/bulan untuk santunan penyakit kritis — dan kelebihannya, kalau tidak ada klaim, premi dikembalikan 100% tiap 10 tahun, jadi bukan uang hilang. Kalau itu masih terasa berat sekarang, kita tidak usah paksakan — saya bantu hitung kapan timing-nya pas, atau mulai dari UP paling kecil dulu. Mana yang Mbak lebih nyaman?
 ```
 
 ### Latihan handle objection
@@ -399,15 +450,19 @@ Mbak Ratna biasanya bilang:
 Coba jawab:
 
 ```
-Saya paham Mbak, Rp 6 juta dengan 2 anak memang ketat. Makanya saya tidak akan tawarkan produk yang Rp 500rb/bulan — itu tidak realistis. Yang saya mau tunjukkan: dengan Rp 150-200rb/bulan, Mbak bisa dapat UP [angka] juta untuk anak-anak. Itu setara [X] tahun biaya sekolah. Kecil preminya, tapi dampaknya besar.
+Saya paham Mbak, Rp 6 juta dengan 2 anak memang ketat — terima kasih sudah terus terang. Saya tidak akan tawarkan yang memberatkan. Opsi paling ringan kami mulai sekitar Rp475 ribu/bulan, dan saya mengerti kalau itu belum masuk sekarang. Kalau begitu, boleh saya bantu susun dulu prioritasnya, dan kita atur supaya saat ada ruang sedikit, Mbak sudah tahu langkah pertamanya?
 ```
 
 ```
-Mbak, soal telat bayar — di BCA Life ada grace period 45 hari. Jadi kalau bulan ini ketat, Mbak masih punya waktu sebelum polis berhenti. Dan kalau sudah bayar beberapa tahun, ada opsi untuk menurunkan premi atau cuti premi sementara tanpa polis hangus. Saya jelaskan detailnya?
+Yang paling ringan dari kami Safety Guard, Mbak, dengan UP terkecil supaya preminya seminimal mungkin. Saya jujur: kami tidak punya produk Rp150 ribuan. Tapi saya tidak mau Mbak ambil yang akhirnya berat lalu lapse — lebih baik kita mulai dari yang benar-benar sanggup Mbak jaga.
 ```
 
 ```
-Betul Mbak, saya tidak mau nakut-nakutin. Faktanya sederhana: Mbak satu-satunya pencari nafkah, dan anak-anak masih SD. Yang saya tawarkan bukan rasa takut — tapi rencana cadangan yang konkret supaya kalau terjadi sesuatu, anak-anak tetap bisa sekolah. Itu saja.
+Soal telat bayar, itu pertanyaan penting buat Mbak yang budget-nya ketat. Aturan grace period dan ketentuan lapse-nya saya tunjukkan hitam di atas putih dari polisnya ya, supaya jelas — saya tidak mau Mbak salah ekspektasi soal ini.
+```
+
+```
+Betul Mbak, saya tidak mau nakut-nakutin. Faktanya sederhana: Mbak satu-satunya pencari nafkah, dan anak-anak masih SD. Yang saya tawarkan bukan rasa takut — tapi rencana cadangan yang konkret dan jujur sesuai kemampuan Mbak. Itu saja.
 ```
 
 ---
@@ -416,11 +471,11 @@ Betul Mbak, saya tidak mau nakut-nakutin. Faktanya sederhana: Mbak satu-satunya 
 
 1. **Mulai dari Ibu Sari atau Mbak Dina** — paling friendly, gunanya untuk merasakan flow chat dulu.
 2. **Lanjut ke Mas Riko atau Andi** — latih bicara dengan data konkret dan handle perbandingan (BPJS / investasi sendiri).
-3. **Mbak Ratna** — latih empati & solusi realistis untuk budget terbatas.
+3. **Mbak Ratna** — latih empati & kejujuran soal budget terbatas.
 4. **Pak Budi** — latih empathy & active listening sebelum jualan, rebuild trust.
 5. **Pak Teguh atau Pak Hendra** — latih pitch high-value (business continuity, estate planning, akurasi teknis).
 
-Per sesi, target **8–15 turn**, lalu klik **Selesai & minta feedback** untuk dapat coaching report. Skor di bawah 6/10 di dimensi tertentu? Ulang sesi dengan fokus area itu.
+Per sesi, target **8–15 turn**, lalu klik **Selesai & minta feedback** untuk dapat coaching report. Skor di bawah 6/10 di dimensi tertentu? Ulang sesi dengan fokus area itu — atau pakai **Drill** yang menargetkan dimensi tersebut (Discovery Sprint, Objection Gauntlet, Numbers Test, Closing Practice, Rapport Warm-up).
 
 ## Cheat: kata-kata pemicu RAG
 
@@ -432,7 +487,7 @@ Safety Guard Critical Cover
 Prosper Life Guard
 premi · polis · klaim · manfaat
 Uang Pertanggungan / UP
-penyakit kritis · cash value · surrender
+penyakit kritis · Nilai Tunai · surrender · No Claim Bonus
 ```
 
-Coba salah satu — kalau angka yang kamu sebut salah, persona akan tegur sesuai gaya masing-masing.
+Coba salah satu — kalau angka yang kamu sebut salah, persona akan tegur sesuai gaya masing-masing. Angka acuan ada di boks **Produk BCA Life** di atas.
