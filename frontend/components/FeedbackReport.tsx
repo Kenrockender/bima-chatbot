@@ -87,18 +87,11 @@ export function FeedbackReport({
         {labels.title}
       </h2>
 
-      {/* Gamification deltas — XP / streak / level earned this session */}
+      {/* Session deltas — streak kept (XP & level retired) */}
       {prog && (
         <div className="flex flex-wrap items-center gap-2.5 animate-fadeIn">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-life-blue text-white px-3.5 py-1.5 text-[12.5px] font-semibold shadow-lifeBlue">
-            <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
-            +{prog.xp_earned} {labels.xpEarned}
-          </span>
           <span className="inline-flex items-center gap-1.5 rounded-full life-card px-3.5 py-1.5 text-[12.5px] text-life-heading/85 font-medium">
             🔥 {prog.streak} {labels.streak}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full life-card px-3.5 py-1.5 text-[12.5px] text-life-heading/85 font-medium">
-            {labels.level} {prog.level}
           </span>
           <span className="text-[11.5px] text-life-body italic ml-auto">
             {labels.saved}

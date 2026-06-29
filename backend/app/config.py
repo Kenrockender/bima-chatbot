@@ -54,6 +54,23 @@ class Settings(BaseSettings):
     stt_base_url: str = "https://api.groq.com/openai/v1"
     stt_model: str = "whisper-large-v3"
 
+    # ElevenLabs text-to-speech. When elevenlabs_api_key is set, the backend
+    # serves natural ElevenLabs audio via /api/training/tts and the frontend
+    # uses it in place of the robotic browser voice. Leave empty to disable
+    # (frontend falls back to the Web Speech API). Cost is per-character, so
+    # turbo v2.5 (cheap + low latency, supports Indonesian) is the default.
+    elevenlabs_api_key: str = ""
+    elevenlabs_base_url: str = "https://api.elevenlabs.io/v1"
+    elevenlabs_model: str = "eleven_turbo_v2_5"
+    # Two multilingual voices so the customer voice matches the persona's
+    # gender. Defaults are stock ElevenLabs voices (Rachel / Adam); override
+    # per deployment to taste.
+    elevenlabs_voice_female: str = "21m00Tcm4TlvDq8ikWAM"  # Rachel
+    elevenlabs_voice_male: str = "pNInz6obpgDQGcFmaJgB"    # Adam
+
+    def elevenlabs_voice_for(self, gender: str) -> str:
+        return self.elevenlabs_voice_male if (gender or "").lower().startswith("m") else self.elevenlabs_voice_female
+
     def admin_email_set(self) -> set[str]:
         return {e.strip().lower() for e in self.admin_emails.split(",") if e.strip()}
 

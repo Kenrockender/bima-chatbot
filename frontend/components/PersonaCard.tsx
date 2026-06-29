@@ -5,6 +5,7 @@ export type Persona = {
   summary: string;
   challenge: string;
   accent: string;
+  gender?: string; // "m" | "f" — picks the matching ElevenLabs voice
 };
 
 // Difficulty → dot/label colour, so the list reads at a glance.

@@ -353,10 +353,21 @@ def _signature_title(s: Dict) -> Optional[Dict]:
     }
 
 
+def _avg_score(s: Dict) -> float:
+    """Mean of the five dimension averages — an FA's overall practice quality."""
+    avgs = s.get("averages", {}) or {}
+    vals = [float(avgs.get(d, 0) or 0) for d in DIMENSIONS]
+    return round(sum(vals) / len(vals), 1) if vals else 0.0
+
+
 def leaderboard(current_uid: str, limit: int = 20) -> Dict:
-    """Top FAs by total XP. Flags the caller's own row so the UI can highlight it."""
+    """Top FAs by average score (quality), with sessions as a tie-break and
+    supporting stat. Flags the caller's own row so the UI can highlight it."""
     summaries = [s for s in _users_summaries() if int(s.get("total_sessions", 0) or 0) > 0]
-    summaries.sort(key=lambda s: int(s.get("total_xp", 0) or 0), reverse=True)
+    summaries.sort(
+        key=lambda s: (_avg_score(s), int(s.get("total_sessions", 0) or 0)),
+        reverse=True,
+    )
 
     entries = []
     me = None
@@ -366,8 +377,7 @@ def leaderboard(current_uid: str, limit: int = 20) -> Dict:
             "uid": s.get("uid"),
             "name": _display_name(s),
             "picture": s.get("picture", ""),
-            "total_xp": int(s.get("total_xp", 0) or 0),
-            "level": int(s.get("level", 1) or 1),
+            "avg_score": _avg_score(s),
             "total_sessions": int(s.get("total_sessions", 0) or 0),
             "title": _signature_title(s),
             "is_me": s.get("uid") == current_uid,

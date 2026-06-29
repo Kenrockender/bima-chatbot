@@ -3,7 +3,7 @@ import logging
 import httpx
 
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
@@ -24,6 +24,7 @@ class PersonaPublic(BaseModel):
     summary: str
     challenge: str
     accent: str
+    gender: Optional[str] = "f"
 
 
 class DrillPublic(BaseModel):
@@ -31,6 +32,7 @@ class DrillPublic(BaseModel):
     title: str
     dimension: str
     summary: str
+    objective: Optional[str] = None
 
 
 class CustomPersona(BaseModel):
@@ -214,6 +216,63 @@ _STT_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 @router.get("/stt/available")
 def stt_available():
     return {"available": bool(settings.stt_api_key)}
+
+
+# -----------------------------------------------------------------------------
+# Text-to-speech (ElevenLabs) — natural customer voice
+# -----------------------------------------------------------------------------
+
+_TTS_MAX_CHARS = 1200  # safety cap; customer replies are short anyway
+
+
+class TTSRequest(BaseModel):
+    text: str
+    gender: Optional[str] = "f"  # "m" | "f" — picks the matching voice
+
+
+@router.get("/tts/available")
+def tts_available():
+    return {"available": bool(settings.elevenlabs_api_key)}
+
+
+@router.post("/tts")
+async def tts(req: TTSRequest):
+    if not settings.elevenlabs_api_key:
+        raise HTTPException(status_code=501, detail="ElevenLabs TTS not configured")
+
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Empty text")
+    text = text[:_TTS_MAX_CHARS]
+
+    voice_id = settings.elevenlabs_voice_for(req.gender or "f")
+    url = f"{settings.elevenlabs_base_url}/text-to-speech/{voice_id}"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                url,
+                headers={
+                    "xi-api-key": settings.elevenlabs_api_key,
+                    "accept": "audio/mpeg",
+                    "content-type": "application/json",
+                },
+                json={
+                    "text": text,
+                    "model_id": settings.elevenlabs_model,
+                    "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
+                },
+            )
+        if resp.status_code != 200:
+            log.warning("TTS error %s: %s", resp.status_code, resp.text[:200])
+            raise HTTPException(status_code=502, detail="TTS service error")
+        return Response(content=resp.content, media_type="audio/mpeg")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="TTS timeout")
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error("TTS failed: %s", e)
+        raise HTTPException(status_code=500, detail="TTS internal error")
 
 
 @router.post("/stt/transcribe")

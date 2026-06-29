@@ -11,6 +11,7 @@ import { AppShell } from "@/components/AppShell";
 import { useConfirm } from "@/components/ConfirmModal";
 import { useSTT, useTTS } from "@/hooks/useSpeech";
 import { useServerSTT } from "@/hooks/useServerSTT";
+import { useServerTTS } from "@/hooks/useServerTTS";
 import { authedFetch } from "@/lib/api";
 import { clearCache } from "@/lib/swr";
 import { recommendedPersona } from "@/lib/coaching";
@@ -33,6 +34,14 @@ export type CustomConfig = {
   background?: string;
   needs?: string;
   challenge?: string;
+};
+
+export type DrillBrief = {
+  id: string;
+  title: string;
+  dimension: string;
+  summary: string;
+  objective?: string | null;
 };
 
 // Persona id reserved for the FA-defined custom persona.
@@ -66,6 +75,7 @@ export default function Home() {
   const [personaError, setPersonaError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activePersona, setActivePersona] = useState<Persona | null>(null);
+  const [activeDrill, setActiveDrill] = useState<DrillBrief | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -77,9 +87,6 @@ export default function Home() {
     if (typeof window === "undefined") return "text";
     try { return (localStorage.getItem("bima.inputMode") as "voice" | "text") || "text"; } catch { return "text"; }
   });
-  const [silenceProgress, setSilenceProgress] = useState(0);
-  const silenceStartRef = useRef<number | null>(null);
-  const silenceRafRef = useRef<number | null>(null);
   const [muted, setMuted] = useState(false);
   const [listenStart, setListenStart] = useState<number | null>(null);
   const [listenSeconds, setListenSeconds] = useState(0);
@@ -93,7 +100,6 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const voiceInitRef = useRef(false);
-  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tr = t[lang];
 
   // The custom persona is rendered as a distinct CTA, not a regular card.
@@ -104,7 +110,25 @@ export default function Home() {
   const stt = useSTT({ lang: speechLang });
   const tts = useTTS({ lang: speechLang });
   const serverSTT = useServerSTT({ lang: speechLang });
+  const serverTTS = useServerTTS();
   const hasVoice = stt.supported || serverSTT.available;
+
+  // Prefer the natural ElevenLabs voice when the backend has it configured;
+  // otherwise fall back to the browser's Web Speech voice.
+  const useServerVoice = serverTTS.available;
+  const ttsSupported = serverTTS.available || tts.supported;
+  const voiceSpeaking = useServerVoice ? serverTTS.speaking : tts.speaking;
+  const personaGender = activePersona?.gender || "f";
+
+  function speakReply(text: string, gender?: string) {
+    if (muted || !text) return;
+    if (useServerVoice) serverTTS.speak(text, gender ?? personaGender);
+    else if (tts.supported) tts.speak(text);
+  }
+  function cancelSpeak() {
+    if (useServerVoice) serverTTS.cancel();
+    else tts.cancel();
+  }
 
   useEffect(() => {
     if (stt.listening) setInput((stt.transcript + " " + stt.interim).trim());
@@ -162,6 +186,10 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (stage !== "pick" || sessionId) return;
+    // A drill/persona deep-link should always start fresh — let that effect win
+    // instead of restoring whatever stale session was in storage.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("drill") || params.get("persona")) return;
     try {
       const raw = sessionStorage.getItem("bima.session");
       if (raw) {
@@ -169,6 +197,7 @@ export default function Home() {
         if (saved.session_id && saved.persona) {
           setSessionId(saved.session_id);
           setActivePersona(saved.persona);
+          setActiveDrill(saved.drill ?? null);
           setSelectedId(saved.persona.id);
           setMessages([{ role: "assistant", content: saved.opening ?? "", timestamp: new Date(saved.started) }]);
           setStage("chat");
@@ -213,40 +242,6 @@ export default function Home() {
   }, [inputMode]);
 
   useEffect(() => {
-    if (!stt.listening) {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      if (silenceRafRef.current) cancelAnimationFrame(silenceRafRef.current);
-      silenceStartRef.current = null;
-      setSilenceProgress(0);
-      return;
-    }
-    const captured = (stt.transcript + " " + stt.interim).trim();
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    if (silenceRafRef.current) cancelAnimationFrame(silenceRafRef.current);
-    silenceStartRef.current = null;
-    setSilenceProgress(0);
-    if (captured) {
-      const SILENCE_MS = 3000;
-      silenceStartRef.current = Date.now();
-      const tick = () => {
-        if (!silenceStartRef.current) return;
-        const elapsed = Date.now() - silenceStartRef.current;
-        setSilenceProgress(Math.min(elapsed / SILENCE_MS, 1));
-        if (elapsed < SILENCE_MS) silenceRafRef.current = requestAnimationFrame(tick);
-      };
-      silenceRafRef.current = requestAnimationFrame(tick);
-      silenceTimerRef.current = setTimeout(() => {
-        if (stt.listening) toggleMic();
-      }, SILENCE_MS);
-    }
-    return () => {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      if (silenceRafRef.current) cancelAnimationFrame(silenceRafRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stt.transcript, stt.interim, stt.listening]);
-
-  useEffect(() => {
     if (!sessionStart) { setSessionElapsed(0); return; }
     const id = setInterval(() => setSessionElapsed(Math.floor((Date.now() - sessionStart) / 1000)), 1000);
     return () => clearInterval(id);
@@ -281,6 +276,7 @@ export default function Home() {
       const data = await res.json();
       setSessionId(data.session_id);
       setActivePersona(data.persona);
+      setActiveDrill(data.drill ?? null);
       setSelectedId(data.persona.id);
       setMessages([
         {
@@ -297,14 +293,15 @@ export default function Home() {
         sessionStorage.setItem("bima.session", JSON.stringify({
           session_id: data.session_id,
           persona: data.persona,
+          drill: data.drill ?? null,
           opening: data.opening_message,
           started: Date.now(),
         }));
       } catch {}
       setLastCoach(null);
       setLastFacts(null);
-      if (inputMode === "voice" && !muted && tts.supported) {
-        setTimeout(() => tts.speak(data.opening_message), 250);
+      if (inputMode === "voice") {
+        setTimeout(() => speakReply(data.opening_message, data.persona.gender), 250);
       }
     } catch {
       setStartError(true);
@@ -342,7 +339,7 @@ export default function Home() {
     setAiSubtitle(reply);
     setLastCoach(coachData);
     setLastFacts(factsData ?? null);
-    if (inputMode === "voice" && !muted && tts.supported) tts.speak(reply);
+    if (inputMode === "voice") speakReply(reply);
   }
 
   // Streamed reply via SSE. Returns true if it produced usable text, false if
@@ -510,6 +507,7 @@ export default function Home() {
     setStage("pick");
     setSelectedId(null);
     setActivePersona(null);
+    setActiveDrill(null);
     setSessionId(null);
     setSessionStart(null);
     setMessages([]);
@@ -518,7 +516,7 @@ export default function Home() {
     try { sessionStorage.removeItem("bima.session"); } catch {}
     abortRef.current?.abort();
     if (stt.listening || stt.paused) stt.stop();
-    if (tts.speaking) tts.cancel();
+    if (voiceSpeaking) cancelSpeak();
   }
 
   function toggleMic() {
@@ -527,7 +525,7 @@ export default function Home() {
       if (serverSTT.recording) {
         serverSTT.stop();
       } else {
-        if (tts.speaking) tts.cancel();
+        if (voiceSpeaking) cancelSpeak();
         serverSTT.start();
       }
       return;
@@ -541,7 +539,7 @@ export default function Home() {
         stt.reset();
       }
     } else {
-      if (tts.speaking) tts.cancel();
+      if (voiceSpeaking) cancelSpeak();
       stt.start();
     }
   }
@@ -573,7 +571,7 @@ export default function Home() {
     ? "recording" as const
     : busy
       ? "processing" as const
-      : tts.speaking
+      : voiceSpeaking
         ? "speaking" as const
         : "idle" as const;
 
@@ -652,9 +650,15 @@ export default function Home() {
               <span className="text-[13.5px] font-semibold text-life-heading truncate">
                 {activePersona.name}
               </span>
-              <span className="hidden sm:inline text-[11px] text-life-body shrink-0">
-                · {tr.challengeLabel}: {activePersona.challenge}
-              </span>
+              {activeDrill ? (
+                <span className="shrink-0 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.1em] font-bold text-life-teal bg-life-teal/10 rounded-full px-2 py-0.5">
+                  {tr.drillTag}: {activeDrill.title}
+                </span>
+              ) : (
+                <span className="hidden sm:inline text-[11px] text-life-body shrink-0">
+                  · {tr.challengeLabel}: {activePersona.challenge}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 shrink-0">
               {sessionStart && (
@@ -817,6 +821,10 @@ export default function Home() {
                   />
                 )}
 
+                {stage === "chat" && activePersona && activeDrill && (
+                  <DrillBriefing drill={activeDrill} tr={tr} />
+                )}
+
                 {stage === "chat" && activePersona && voiceMode && (
                   <VoiceStage
                     voiceState={voiceState}
@@ -826,7 +834,7 @@ export default function Home() {
                     aiSubtitle={aiSubtitle}
                     userCaption={(stt.transcript + " " + stt.interim).trim()}
                     userInterim={!!stt.interim}
-                    silenceProgress={silenceProgress}
+                    silenceProgress={0}
                     paused={stt.paused}
                     coach={lastCoach}
                     facts={null}
@@ -836,10 +844,10 @@ export default function Home() {
                     onSwitchToText={() => {
                       setInputMode("text");
                       if (stt.listening || stt.paused) stt.stop();
-                      if (tts.speaking) tts.cancel();
+                      if (voiceSpeaking) cancelSpeak();
                     }}
                     onMuteToggle={() => {
-                      if (!muted && tts.speaking) tts.cancel();
+                      if (!muted && voiceSpeaking) cancelSpeak();
                       setMuted((m) => !m);
                     }}
                     onEndSession={endSession}
@@ -974,12 +982,12 @@ export default function Home() {
                         setInputMode(next);
                         if (next === "text") {
                           if (stt.listening || stt.paused) stt.stop();
-                          if (tts.speaking) tts.cancel();
+                          if (voiceSpeaking) cancelSpeak();
                         }
                       }}
-                      disabled={!hasVoice && !tts.supported}
+                      disabled={!hasVoice && !ttsSupported}
                       title={
-                        !stt.supported && !tts.supported
+                        !stt.supported && !ttsSupported
                           ? unsupportedMessage
                           : tr.voiceMode
                       }
@@ -993,10 +1001,10 @@ export default function Home() {
                       <span>{voiceMode ? tr.voiceOn : tr.voiceOff}</span>
                     </button>
 
-                    {voiceMode && tts.supported && (
+                    {voiceMode && ttsSupported && (
                       <button
                         onClick={() => {
-                          if (!muted && tts.speaking) tts.cancel();
+                          if (!muted && voiceSpeaking) cancelSpeak();
                           setMuted((m) => !m);
                         }}
                         title={muted ? tr.unmute : tr.mute}
@@ -1010,7 +1018,7 @@ export default function Home() {
                       </button>
                     )}
 
-                    {voiceMode && tts.supported && tts.voices.length > 0 && (
+                    {voiceMode && !useServerVoice && tts.supported && tts.voices.length > 0 && (
                       <VoicePicker
                         voices={tts.voices}
                         lang={speechLang}
@@ -1020,11 +1028,11 @@ export default function Home() {
                         testLabel={tr.voiceTest}
                         sample={tr.voiceTestSample}
                         onSelect={(name) => {
-                          if (tts.speaking) tts.cancel();
+                          if (voiceSpeaking) cancelSpeak();
                           tts.setVoice(name);
                         }}
                         onTest={() => {
-                          if (tts.speaking) tts.cancel();
+                          if (voiceSpeaking) cancelSpeak();
                           tts.speak(tr.voiceTestSample);
                         }}
                       />
@@ -1041,7 +1049,7 @@ export default function Home() {
                             {tr.listening.replace(/…|\.\.\./g, "")} ({listenSeconds.toFixed(1)}s)
                           </span>
                         </>
-                      ) : tts.speaking ? (
+                      ) : voiceSpeaking ? (
                         <>
                           <span className="eq-bars" aria-hidden>
                             <span /><span /><span /><span /><span /><span /><span />
@@ -1171,6 +1179,41 @@ function CustomCta({
         {label}
       </span>
     </button>
+  );
+}
+
+function DrillBriefing({
+  drill,
+  tr,
+}: {
+  drill: DrillBrief;
+  tr: (typeof t)["en"] | (typeof t)["id"];
+}) {
+  const dimLabel = (tr as Record<string, string>)[drill.dimension] ?? drill.dimension;
+  return (
+    <div className="mb-5 rounded-2xl border border-life-teal/25 bg-life-blueBg/50 p-5 animate-fadeIn">
+      <div className="flex items-center gap-2 mb-2.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-life-teal" />
+        <span className="text-[10px] uppercase tracking-[0.16em] font-bold text-life-teal">
+          {tr.drillFocusLabel} · {dimLabel}
+        </span>
+      </div>
+      <h3 className="font-sans font-extrabold text-life-heading text-[18px] leading-snug mb-3">
+        {drill.title}
+      </h3>
+      <div className="space-y-2 text-[13px] leading-relaxed">
+        <p>
+          <span className="font-semibold text-life-heading">{tr.drillScenarioLabel}: </span>
+          <span className="text-life-body">{drill.summary}</span>
+        </p>
+        {drill.objective && (
+          <p>
+            <span className="font-semibold text-life-heading">{tr.drillObjectiveLabel}: </span>
+            <span className="text-life-body">{drill.objective}</span>
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 

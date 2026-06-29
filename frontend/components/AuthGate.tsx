@@ -67,6 +67,12 @@ function SignIn({ onSignIn }: { onSignIn: () => Promise<void> }) {
           className="absolute top-0 left-0 right-0 h-1"
           style={{ background: "linear-gradient(90deg, #0a55ab, #19b8a6)" }}
         />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/bca-life-logo.svg"
+          alt="BCA Life"
+          className="h-7 w-auto mx-auto mb-5"
+        />
         <div className="text-3xl font-sans font-extrabold text-life-heading tracking-tight">
           BIMA
         </div>

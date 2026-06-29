@@ -111,6 +111,7 @@ def start_session(
             "summary": persona["summary"],
             "challenge": persona["challenge"],
             "accent": persona["accent"],
+            "gender": persona.get("gender", "f"),
         },
         "opening_message": persona["opening"],
         "drill": {
@@ -118,6 +119,7 @@ def start_session(
             "title": drill["title"],
             "dimension": drill["dimension"],
             "summary": drill["summary"],
+            "objective": drill.get("objective"),
         } if drill else None,
     }
 
@@ -548,6 +550,7 @@ def _empty_report(persona: Dict, error: Optional[str] = None) -> Dict:
             "summary": persona["summary"],
             "challenge": persona["challenge"],
             "accent": persona["accent"],
+            "gender": persona.get("gender", "f"),
         },
         "turn_count": 0,
     }

@@ -15,6 +15,11 @@ DRILLS: List[Dict] = [
         "dimension": "discovery",
         "persona_id": "skeptical_owner",
         "summary": "Pak Budi won't hear a pitch until you've understood his story. Ask, don't sell.",
+        "objective": (
+            "Gali situasi, kekhawatiran, dan kebutuhan Pak Budi lewat pertanyaan "
+            "terbuka dulu — jangan tawarkan produk apa pun sampai kamu benar-benar "
+            "paham ceritanya."
+        ),
         "focus_note": (
             "DRILL FOKUS: DISCOVERY. Jangan mau dengar produk apa pun sampai FA "
             "benar-benar menggali situasi, kekhawatiran, dan kebutuhanmu lewat "
@@ -28,6 +33,11 @@ DRILLS: List[Dict] = [
         "dimension": "objection_handling",
         "persona_id": "skeptical_owner",
         "summary": "Rapid-fire objections about claims and trust. Stay empathetic and substantive.",
+        "objective": (
+            "Tanggapi tiap keberatan dengan empati dulu, lalu fakta yang substansial. "
+            "Pastikan keberatannya benar-benar teratasi sebelum lanjut, bukan sekadar "
+            "ditenangkan."
+        ),
         "focus_note": (
             "DRILL FOKUS: OBJECTION HANDLING. Lempar keberatan bertubi-tubi soal "
             "klaim, kepercayaan, dan risiko. Uji apakah FA menjawab dengan empati "
@@ -40,6 +50,11 @@ DRILLS: List[Dict] = [
         "dimension": "product_knowledge",
         "persona_id": "young_executive",
         "summary": "Andi only cares about figures. Get the IRR, premiums, and surrender values right.",
+        "objective": (
+            "Jawab tiap pertanyaan angka Andi dengan akurat — IRR, premi, surrender "
+            "value, biaya — sesuai FAKTA_PRODUK. Jangan mengarang; kalau tidak tahu, "
+            "akui dan janji cek."
+        ),
         "focus_note": (
             "DRILL FOKUS: PRODUCT KNOWLEDGE. Tanya angka spesifik terus-menerus "
             "(IRR, premi, surrender value, biaya). Kalau FA salah atau ngarang vs "
@@ -52,6 +67,10 @@ DRILLS: List[Dict] = [
         "dimension": "closing",
         "persona_id": "young_executive",
         "summary": "You're warm but undecided. Make the advisor land a clear, non-pushy next step.",
+        "objective": (
+            "Arahkan Andi ke satu next step yang jelas (proposal/jadwal ketemu) tanpa "
+            "memaksa, lalu kunci komitmen waktunya."
+        ),
         "focus_note": (
             "DRILL FOKUS: CLOSING. Kamu sebenarnya cukup tertarik tapi belum "
             "memutuskan. Beri ruang buat FA mengarahkan ke next step yang jelas; "
@@ -64,6 +83,10 @@ DRILLS: List[Dict] = [
         "dimension": "rapport",
         "persona_id": "cautious_mom",
         "summary": "Ibu Sari opens up only to advisors who build trust first. Slow down and connect.",
+        "objective": (
+            "Bangun kepercayaan Ibu Sari dulu lewat obrolan yang hangat dan tulus "
+            "sebelum masuk ke produk atau angka."
+        ),
         "focus_note": (
             "DRILL FOKUS: RAPPORT. Tunjukkan minat hanya kalau FA membangun "
             "hubungan dengan hangat dulu. Kalau FA langsung teknis/jualan tanpa "
@@ -97,6 +120,7 @@ def list_public() -> List[Dict]:
             "dimension": d["dimension"],
             "persona_id": d["persona_id"],
             "summary": d["summary"],
+            "objective": d.get("objective"),
         }
         for d in DRILLS
     ]

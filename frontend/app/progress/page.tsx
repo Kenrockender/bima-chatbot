@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { FetchError } from "@/components/FetchError";
-import { SectionTitle } from "@/components/SectionTitle";
-import { FlameIcon, MedalIcon, CheckIcon, ClockIcon } from "@/components/icons";
+import { FlameIcon } from "@/components/icons";
 import { authedFetch } from "@/lib/api";
 import { readCache, writeCache } from "@/lib/swr";
 import { t, type Lang } from "@/lib/i18n";
@@ -163,33 +162,45 @@ export default function ProgressPage() {
             {tr.progressSubtitle}
           </p>
 
-          {hasData && (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8">
-              <HeroStat label={tr.statLevel} value={stats!.level}>
-                <div className="mt-2 h-1.5 rounded-full overflow-hidden bg-white/20">
-                  <div
-                    className="h-full rounded-full bg-white"
-                    style={{ width: `${(stats!.xp_into_level / stats!.xp_per_level) * 100}%` }}
-                  />
-                </div>
-                <p className="text-[10px] text-white/70 mt-1.5">
-                  {stats!.xp_into_level} / {stats!.xp_per_level} XP
-                </p>
-              </HeroStat>
-              <HeroStat label={tr.statXp} value={stats!.total_xp} />
-              <HeroStat
-                label={tr.statStreak}
-                value={
-                  <span className="inline-flex items-center gap-1.5">
-                    <FlameIcon size={24} className="text-life-amber" />
-                    {stats!.streak}
-                  </span>
-                }
-                sub={tr.daysUnit}
-              />
-              <HeroStat label={tr.statSessions} value={stats!.total_sessions} />
-            </div>
-          )}
+          {hasData && (() => {
+            const vals = DIMS.map((d) => stats!.averages[d] ?? 0);
+            const avgScore =
+              vals.length
+                ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+                : 0;
+            return (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8">
+                <HeroStat label={tr.statSessions} value={stats!.total_sessions} />
+                <HeroStat
+                  label={tr.statAvg}
+                  value={
+                    <span className="inline-flex items-baseline gap-1">
+                      {avgScore}
+                      <span className="text-[14px] font-semibold text-white/65">/ 10</span>
+                    </span>
+                  }
+                />
+                <HeroStat
+                  label={tr.statStreak}
+                  value={
+                    <span className="inline-flex items-center gap-1.5">
+                      <FlameIcon size={24} className="text-life-amber" />
+                      {stats!.streak}
+                    </span>
+                  }
+                  sub={tr.daysUnit}
+                />
+                <HeroStat
+                  label={tr.statFocus}
+                  value={
+                    <span className="text-[19px] leading-tight">
+                      {stats!.weakest_dimension ? dimLabel(stats!.weakest_dimension) : "—"}
+                    </span>
+                  }
+                />
+              </div>
+            );
+          })()}
         </div>
       </section>
 
@@ -236,35 +247,6 @@ export default function ProgressPage() {
           </div>
         ) : (
           <div className="space-y-7">
-            {/* Daily goal */}
-            {(() => {
-              const done = stats!.done_today >= stats!.daily_goal;
-              return (
-                <div
-                  className={`life-card card-goal p-5 flex items-center gap-4 ${done ? "is-done" : ""}`}
-                >
-                  <span
-                    className="life-icon"
-                    style={{
-                      width: 44,
-                      height: 44,
-                      background: done
-                        ? "linear-gradient(150deg, #1f9d57, #19a594)"
-                        : "linear-gradient(150deg, #0a55ab, #1786b1)",
-                    }}
-                  >
-                    {done ? <CheckIcon size={20} /> : <ClockIcon size={20} />}
-                  </span>
-                  <div>
-                    <div className="life-eyebrow text-[10px]">{tr.dailyGoalTitle}</div>
-                    <p className="font-sans font-bold text-life-heading text-[17px] leading-snug mt-0.5">
-                      {done ? tr.dailyGoalDone : tr.dailyGoalTodo}
-                    </p>
-                  </div>
-                </div>
-              );
-            })()}
-
             {/* Recommended next */}
             {next && next.persona_id && (
               <div className="life-card p-6 flex flex-wrap items-center gap-4 justify-between">
@@ -354,42 +336,6 @@ export default function ProgressPage() {
               </div>
             </div>
 
-            {/* Badges */}
-            <div className="life-card p-7">
-              <div className="flex items-center gap-2 mb-5">
-                <span className="life-eyebrow">{tr.badgesTitle}</span>
-                <span className="h-px flex-1 max-w-[60px] bg-life-blue/15" />
-              </div>
-              {stats!.badges.length === 0 ? (
-                <p className="text-[13.5px] text-life-body italic">{tr.noBadges}</p>
-              ) : (
-                <div className="flex flex-wrap gap-3">
-                  {stats!.badges.map((b) => (
-                    <div
-                      key={b.id}
-                      className="flex items-center gap-2.5 rounded-[14px] p-3 pr-4 border border-life-blue/12 bg-life-blueBg/60"
-                      title={b.description}
-                    >
-                      <span
-                        className="life-icon"
-                        style={{ width: 32, height: 32, borderRadius: 999 }}
-                      >
-                        <MedalIcon size={17} />
-                      </span>
-                      <div className="leading-tight">
-                        <div className="font-sans font-bold text-life-heading text-[14px]">
-                          {b.name}
-                        </div>
-                        <div className="text-[10.5px] text-life-body">
-                          {b.description}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Focus drills */}
             <div className="life-card p-7">
               <div className="flex items-center gap-2 mb-1">
@@ -461,7 +407,7 @@ export default function ProgressPage() {
                         {h.persona_name}
                       </div>
                       <div className="text-[11.5px] text-life-body">
-                        {h.turn_count} {tr.reportTurns} · +{h.xp_earned} XP ·{" "}
+                        {h.turn_count} {tr.reportTurns} ·{" "}
                         {new Date(h.created_at).toLocaleDateString()}
                       </div>
                     </div>

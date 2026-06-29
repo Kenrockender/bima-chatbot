@@ -17,6 +17,14 @@ const DIMS = [
   "closing",
 ] as const;
 
+// An FA's overall practice quality: mean of the five dimension averages.
+function memberAvg(averages: Record<string, number>): number {
+  const vals = DIMS.map((d) => averages?.[d] ?? 0);
+  return vals.length
+    ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+    : 0;
+}
+
 type Member = {
   uid: string;
   name: string;
@@ -255,16 +263,16 @@ export default function ManagerPage() {
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-lg bg-white/50 py-1.5">
-                    <div className="text-[10px] uppercase tracking-wide text-life-bodyLight">Level</div>
-                    <div className="text-[15px] font-bold text-life-heading">{m.level}</div>
-                  </div>
-                  <div className="rounded-lg bg-white/50 py-1.5">
-                    <div className="text-[10px] uppercase tracking-wide text-life-bodyLight">XP</div>
-                    <div className="text-[15px] font-bold text-life-blue">{m.total_xp}</div>
+                    <div className="text-[10px] uppercase tracking-wide text-life-bodyLight">{lang === "id" ? "Rata-rata" : "Avg"}</div>
+                    <div className="text-[15px] font-bold text-life-blue tabular-nums">{memberAvg(m.averages).toFixed(1)}</div>
                   </div>
                   <div className="rounded-lg bg-white/50 py-1.5">
                     <div className="text-[10px] uppercase tracking-wide text-life-bodyLight">{lang === "id" ? "Sesi" : "Sessions"}</div>
                     <div className="text-[15px] font-bold text-life-heading">{m.total_sessions}</div>
+                  </div>
+                  <div className="rounded-lg bg-white/50 py-1.5">
+                    <div className="text-[10px] uppercase tracking-wide text-life-bodyLight">{lang === "id" ? "Terakhir" : "Last"}</div>
+                    <div className="text-[15px] font-bold text-life-heading tabular-nums">{m.last_overall}</div>
                   </div>
                 </div>
                 <div className="mt-2.5 flex items-center gap-1.5 text-[12px]">
@@ -287,9 +295,9 @@ export default function ManagerPage() {
             <thead>
               <tr className="text-life-bodyLight text-[11px] uppercase tracking-wide text-left border-b border-life-blue/12">
                 <th className="py-2 pr-3 font-semibold">FA</th>
-                <th className="py-2 px-3 font-semibold">Level</th>
-                <th className="py-2 px-3 font-semibold">XP</th>
+                <th className="py-2 px-3 font-semibold">{lang === "id" ? "Rata-rata" : "Avg"}</th>
                 <th className="py-2 px-3 font-semibold">{lang === "id" ? "Sesi" : "Sessions"}</th>
+                <th className="py-2 px-3 font-semibold">{lang === "id" ? "Terakhir" : "Last"}</th>
                 <th className="py-2 px-3 font-semibold">{lang === "id" ? "Perlu fokus" : "Needs focus"}</th>
               </tr>
             </thead>
@@ -314,9 +322,9 @@ export default function ManagerPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 text-life-heading">{m.level}</td>
-                  <td className="py-2.5 px-3 font-bold text-life-blue">{m.total_xp}</td>
+                  <td className="py-2.5 px-3 font-bold text-life-blue tabular-nums">{memberAvg(m.averages).toFixed(1)}</td>
                   <td className="py-2.5 px-3 text-life-heading">{m.total_sessions}</td>
+                  <td className="py-2.5 px-3 text-life-heading tabular-nums">{m.last_overall}</td>
                   <td className="py-2.5 px-3 text-life-body">
                     {m.weakest_dimension ? dimLabel(m.weakest_dimension) : "—"}
                   </td>

@@ -14,8 +14,7 @@ type Entry = {
   uid: string;
   name: string;
   picture: string;
-  total_xp: number;
-  level: number;
+  avg_score: number;
   total_sessions: number;
   title: Title | null;
   is_me: boolean;
@@ -95,8 +94,8 @@ export default function LeaderboardPage() {
           </h2>
           <p className="text-[14.5px] leading-[1.6] text-white/80 mt-2.5 max-w-[560px]">
             {lang === "id"
-              ? "Diurutkan dari total XP. Selesaikan sesi latihan untuk naik peringkat."
-              : "Ranked by total XP. Finish practice sessions to climb."}
+              ? "Diurutkan dari skor rata-rata. Jaga kualitas tiap sesi untuk naik peringkat."
+              : "Ranked by average score. Keep your quality high to climb."}
           </p>
         </div>
       </section>
@@ -180,8 +179,7 @@ function Row({ e, lang }: { e: Entry; lang: Lang }) {
         </div>
         <div className="text-[11.5px] text-life-body flex items-center gap-1.5 flex-wrap">
           <span>
-            {lang === "id" ? "Level" : "Level"} {e.level} · {e.total_sessions}{" "}
-            {lang === "id" ? "sesi" : "sessions"}
+            {e.total_sessions} {lang === "id" ? "sesi" : "sessions"}
           </span>
           {e.title && (
             <span
@@ -194,9 +192,11 @@ function Row({ e, lang }: { e: Entry; lang: Lang }) {
         </div>
       </div>
       <div className="text-right">
-        <div className="text-[16px] font-bold text-life-blue">{e.total_xp}</div>
+        <div className="text-[16px] font-bold text-life-blue tabular-nums">
+          {e.avg_score.toFixed(1)}
+        </div>
         <div className="text-[10px] uppercase tracking-[0.14em] text-life-bodyLight font-semibold">
-          XP
+          {lang === "id" ? "Rata-rata" : "Avg"}
         </div>
       </div>
     </div>

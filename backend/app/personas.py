@@ -20,6 +20,7 @@ PERSONAS: List[Dict] = [
         ),
         "challenge": "Mudah",
         "accent": "#1E7B47",
+        "gender": "f",
         "opening": (
             "Halo, Mas/Mbak. Saya Sari, ibu rumah tangga. Suami saya yang cari "
             "nafkah, dan saya lagi mikir-mikir untuk anak-anak. Belum tahu "
@@ -46,6 +47,7 @@ Cara membalas FA:
         ),
         "challenge": "Sedang",
         "accent": "#003D7A",
+        "gender": "m",
         "opening": (
             "Hi. Saya Andi, single, kerja di consulting di SCBD. Honestly, "
             "asuransi bukan prioritas utama saya — saya lebih suka reksa dana "
@@ -74,6 +76,7 @@ Cara membalas FA:
         ),
         "challenge": "Sulit",
         "accent": "#B23A3A",
+        "gender": "m",
         "opening": (
             "Iya, ada apa? Saya Budi. Saya kasih tau dulu — saya udah pernah "
             "punya asuransi sebelumnya, dan pas mau klaim, dipersulit terus. "
@@ -103,6 +106,7 @@ Cara membalas FA:
         ),
         "challenge": "Sulit",
         "accent": "#8E6612",
+        "gender": "m",
         "opening": (
             "Selamat siang. Saya Hendra, baru pensiun dari perusahaan multinasional. "
             "Saya tidak butuh asuransi untuk proteksi — aset saya cukup. Yang saya "
@@ -132,6 +136,7 @@ Cara membalas FA:
         ),
         "challenge": "Mudah",
         "accent": "#9B59B6",
+        "gender": "f",
         "opening": (
             "Halo, saya Dina. Saya baru menikah 6 bulan lalu dan suami saya "
             "bilang kita harus mulai mikirin asuransi, apalagi kalau nanti ada "
@@ -160,6 +165,7 @@ Cara membalas FA:
         ),
         "challenge": "Sedang",
         "accent": "#2E86C1",
+        "gender": "m",
         "opening": (
             "Siang, saya Riko. Saya kerja di bagian operasional pabrik, gaji "
             "UMR plus sedikit. Saya udah punya BPJS dari kantor. Emang perlu ya "
@@ -188,6 +194,7 @@ Cara membalas FA:
         ),
         "challenge": "Sulit",
         "accent": "#D4AC0D",
+        "gender": "m",
         "opening": (
             "Ya, sebentar saja ya — saya sedang sibuk. Teman saya yang rekomendasikan "
             "BCA Life. Tapi terus terang, saya sudah punya beberapa properti, "
@@ -218,6 +225,7 @@ Cara membalas FA:
         ),
         "challenge": "Sedang",
         "accent": "#E74C3C",
+        "gender": "f",
         "opening": (
             "Halo, saya Ratna. Saya single parent, dua anak masih SD. Saya "
             "satu-satunya yang kerja. Jujur saya khawatir... kalau saya kenapa-kenapa, "
@@ -326,6 +334,7 @@ def build_custom(cfg: Dict) -> Dict:
         "summary": summary,
         "challenge": challenge,
         "accent": "#6B4FA1",
+        "gender": (cfg.get("gender") or "f").strip().lower()[:1] or "f",
         "opening": opening,
         "persona_prompt": _custom_prompt(name, background, needs),
     }
@@ -348,6 +357,7 @@ def list_public() -> List[Dict]:
             "summary": p["summary"],
             "challenge": p["challenge"],
             "accent": p["accent"],
+            "gender": p.get("gender", "f"),
         }
         for p in PERSONAS
     ]

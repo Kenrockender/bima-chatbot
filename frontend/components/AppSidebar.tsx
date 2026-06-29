@@ -181,8 +181,17 @@ export function AppSidebar({
           {navLinks(collapsed)}
         </nav>
 
-        {/* Footer: lang / theme / account */}
+        {/* Footer: co-brand / lang / theme / account */}
         <div className="border-t border-life-blue/10 px-2.5 py-3 flex flex-col gap-2.5">
+          {!collapsed && (
+            <div className="flex items-center gap-2 pb-0.5">
+              <span className="text-[8.5px] uppercase tracking-[0.16em] text-life-bodyLight">
+                by
+              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/bca-life-logo.svg" alt="BCA Life" className="h-3.5 w-auto" />
+            </div>
+          )}
           {!collapsed && onLang && <div className="flex justify-start">{langSwitch}</div>}
           <div className={`flex items-center gap-2 ${collapsed ? "flex-col" : ""}`}>
             <ThemeToggle />
@@ -266,7 +275,14 @@ export function AppSidebar({
             <nav className="flex-1 flex flex-col gap-1 px-3 overflow-y-auto scroll-stylish">
               {navLinks(false, () => setDrawerOpen(false))}
             </nav>
-            <div className="border-t border-life-blue/10 px-3 py-3">
+            <div className="border-t border-life-blue/10 px-3 py-3 flex flex-col gap-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[8.5px] uppercase tracking-[0.16em] text-life-bodyLight">
+                  by
+                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/bca-life-logo.svg" alt="BCA Life" className="h-3.5 w-auto" />
+              </div>
               <button
                 onClick={() => {
                   setDrawerOpen(false);
