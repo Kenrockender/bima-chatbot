@@ -130,6 +130,24 @@ def _session_persona(session: Dict) -> Dict:
     return session.get("persona") or personas.get_persona(session["persona_id"])
 
 
+def _customer_system(persona: Dict, session: Dict) -> str:
+    """Build the customer's system prompt: persona + product facts + format
+    rules, plus the drill's focus note when the session is a drill. The drill
+    note tells the customer to apply extra pressure on the targeted skill, so
+    a 'discovery' drill (say) makes the customer stonewall any pitch until the
+    FA has actually asked questions.
+
+    The whole string is stable across every turn of a session, so it stays a
+    valid prompt-cache prefix even with the drill note appended."""
+    system = persona["persona_prompt"] + _CUSTOMER_RULES_FOOTER.format(
+        product_facts=_product_facts_block(),
+    )
+    drill = drills.get_drill_safe(session.get("drill_id"))
+    if drill and drill.get("focus_note"):
+        system += "\n\n" + drill["focus_note"]
+    return system
+
+
 def reply(session_id: str, fa_message: str) -> Dict:
     session = sessions.get(session_id)
     if not session:
@@ -139,9 +157,7 @@ def reply(session_id: str, fa_message: str) -> Dict:
     history = session["history"]
     focus = session.get("focus_dimension")
 
-    system = persona["persona_prompt"] + _CUSTOMER_RULES_FOOTER.format(
-        product_facts=_product_facts_block(),
-    )
+    system = _customer_system(persona, session)
 
     # Mark the (stable, large) system+product-facts prefix as a prompt-cache
     # breakpoint. It's byte-identical across every turn of the session, so on
@@ -203,9 +219,7 @@ def reply_stream(session_id: str, fa_message: str):
     history = session["history"]
     focus = session.get("focus_dimension")
 
-    system = persona["persona_prompt"] + _CUSTOMER_RULES_FOOTER.format(
-        product_facts=_product_facts_block(),
-    )
+    system = _customer_system(persona, session)
     msgs = [rag.cached_system(system)]
     for h in history[-8:]:
         if h["role"] == "user":

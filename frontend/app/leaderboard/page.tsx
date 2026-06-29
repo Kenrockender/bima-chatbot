@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FetchError } from "@/components/FetchError";
+import { useAuth } from "@/components/AuthProvider";
 import { authedFetch } from "@/lib/api";
 import { readCache, writeCache } from "@/lib/swr";
 import { t, type Lang } from "@/lib/i18n";
@@ -25,6 +26,7 @@ type Board = { entries: Entry[]; me: Entry | null; total_players: number };
 const MEDAL = ["🥇", "🥈", "🥉"];
 
 export default function LeaderboardPage() {
+  const { user, loading: authLoading, enabled } = useAuth();
   const [lang, setLang] = useState<Lang>("id");
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,8 +43,15 @@ export default function LeaderboardPage() {
       .catch(() => { if (!bg) setFetchError(true); })
       .finally(() => setLoading(false));
   }
+
+  // Wait for Firebase to resolve the session before fetching. Fetching while
+  // `auth.currentUser` is still null sends no bearer token, the backend 401s,
+  // and the page would flash a misleading error. Once auth is ready (a user is
+  // signed in, or Firebase is disabled for local dev) we load.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (authLoading) return;        // still restoring the session
+    if (enabled && !user) return;   // signed out — AuthGate shows sign-in
     const cached = readCache<Board>("leaderboard");
     if (cached) {
       setBoard(cached);
@@ -51,7 +60,7 @@ export default function LeaderboardPage() {
     } else {
       loadBoard();
     }
-  }, []);
+  }, [authLoading, user, enabled]);
 
   const entries = board?.entries ?? [];
   const me = board?.me ?? null;
