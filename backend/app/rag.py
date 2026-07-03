@@ -347,6 +347,28 @@ _REWRITE_SYSTEM = (
     "Keep the original language of the follow-up."
 )
 
+# Reference/pronoun cues that signal a question depends on prior turns. Only
+# when one of these appears (or the question is very short) is it worth the
+# extra LLM call to rewrite it into a standalone form — saving ~1 call/turn on
+# the common case of a fully self-contained question.
+_REFERENCE_RX = re.compile(
+    r"\b(itu|ini|tersebut|nya|yang tadi|yang itu|tadi|barusan|lagi|juga|"
+    r"lebih detail|lebih lanjut|jelaskan lagi|gimana kalau|bagaimana dengan|"
+    r"it|its|that|those|these|them|the same|more detail|tell me more|"
+    r"what about|how about|and the|also)\b",
+    re.IGNORECASE,
+)
+
+
+def _needs_rewrite(question: str) -> bool:
+    """Cheap gate: a question that already stands on its own doesn't need the
+    rewrite LLM call. We only rewrite when it carries a reference/pronoun cue or
+    is too short to be self-contained."""
+    q = (question or "").strip()
+    if len(q.split()) <= 3:
+        return True
+    return bool(_REFERENCE_RX.search(q))
+
 
 def rewrite_standalone(question: str, history: List[Dict[str, str]]) -> str:
     if not history:
@@ -490,8 +512,14 @@ def answer(
         log.info("no documents loaded -> fallback")
         return _fallback(lang)
 
-    # Resolve follow-ups so the question can stand alone
-    standalone = rewrite_standalone(question, history) if history else question
+    # Resolve follow-ups so the question can stand alone — but only when the
+    # question actually references prior turns. Self-contained questions skip
+    # the extra rewrite LLM call entirely.
+    standalone = (
+        rewrite_standalone(question, history)
+        if (history and _needs_rewrite(question))
+        else question
+    )
 
     system = _system_with_docs(lang)
     user_msg = f"QUESTION: {question}"

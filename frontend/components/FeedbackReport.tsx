@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Persona } from "./PersonaCard";
 
 export type Scores = {
@@ -63,9 +64,13 @@ export function FeedbackReport({
     level: string;
     practiceWeakest: string;
     saved: string;
+    copyReport: string;
+    downloadReport: string;
+    reportCopied: string;
   };
 }) {
   const prog = report.progress;
+  const [copied, setCopied] = useState(false);
   const dims: { key: keyof Scores; label: string }[] = [
     { key: "rapport", label: labels.rapport },
     { key: "discovery", label: labels.discovery },
@@ -73,6 +78,70 @@ export function FeedbackReport({
     { key: "objection_handling", label: labels.objection_handling },
     { key: "closing", label: labels.closing },
   ];
+
+  // Plain-text/markdown summary an FA can paste into WhatsApp/email to their
+  // manager, or keep as a record. Built from the same report the UI renders.
+  function buildSummary(): string {
+    const line = "──────────────────────────";
+    const out: string[] = [];
+    out.push(`${labels.eyebrow} · BIMA`);
+    out.push(line);
+    out.push(`${labels.overall}: ${report.overall_score}/10`);
+    out.push(
+      `${report.persona.name} · ${report.turn_count} ${labels.turns} · ${new Date().toLocaleString()}`,
+    );
+    out.push("");
+    out.push(`${labels.scores}:`);
+    for (const d of dims) out.push(`  • ${d.label}: ${report.scores[d.key] ?? 0}/10`);
+    if (report.strengths.length) {
+      out.push("");
+      out.push(`${labels.strengths}:`);
+      for (const s of report.strengths) out.push(`  • ${s}`);
+    }
+    if (report.improvements.length) {
+      out.push("");
+      out.push(`${labels.improvements}:`);
+      for (const s of report.improvements) out.push(`  • ${s}`);
+    }
+    if (report.next_focus) {
+      out.push("");
+      out.push(`${labels.next}: ${report.next_focus}`);
+    }
+    return out.join("\n");
+  }
+
+  async function copySummary() {
+    const text = buildSummary();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Clipboard API can be blocked (insecure context) — fall back to a
+      // hidden textarea + execCommand so the copy still works.
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch {}
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function downloadSummary() {
+    const blob = new Blob([buildSummary()], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `bima-report-${report.persona.name.replace(/\s+/g, "-").toLowerCase()}-${stamp}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div className="animate-riseIn space-y-6">
@@ -124,19 +193,13 @@ export function FeedbackReport({
 
       {/* Eval failure banner */}
       {report.eval_failed && (
-        <div
-          className="rounded-[14px] p-5 flex items-start gap-3"
-          style={{
-            background: "linear-gradient(150deg, #FFF8F0 0%, #FDEBD0 100%)",
-            border: "1px solid #F0C27A",
-          }}
-        >
-          <span className="text-[20px] shrink-0 mt-0.5">⚠️</span>
+        <div className="rounded-[14px] p-5 flex items-start gap-3 border border-life-amber/40 bg-life-amberBg">
+          <span className="text-[20px] shrink-0 mt-0.5" aria-hidden>⚠️</span>
           <div>
-            <p className="text-[14px] font-semibold text-bca-ink/90 mb-1">
+            <p className="text-[14px] font-semibold text-life-heading mb-1">
               Evaluasi gagal diproses
             </p>
-            <p className="text-[13px] text-bca-ink/70 leading-relaxed">
+            <p className="text-[13px] text-life-body leading-relaxed">
               Skor di bawah bukan penilaian asli — sistem tidak berhasil mengevaluasi sesi ini.
               Silakan klik &quot;Coba Lagi&quot; untuk mengakhiri sesi dan mendapatkan evaluasi ulang.
             </p>
@@ -278,6 +341,28 @@ export function FeedbackReport({
         >
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-life-amber" />
           {labels.tryAgain}
+        </button>
+
+        <button
+          onClick={copySummary}
+          aria-label={labels.copyReport}
+          className="inline-flex items-center gap-2 text-[13px] font-semibold text-life-heading/85 bg-life-blue/[0.06] hover:bg-life-blue/[0.12] border border-life-blue/15 rounded-full px-4 py-2.5 transition"
+        >
+          {copied ? (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><polyline points="20 6 9 17 4 12" /></svg>
+          ) : (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg>
+          )}
+          {copied ? labels.reportCopied : labels.copyReport}
+        </button>
+
+        <button
+          onClick={downloadSummary}
+          aria-label={labels.downloadReport}
+          className="inline-flex items-center gap-2 text-[13px] font-semibold text-life-heading/85 bg-life-blue/[0.06] hover:bg-life-blue/[0.12] border border-life-blue/15 rounded-full px-4 py-2.5 transition"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></svg>
+          {labels.downloadReport}
         </button>
       </div>
     </div>

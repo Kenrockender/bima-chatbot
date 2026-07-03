@@ -2,11 +2,12 @@ import os
 import uuid
 
 from typing import List, Literal, Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from pydantic import BaseModel, Field, model_validator
 
 from . import recommender, rag
 from .config import settings
+from .ratelimit import RateLimiter
 
 
 router = APIRouter(prefix="/api/recommender", tags=["recommender"])
@@ -77,7 +78,11 @@ class RecommendationResponse(BaseModel):
     profile_echo: Optional[dict] = None
 
 
-@router.post("/recommend", response_model=RecommendationResponse)
+@router.post(
+    "/recommend",
+    response_model=RecommendationResponse,
+    dependencies=[Depends(RateLimiter("recommend", max_calls=20, per_seconds=60))],
+)
 def recommend(profile: CustomerProfile):
     return recommender.recommend(profile.model_dump(exclude_none=False))
 
@@ -150,7 +155,11 @@ class CompareResponse(BaseModel):
     raw: Optional[str] = None
 
 
-@router.post("/compare", response_model=CompareResponse)
+@router.post(
+    "/compare",
+    response_model=CompareResponse,
+    dependencies=[Depends(RateLimiter("compare", max_calls=20, per_seconds=60))],
+)
 def compare(req: CompareRequest):
     return recommender.compare(
         competitor_id=req.competitor_id,
@@ -164,7 +173,11 @@ def compare(req: CompareRequest):
 _COMPARE_UPLOAD_EXTS = (".pdf", ".pptx")
 
 
-@router.post("/compare-upload", response_model=CompareResponse)
+@router.post(
+    "/compare-upload",
+    response_model=CompareResponse,
+    dependencies=[Depends(RateLimiter("compare", max_calls=20, per_seconds=60))],
+)
 async def compare_upload(
     file: UploadFile = File(...),
     bca_name: str = Form(""),

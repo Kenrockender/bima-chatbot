@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { FetchError } from "@/components/FetchError";
+import { TrophyIcon } from "@/components/icons";
 import { useAuth } from "@/components/AuthProvider";
 import { authedFetch } from "@/lib/api";
 import { readCache, writeCache } from "@/lib/swr";
@@ -126,10 +128,15 @@ export default function LeaderboardPage() {
         ) : fetchError ? (
           <FetchError message={tr.fetchError} onRetry={loadBoard} />
         ) : entries.length === 0 ? (
-          <div className="life-card p-10 text-center text-life-body">
-            {lang === "id"
-              ? "Belum ada yang menyelesaikan sesi. Jadilah yang pertama!"
-              : "No one has finished a session yet. Be the first!"}
+          <div className="life-card p-10 text-center flex flex-col items-center gap-4 animate-fadeIn">
+            <span className="life-icon" style={{ width: 56, height: 56, borderRadius: 18 }}>
+              <TrophyIcon size={28} className="text-white" />
+            </span>
+            <p className="text-life-body text-[15px] max-w-[360px]">{tr.leaderboardEmpty}</p>
+            <Link href="/" className="btn-life">
+              <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-life-amber" />
+              {tr.leaderboardEmptyCta}
+            </Link>
           </div>
         ) : (
           <div className="space-y-2.5 animate-riseIn">

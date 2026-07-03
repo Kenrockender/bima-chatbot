@@ -129,6 +129,17 @@ export const t = {
     levelLabel: "Level",
     practiceWeakest: "Practice this now",
     savedToProgress: "Saved to your progress",
+    copyReport: "Copy summary",
+    downloadReport: "Download",
+    reportCopied: "Copied!",
+
+    // Session review (past attempts)
+    reviewSession: "Review",
+    sessionTranscript: "Session transcript",
+    closeLabel: "Close",
+    loadingLabel: "Loading…",
+    leaderboardEmptyCta: "Start a roleplay",
+    leaderboardEmpty: "No one has finished a session yet. Be the first!",
 
     // Progress dashboard
     navProgress: "Progress",
@@ -411,6 +422,17 @@ export const t = {
     levelLabel: "Level",
     practiceWeakest: "Latih ini sekarang",
     savedToProgress: "Tersimpan ke progresmu",
+    copyReport: "Salin ringkasan",
+    downloadReport: "Unduh",
+    reportCopied: "Tersalin!",
+
+    // Session review (sesi lampau)
+    reviewSession: "Lihat",
+    sessionTranscript: "Transkrip sesi",
+    closeLabel: "Tutup",
+    loadingLabel: "Memuat…",
+    leaderboardEmptyCta: "Mulai roleplay",
+    leaderboardEmpty: "Belum ada yang menyelesaikan sesi. Jadilah yang pertama!",
 
     // Progress dashboard
     navProgress: "Progres",

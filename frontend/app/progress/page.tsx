@@ -45,6 +45,21 @@ type Drill = {
 
 type NextRec = { dimension?: string; persona_id?: string; average?: number };
 
+type TranscriptTurn = { role: "user" | "assistant"; content: string };
+
+type AttemptDetail = {
+  id: string;
+  persona_name: string;
+  overall_score: number;
+  scores: Record<string, number>;
+  strengths: string[];
+  improvements: string[];
+  next_focus: string;
+  turn_count: number;
+  transcript: TranscriptTurn[];
+  created_at: string;
+};
+
 const DIMS = [
   "rapport",
   "discovery",
@@ -61,9 +76,21 @@ export default function ProgressPage() {
   const [next, setNext] = useState<NextRec | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  const [review, setReview] = useState<AttemptDetail | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
   const tr = t[lang];
 
   const dimLabel = (d: string) => (tr as Record<string, string>)[d] ?? d;
+
+  function openReview(id: string) {
+    setReviewLoading(true);
+    setReview(null);
+    authedFetch(`/api/training/attempt/${id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: AttemptDetail | null) => setReview(d))
+      .catch(() => setReview(null))
+      .finally(() => setReviewLoading(false));
+  }
 
   type ProgressData = {
     stats: Stats | null;
@@ -382,9 +409,11 @@ export default function ProgressPage() {
               </div>
               <div className="divide-y divide-life-blue/10">
                 {history.map((h) => (
-                  <div
+                  <button
                     key={h.id}
-                    className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
+                    onClick={() => openReview(h.id)}
+                    aria-label={`${tr.reviewSession}: ${h.persona_name}`}
+                    className="w-full text-left flex items-center gap-4 py-3 first:pt-0 last:pb-0 group hover:bg-life-blue/[0.03] rounded-lg px-1 -mx-1 transition"
                   >
                     <span
                       className="font-sans font-extrabold text-white rounded-full flex items-center justify-center shrink-0"
@@ -411,14 +440,146 @@ export default function ProgressPage() {
                         {new Date(h.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                  </div>
+                    <span className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-life-blue opacity-70 group-hover:opacity-100 transition">
+                      {tr.reviewSession}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m9 18 6-6-6-6" /></svg>
+                    </span>
+                  </button>
                 ))}
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {(review || reviewLoading) && (
+        <AttemptModal
+          detail={review}
+          loading={reviewLoading}
+          lang={lang}
+          tr={tr}
+          dimLabel={dimLabel}
+          onClose={() => { setReview(null); setReviewLoading(false); }}
+        />
+      )}
     </AppShell>
+  );
+}
+
+// Modal that replays a past session: scores + full transcript. Fetched lazily
+// when an FA taps a history row.
+function AttemptModal({
+  detail,
+  loading,
+  lang,
+  tr,
+  dimLabel,
+  onClose,
+}: {
+  detail: AttemptDetail | null;
+  loading: boolean;
+  lang: Lang;
+  tr: (typeof t)["en"] | (typeof t)["id"];
+  dimLabel: (d: string) => string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label={tr.sessionTranscript}
+    >
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fadeIn"
+        onClick={onClose}
+        aria-hidden
+      />
+      <div className="relative z-10 life-card w-full sm:max-w-[560px] max-h-[88vh] flex flex-col overflow-hidden animate-riseIn rounded-t-2xl sm:rounded-2xl">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-life-blue/10 shrink-0">
+          <div className="min-w-0">
+            <div className="life-eyebrow">{tr.sessionTranscript}</div>
+            {detail && (
+              <div className="text-[15px] font-bold text-life-heading truncate">
+                {detail.persona_name}
+                <span className="text-life-body font-normal text-[12.5px]">
+                  {" "}· {new Date(detail.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            aria-label={tr.closeLabel}
+            className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full border border-life-blue/15 text-life-body hover:text-life-blue hover:border-life-blue/40 transition"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <div className="overflow-y-auto scroll-stylish px-5 py-4">
+          {loading || !detail ? (
+            <div className="py-10 text-center text-life-body text-[13.5px]">{tr.loadingLabel}</div>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-life-blue/[0.07] px-3 py-1.5 text-[12.5px] font-semibold text-life-heading">
+                  {tr.reportOverall}: {detail.overall_score}/10
+                </span>
+                {Object.entries(detail.scores).map(([d, v]) => (
+                  <span key={d} className="inline-flex items-center gap-1.5 rounded-full bg-life-blue/[0.04] px-3 py-1.5 text-[11.5px] text-life-body">
+                    {dimLabel(d)}: <span className="font-semibold text-life-heading">{v}</span>
+                  </span>
+                ))}
+              </div>
+
+              {detail.next_focus && (
+                <p className="text-[12.5px] text-life-body mb-4">
+                  <span className="font-semibold text-life-heading">{tr.reportNext}: </span>
+                  {detail.next_focus}
+                </p>
+              )}
+
+              <div className="space-y-3">
+                {detail.transcript.length === 0 ? (
+                  <p className="text-[13px] text-life-body italic text-center py-6">—</p>
+                ) : (
+                  detail.transcript.map((turn, i) => {
+                    const isFA = turn.role === "user";
+                    return (
+                      <div key={i} className={`flex ${isFA ? "justify-end" : "justify-start"}`}>
+                        <div
+                          className={`max-w-[82%] rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed ${
+                            isFA
+                              ? "bg-life-blue text-white rounded-br-sm"
+                              : "bg-life-blue/[0.06] text-life-heading rounded-bl-sm"
+                          }`}
+                        >
+                          <div className={`text-[9.5px] uppercase tracking-[0.12em] font-bold mb-0.5 ${isFA ? "text-white/70" : "text-life-blue"}`}>
+                            {isFA ? (lang === "id" ? "Anda" : "You") : detail.persona_name}
+                          </div>
+                          {turn.content}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
