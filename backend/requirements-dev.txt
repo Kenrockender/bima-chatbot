@@ -1,0 +1,4 @@
+# Dev/test dependencies. Install with:
+#   pip install -r requirements.txt -r requirements-dev.txt
+# Run tests from the backend/ directory with: pytest
+pytest==8.3.4

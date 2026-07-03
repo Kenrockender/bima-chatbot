@@ -29,6 +29,7 @@ import { useSTT, useTTS } from "@/hooks/useSpeech";
 import { useServerSTT } from "@/hooks/useServerSTT";
 import { useServerTTS } from "@/hooks/useServerTTS";
 import { authedFetch } from "@/lib/api";
+import { escalation } from "@/lib/appConfig";
 import { clearCache } from "@/lib/swr";
 import { recommendedPersona } from "@/lib/coaching";
 import { t, type Lang } from "@/lib/i18n";
@@ -913,8 +914,8 @@ export default function Home() {
                         {m.escalation && (
                           <>
                             <EscalationCard
-                              whatsapp="+62 812-1234-5678"
-                              email="hr-it@bcalife.co.id"
+                              whatsapp={escalation.whatsapp}
+                              email={escalation.email}
                               title={tr.needDirectHelp}
                               body={tr.teamReady}
                               whatsappLabel="WhatsApp"

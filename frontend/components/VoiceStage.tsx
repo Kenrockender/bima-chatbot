@@ -139,11 +139,11 @@ export function VoiceStage({
 
       {/* Error display */}
       {sttErrorMessage && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50/90 border border-red-300/60 text-[12px] text-red-800 max-w-[400px]">
+        <div role="alert" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-life-negBg border border-life-neg/40 text-[12px] text-life-neg max-w-[400px]">
           <span className="flex-1">{sttErrorMessage}</span>
           <button
             onClick={onMicClick}
-            className="text-[11px] uppercase tracking-wide font-semibold text-red-700/70 hover:text-red-900"
+            className="text-[11px] uppercase tracking-wide font-semibold text-life-neg/80 hover:text-life-neg"
           >
             {labels.voiceErrDismiss}
           </button>
@@ -226,6 +226,8 @@ export function VoiceStage({
         <button
           onClick={onMuteToggle}
           title={muted ? labels.unmute : labels.mute}
+          aria-label={muted ? labels.unmute : labels.mute}
+          aria-pressed={muted}
           className={`inline-flex items-center justify-center w-8 h-8 rounded-full border transition ${
             muted
               ? "bg-white text-life-bodyLight border-life-blue/15"

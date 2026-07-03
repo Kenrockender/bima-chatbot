@@ -70,7 +70,9 @@ export function useServerSTT(opts: { lang?: string } = {}) {
     }
 
     setProcessing(true);
-    try {
+    // Transcription can fail on a transient network blip or a cold backend;
+    // retry a couple of times with a short backoff before surfacing an error.
+    const attempt = async (): Promise<string> => {
       const form = new FormData();
       form.append("audio", blob, "recording.webm");
       form.append("language", lang);
@@ -78,10 +80,26 @@ export function useServerSTT(opts: { lang?: string } = {}) {
         method: "POST",
         body: form,
       });
+      if (res.status === 429) throw new Error("rate");
       if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json();
-      setTranscript(data.text || "");
-    } catch {
+      return data.text || "";
+    };
+    try {
+      let lastErr: unknown;
+      for (let i = 0; i < 3; i++) {
+        try {
+          const text = await attempt();
+          setTranscript(text);
+          setError(null);
+          return;
+        } catch (e) {
+          lastErr = e;
+          if (e instanceof Error && e.message === "rate") break; // don't hammer
+          if (i < 2) await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+        }
+      }
+      void lastErr;
       setError("network");
     } finally {
       setProcessing(false);

@@ -10,6 +10,7 @@ Client identity: the authenticated Firebase uid when present, else the client
 IP (honouring X-Forwarded-For behind the proxy). Missing both → a shared
 "anon" bucket, which still caps total anonymous traffic.
 """
+import hashlib
 import threading
 import time
 from collections import defaultdict, deque
@@ -31,6 +32,14 @@ def _client_id(request: Request) -> str:
     uid = getattr(request.state, "uid", None)
     if uid:
         return f"uid:{uid}"
+    # Next-best: the bearer token itself. It's per-user and stable within its
+    # (~1h) lifetime, so two signed-in FAs behind the same office NAT get
+    # separate buckets — without paying to verify the token here. We only hash
+    # it so the raw credential never becomes a dictionary key.
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer ") and len(auth) > 20:
+        digest = hashlib.sha256(auth[7:].strip().encode("utf-8")).hexdigest()[:16]
+        return f"tok:{digest}"
     fwd = request.headers.get("x-forwarded-for", "")
     if fwd:
         return f"ip:{fwd.split(',')[0].strip()}"
