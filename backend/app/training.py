@@ -176,7 +176,7 @@ def reply(session_id: str, fa_message: str) -> Dict:
     # filler/acknowledgement turns skip the second LLM call entirely.
     def _customer() -> str:
         try:
-            out = rag.get_llm().invoke(msgs)
+            out = rag.invoke_with_retry(rag.get_llm(), msgs)
             return _clean_reply((out.content or "").strip())
         except Exception as e:
             log.exception("customer reply failed: %s", e)
@@ -356,7 +356,7 @@ def _coach_turn(
             f"FA menjawab: \"{fa_message}\"\n\n"
             "Nilai pesan FA itu. Output JSON."
         )
-        out = rag.get_coach_llm().invoke([
+        out = rag.invoke_with_retry(rag.get_coach_llm(), [
             rag.cached_system(_COACH_SYSTEM),
             HumanMessage(content=user),
         ])
@@ -477,7 +477,7 @@ Kasih evaluasi JSON sesuai format yang diminta."""
     last_error = ""
     for attempt in range(3):
         try:
-            out = rag.get_eval_llm().invoke([
+            out = rag.invoke_with_retry(rag.get_eval_llm(), [
                 rag.cached_system(EVAL_SYSTEM),
                 HumanMessage(content=user_block),
             ])

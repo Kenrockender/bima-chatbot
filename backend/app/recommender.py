@@ -269,7 +269,7 @@ def recommend(profile: Dict) -> Dict:
 Berikan rekomendasi JSON sesuai format yang diminta."""
 
     try:
-        out = rag.get_strict_llm().invoke([
+        out = rag.invoke_with_retry(rag.get_strict_llm(), [
             SystemMessage(content=system),
             HumanMessage(content=user_msg),
         ])
@@ -466,7 +466,7 @@ def _compare_llm(bca_text: str, comp_text: str, comp_insurer: str, mode: str) ->
     )
 
     try:
-        out = rag.get_strict_llm().invoke([
+        out = rag.invoke_with_retry(rag.get_strict_llm(), [
             SystemMessage(content=COMPARE_SYSTEM),
             HumanMessage(content=user_msg),
         ])

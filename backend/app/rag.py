@@ -9,6 +9,7 @@ Design:
   lets DeepSeek's automatic prompt cache kick in (~10x cheaper, faster).
 """
 import re
+import time
 import logging
 import threading
 from typing import Dict, List, Optional, Tuple
@@ -126,6 +127,38 @@ def get_helper_llm() -> ChatOpenAI:
     return _helper_llm
 
 
+# Errors that won't fix themselves on a retry — bad key, malformed request. We
+# fail these fast to the caller's fallback instead of burning the retry budget.
+_PERMANENT_ERR_RX = re.compile(
+    r"\b(400|401|403|invalid.?api.?key|authenticat|unauthorized|no.?such.?model)\b",
+    re.IGNORECASE,
+)
+
+
+def invoke_with_retry(llm, messages):
+    """Invoke an LLM, retrying transient failures before giving up.
+
+    OpenRouter calls fail intermittently on network blips, provider 5xx, and
+    rate limits; a couple of retries with a short backoff turns most of those
+    into a success instead of a user-facing fallback. Every LLM call in the app
+    (chat, recommender, coach/eval, helpers) goes through here so the retry
+    behaviour is consistent. Permanent errors are re-raised immediately, and the
+    last error is re-raised once the budget (settings.llm_max_retries) is spent —
+    each call site keeps its own try/except fallback."""
+    attempts = max(1, settings.llm_max_retries + 1)
+    last_err: Optional[Exception] = None
+    for i in range(attempts):
+        try:
+            return llm.invoke(messages)
+        except Exception as e:  # noqa: BLE001 — provider errors are opaque
+            last_err = e
+            if _PERMANENT_ERR_RX.search(str(e)) or i == attempts - 1:
+                break
+            log.warning("LLM invoke failed (attempt %d/%d): %s", i + 1, attempts, e)
+            time.sleep(0.5 * (i + 1))
+    raise last_err
+
+
 # -----------------------------------------------------------------------------
 # In-memory document store
 # -----------------------------------------------------------------------------
@@ -148,6 +181,40 @@ def _invalidate_block() -> None:
     _DOCS_BLOCK = None
 
 
+def _insurer_of(d: Dict[str, str]) -> str:
+    return d.get("insurer") or "Lainnya"
+
+
+def _within_budget(items: List[Dict[str, str]], budget: int) -> List[Dict[str, str]]:
+    """Enforce the soft DOCUMENTS char budget (settings.max_docs_block_chars).
+
+    Our own (BCA Life) products are always kept in full for accuracy; competitor
+    docs are dropped largest-first until the concatenated text fits. Order is
+    preserved for the caller. A non-positive budget disables the cap. The
+    default budget is generous, so a normal catalog keeps everything and the
+    prompt prefix stays byte-identical (cache-friendly)."""
+    if not budget or budget <= 0:
+        return items
+    total = sum(len(d.get("text") or "") for d in items)
+    if total <= budget:
+        return items
+    over = total
+    dropped: set = set()
+    competitors = [d for d in items if _insurer_of(d) != HOME_INSURER]
+    for d in sorted(competitors, key=lambda x: len(x.get("text") or ""), reverse=True):
+        if total <= budget:
+            break
+        total -= len(d.get("text") or "")
+        dropped.add(id(d))
+    if dropped:
+        log.warning(
+            "DOCUMENTS block over budget (%d > %d chars); dropped %d competitor "
+            "doc(s) largest-first to fit (BCA Life docs always kept)",
+            over, budget, len(dropped),
+        )
+    return [d for d in items if id(d) not in dropped]
+
+
 def _build_block() -> str:
     """Render the full DOCUMENTS block, grouped by insurer so the model can tell
     our products from competitors. Home insurer first, then others A→Z; stable
@@ -156,8 +223,10 @@ def _build_block() -> str:
     if not items:
         return "(belum ada dokumen produk yang diunggah)"
 
+    items = _within_budget(items, settings.max_docs_block_chars)
+
     def insurer_of(d):
-        return d.get("insurer") or "Lainnya"
+        return _insurer_of(d)
 
     groups: Dict[str, List[Dict[str, str]]] = {}
     for d in items:
@@ -377,7 +446,7 @@ def rewrite_standalone(question: str, history: List[Dict[str, str]]) -> str:
         f"{h['role'].upper()}: {h['content']}" for h in history[-4:]
     )
     try:
-        out = get_helper_llm().invoke([
+        out = invoke_with_retry(get_helper_llm(), [
             SystemMessage(content=_REWRITE_SYSTEM),
             HumanMessage(content=(
                 f"Conversation so far:\n{convo}\n\n"
@@ -490,7 +559,7 @@ def _sources_listing() -> List[Dict]:
 
 
 def _generate(system: str, user: str, *, llm=None) -> str:
-    out = (llm or get_llm()).invoke([
+    out = invoke_with_retry(llm or get_llm(), [
         cached_system(system),
         HumanMessage(content=user),
     ])

@@ -18,6 +18,18 @@ class Settings(BaseSettings):
     openrouter_coach_model: str = ""
     openrouter_eval_model: str = ""
 
+    # Soft budget for the concatenated DOCUMENTS block that gets stuffed into
+    # every prompt. Our own (BCA Life) products are always kept in full for
+    # accuracy; competitor docs are dropped (largest first) once the block
+    # would exceed this, so token cost stays bounded as the catalog grows.
+    # Default is generous — the current catalog is well under it, so nothing
+    # changes today; this is a safety valve for later. ~4 chars ≈ 1 token, so
+    # 120k chars ≈ 30k tokens.
+    max_docs_block_chars: int = 120_000
+
+    # How many times to retry a transient LLM error before falling back.
+    llm_max_retries: int = 2
+
     def coach_model_name(self) -> str:
         return self.openrouter_coach_model.strip() or self.openrouter_chat_model
 
