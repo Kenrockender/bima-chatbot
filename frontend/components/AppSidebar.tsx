@@ -73,7 +73,6 @@ function destinations(lang: Lang): { key: NavKey; href: string; label: string }[
   const id = lang === "id";
   return [
     { key: "home", href: "/", label: id ? "Latihan" : "Train" },
-    { key: "learn", href: "/learn", label: id ? "Kelas" : "Learn" },
     { key: "progress", href: "/progress", label: id ? "Progres" : "Progress" },
     { key: "leaderboard", href: "/leaderboard", label: id ? "Peringkat" : "Leaderboard" },
     { key: "recommend", href: "/recommend", label: id ? "Rekomendasi" : "Recommend" },
