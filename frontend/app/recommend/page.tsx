@@ -18,9 +18,9 @@ import {
 
 const COMPARE_UPLOAD_EXTS = [".pdf", ".pptx"];
 
-// The customer-profile analysis flow is hidden for now (kept in git history at
-// commit 4179c3d for easy restore). Flip to true to bring it back.
-const SHOW_PROFILE_ANALYSIS = true;
+// The customer-profile analysis flow ("lewat profil nasabah") is hidden for now
+// (kept in git history for easy restore). Flip to true to bring it back.
+const SHOW_PROFILE_ANALYSIS = false;
 
 type RecoView = "compare" | "profile";
 

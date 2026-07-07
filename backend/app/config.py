@@ -48,6 +48,13 @@ class Settings(BaseSettings):
     admin_emails: str = ""
     allowed_email_domains: str = ""
 
+    # Comma-separated identifiers (email or display name, case-insensitive) to
+    # hide from the leaderboard — e.g. the owner's own demo account. The data
+    # stays in Firestore; these rows are just filtered out of the ranking, so
+    # deleting/redoing sessions won't bring them back. Override via env
+    # LEADERBOARD_HIDDEN.
+    leaderboard_hidden: str = "Kenneth Gunawan"
+
     # Temp dir for PDF uploads while text is extracted (then deleted — the
     # extracted text lives in Firestore, not on disk).
     upload_dir: str = "./data/uploads"
@@ -88,6 +95,9 @@ class Settings(BaseSettings):
 
     def allowed_domain_set(self) -> set[str]:
         return {d.strip().lower().lstrip("@") for d in self.allowed_email_domains.split(",") if d.strip()}
+
+    def leaderboard_hidden_set(self) -> set[str]:
+        return {x.strip().lower() for x in self.leaderboard_hidden.split(",") if x.strip()}
 
 
 settings = Settings()

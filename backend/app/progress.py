@@ -12,6 +12,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
+from .config import settings
 from .firebase import fs
 
 log = logging.getLogger("bima.progress")
@@ -337,6 +338,19 @@ def _display_name(s: Dict) -> str:
     return s.get("name") or (s.get("email") or "").split("@")[0] or "FA"
 
 
+def _is_hidden(s: Dict) -> bool:
+    """True if this FA is on the leaderboard hide-list (matched by display name
+    or email, case-insensitive). Used to keep the owner's own demo account off
+    the public ranking without deleting their data."""
+    hidden = settings.leaderboard_hidden_set()
+    if not hidden:
+        return False
+    return (
+        _display_name(s).lower() in hidden
+        or (s.get("email") or "").lower() in hidden
+    )
+
+
 # A signature "title" per FA derived from their strongest dimension — turns a
 # bare XP ranking into a bit of personality on the leaderboard. Zero extra cost:
 # it's computed from the averages already stored in the user summary.
@@ -376,7 +390,10 @@ def _avg_score(s: Dict) -> float:
 def leaderboard(current_uid: str, limit: int = 20) -> Dict:
     """Top FAs by average score (quality), with sessions as a tie-break and
     supporting stat. Flags the caller's own row so the UI can highlight it."""
-    summaries = [s for s in _users_summaries() if int(s.get("total_sessions", 0) or 0) > 0]
+    summaries = [
+        s for s in _users_summaries()
+        if int(s.get("total_sessions", 0) or 0) > 0 and not _is_hidden(s)
+    ]
     summaries.sort(
         key=lambda s: (_avg_score(s), int(s.get("total_sessions", 0) or 0)),
         reverse=True,
