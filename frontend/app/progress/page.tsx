@@ -381,9 +381,6 @@ export default function ProgressPage() {
                         <span className="font-sans font-bold text-life-heading text-[15.5px]">
                           {d.title}
                         </span>
-                        <span className="text-[9px] uppercase tracking-[0.12em] font-bold text-life-teal">
-                          {dimLabel(d.dimension)}
-                        </span>
                       </div>
                       <p className="text-[12.5px] text-life-body leading-snug mt-1">
                         {d.summary}

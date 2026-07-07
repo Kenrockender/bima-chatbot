@@ -46,7 +46,7 @@ DRILLS: List[Dict] = [
     },
     {
         "id": "numbers_drill",
-        "title": "Menguasai Angka Produk",
+        "title": "Pengetahuan Produk",
         "dimension": "product_knowledge",
         "persona_id": "young_executive",
         "summary": "Andi hanya peduli angka. Pastikan IRR, premi, dan surrender value-nya tepat.",
