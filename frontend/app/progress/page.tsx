@@ -45,6 +45,25 @@ type Drill = {
 
 type NextRec = { dimension?: string; persona_id?: string; average?: number };
 
+type CurriculumModule = {
+  id: string;
+  title: string;
+  dimension: string;
+  summary: string;
+  passed: boolean;
+  unlocked: boolean;
+  best_score: number;
+};
+
+type Curriculum = {
+  modules: CurriculumModule[];
+  total_modules: number;
+  passed_modules: number;
+  percent_complete: number;
+  completed: boolean;
+  next_module_id: string | null;
+};
+
 type TranscriptTurn = { role: "user" | "assistant"; content: string };
 
 type AttemptDetail = {
@@ -74,6 +93,7 @@ export default function ProgressPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [drills, setDrills] = useState<Drill[]>([]);
   const [next, setNext] = useState<NextRec | null>(null);
+  const [curriculum, setCurriculum] = useState<Curriculum | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [review, setReview] = useState<AttemptDetail | null>(null);
@@ -97,6 +117,7 @@ export default function ProgressPage() {
     history: HistoryItem[];
     drills: Drill[];
     next: NextRec | null;
+    curriculum: Curriculum | null;
   };
 
   function apply(d: ProgressData) {
@@ -104,6 +125,7 @@ export default function ProgressPage() {
     setHistory(d.history || []);
     setDrills(d.drills || []);
     setNext(d.next && d.next.dimension ? d.next : null);
+    setCurriculum(d.curriculum ?? null);
   }
 
   // `bg` = background revalidation: we already painted cached data, so don't
@@ -122,13 +144,17 @@ export default function ProgressPage() {
       authedFetch("/api/training/next").then((r) =>
         r.ok ? r.json() : null,
       ),
+      authedFetch("/api/training/curriculum").then((r) =>
+        r.ok ? r.json() : null,
+      ),
     ])
-      .then(([s, hist, dr, nx]) => {
+      .then(([s, hist, dr, nx, cur]) => {
         const d: ProgressData = {
           stats: s,
           history: hist || [],
           drills: dr || [],
           next: nx || null,
+          curriculum: cur || null,
         };
         apply(d);
         writeCache("progress", d);
@@ -274,6 +300,79 @@ export default function ProgressPage() {
           </div>
         ) : (
           <div className="space-y-7">
+            {/* Learning Path — progress + the next module to continue */}
+            {curriculum && curriculum.total_modules > 0 && (() => {
+              const nextMod = curriculum.modules.find(
+                (m) => m.id === curriculum.next_module_id,
+              );
+              return (
+                <div className="life-card p-6">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <span className="life-eyebrow">
+                      {lang === "id" ? "Kelas" : "Learning Path"}
+                    </span>
+                    <Link
+                      href="/learn"
+                      className="inline-flex items-center gap-1 text-[12px] font-semibold text-life-blue hover:underline"
+                    >
+                      {lang === "id" ? "Lihat semua" : "View all"}
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m9 18 6-6-6-6" /></svg>
+                    </Link>
+                  </div>
+
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <span className="text-[12.5px] text-life-body">
+                      {curriculum.passed_modules}/{curriculum.total_modules}{" "}
+                      {lang === "id" ? "modul dikuasai" : "modules mastered"}
+                    </span>
+                    <span className="text-[12.5px] font-semibold text-life-heading tabular-nums">
+                      {curriculum.percent_complete}%
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-life-blue/[0.08] overflow-hidden mb-4">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${curriculum.percent_complete}%`,
+                        background: "linear-gradient(90deg, #0a55ab, #19b8a6)",
+                      }}
+                    />
+                  </div>
+
+                  {nextMod ? (
+                    <div className="rounded-[14px] border border-life-blue/12 bg-life-card p-4 flex flex-wrap items-center gap-3 justify-between">
+                      <div className="min-w-0">
+                        <div className="text-[9.5px] uppercase tracking-[0.12em] font-bold text-life-amberDark mb-1">
+                          {lang === "id" ? "Modul berikutnya" : "Next module"}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-sans font-bold text-life-heading text-[15.5px]">
+                            {nextMod.title}
+                          </span>
+                          <span className="text-[9px] uppercase tracking-[0.12em] font-bold text-life-teal">
+                            {dimLabel(nextMod.dimension)}
+                          </span>
+                        </div>
+                        <p className="text-[12.5px] text-life-body leading-snug mt-1 max-w-[440px]">
+                          {nextMod.summary}
+                        </p>
+                      </div>
+                      <Link href={`/?module=${nextMod.id}`} className="btn-life shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-life-amber" />
+                        {lang === "id" ? "Lanjutkan" : "Continue"}
+                      </Link>
+                    </div>
+                  ) : curriculum.completed ? (
+                    <p className="text-[13px] text-life-body leading-relaxed">
+                      {lang === "id"
+                        ? "Kurikulum tuntas! 🎉 Ulangi modul mana pun untuk menjaga ketajaman."
+                        : "Curriculum complete! 🎉 Replay any module to stay sharp."}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })()}
+
             {/* Recommended next */}
             {next && next.persona_id && (
               <div className="life-card p-6 flex flex-wrap items-center gap-4 justify-between">

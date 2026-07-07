@@ -19,6 +19,14 @@ export type Progress = {
   new_badges: Badge[];
 };
 
+export type ModuleResult = {
+  id: string;
+  title: string;
+  dimension: string;
+  passed: boolean;
+  gate: { dimension: string; min_score: number; overall_min: number | null };
+};
+
 export type Report = {
   persona: Persona;
   scores: Scores;
@@ -28,6 +36,7 @@ export type Report = {
   next_focus: string;
   turn_count: number;
   progress?: Progress;
+  module?: ModuleResult;
   raw?: string;
   eval_failed?: boolean;
 };
@@ -67,6 +76,10 @@ export function FeedbackReport({
     copyReport: string;
     downloadReport: string;
     reportCopied: string;
+    moduleMastered: string;
+    moduleUnlockedNext: string;
+    moduleKeepGoing: string;
+    modulePassNeed: string;
   };
 }) {
   const prog = report.progress;
@@ -155,6 +168,42 @@ export function FeedbackReport({
       >
         {labels.title}
       </h2>
+
+      {/* Learning-path module outcome — celebrate mastery or nudge a retry */}
+      {report.module && (
+        report.module.passed ? (
+          <div className="rounded-[16px] p-5 flex items-start gap-3.5 border border-life-teal/30 bg-life-blueBg/60 animate-fadeIn">
+            <span className="text-[24px] shrink-0 leading-none mt-0.5" aria-hidden>🎉</span>
+            <div className="min-w-0">
+              <p className="font-sans font-extrabold text-life-heading text-[16px]">
+                {labels.moduleMastered}
+              </p>
+              <p className="text-[13px] text-life-body mt-0.5 leading-relaxed">
+                <span className="font-semibold text-life-heading">{report.module.title}</span>
+                {" · "}
+                {labels.moduleUnlockedNext}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[16px] p-5 flex items-start gap-3.5 border border-life-amber/40 bg-life-amberBg animate-fadeIn">
+            <span className="text-[22px] shrink-0 leading-none mt-0.5" aria-hidden>💪</span>
+            <div className="min-w-0">
+              <p className="font-sans font-extrabold text-life-heading text-[15.5px]">
+                {labels.moduleKeepGoing}
+              </p>
+              <p className="text-[13px] text-life-body mt-0.5 leading-relaxed">
+                <span className="font-semibold text-life-heading">{report.module.title}</span>
+                {" · "}
+                {labels.modulePassNeed}:{" "}
+                {(labels as Record<string, string>)[report.module.dimension] ?? report.module.dimension}
+                {" ≥ "}
+                {report.module.gate.min_score}
+              </p>
+            </div>
+          </div>
+        )
+      )}
 
       {/* Session deltas — streak kept (XP & level retired) */}
       {prog && (

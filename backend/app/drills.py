@@ -11,10 +11,10 @@ from typing import Dict, List, Optional
 DRILLS: List[Dict] = [
     {
         "id": "discovery_sprint",
-        "title": "Discovery Sprint",
+        "title": "Menggali Kebutuhan",
         "dimension": "discovery",
         "persona_id": "skeptical_owner",
-        "summary": "Pak Budi won't hear a pitch until you've understood his story. Ask, don't sell.",
+        "summary": "Pak Budi tidak mau dengar pitch sebelum kamu paham ceritanya. Bertanya, jangan menjual.",
         "objective": (
             "Gali situasi, kekhawatiran, dan kebutuhan Pak Budi lewat pertanyaan "
             "terbuka dulu — jangan tawarkan produk apa pun sampai kamu benar-benar "
@@ -29,10 +29,10 @@ DRILLS: List[Dict] = [
     },
     {
         "id": "objection_gauntlet",
-        "title": "Objection Gauntlet",
+        "title": "Menangani Keberatan",
         "dimension": "objection_handling",
         "persona_id": "skeptical_owner",
-        "summary": "Rapid-fire objections about claims and trust. Stay empathetic and substantive.",
+        "summary": "Keberatan bertubi-tubi soal klaim dan kepercayaan. Tetap empatik dan substansial.",
         "objective": (
             "Tanggapi tiap keberatan dengan empati dulu, lalu fakta yang substansial. "
             "Pastikan keberatannya benar-benar teratasi sebelum lanjut, bukan sekadar "
@@ -46,10 +46,10 @@ DRILLS: List[Dict] = [
     },
     {
         "id": "numbers_drill",
-        "title": "The Numbers Test",
+        "title": "Menguasai Angka Produk",
         "dimension": "product_knowledge",
         "persona_id": "young_executive",
-        "summary": "Andi only cares about figures. Get the IRR, premiums, and surrender values right.",
+        "summary": "Andi hanya peduli angka. Pastikan IRR, premi, dan surrender value-nya tepat.",
         "objective": (
             "Jawab tiap pertanyaan angka Andi dengan akurat — IRR, premi, surrender "
             "value, biaya — sesuai FAKTA_PRODUK. Jangan mengarang; kalau tidak tahu, "
@@ -63,10 +63,10 @@ DRILLS: List[Dict] = [
     },
     {
         "id": "closing_drill",
-        "title": "Closing Practice",
+        "title": "Latihan Closing",
         "dimension": "closing",
         "persona_id": "young_executive",
-        "summary": "You're warm but undecided. Make the advisor land a clear, non-pushy next step.",
+        "summary": "Andi tertarik tapi belum memutuskan. Arahkan ke next step yang jelas tanpa memaksa.",
         "objective": (
             "Arahkan Andi ke satu next step yang jelas (proposal/jadwal ketemu) tanpa "
             "memaksa, lalu kunci komitmen waktunya."
@@ -79,10 +79,10 @@ DRILLS: List[Dict] = [
     },
     {
         "id": "rapport_warmup",
-        "title": "Rapport Warm-up",
+        "title": "Membangun Relationship",
         "dimension": "rapport",
         "persona_id": "cautious_mom",
-        "summary": "Ibu Sari opens up only to advisors who build trust first. Slow down and connect.",
+        "summary": "Ibu Sari hanya terbuka pada advisor yang membangun kepercayaan dulu. Pelan-pelan dan bangun relationship.",
         "objective": (
             "Bangun kepercayaan Ibu Sari dulu lewat obrolan yang hangat dan tulus "
             "sebelum masuk ke produk atau angka."

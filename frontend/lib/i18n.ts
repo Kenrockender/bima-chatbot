@@ -306,10 +306,10 @@ export const t = {
 
     landingHeadline: "Latih percakapan jualanmu.",
     landingSubtitle:
-      "BIMA berperan sebagai calon nasabah. Kamu yang jualan. Pilih prospek, pitch produkmu, dan dapatkan coaching report di akhir sesi.",
+      "BIMA berperan sebagai calon nasabah. Kamu berperan sebagai Financial Advisor. Pilih prospek, gali kebutuhan, pitch produkmu, dan dapatkan coaching report di akhir sesi.",
     pickPersona: "Pilih calon nasabah",
     pickPersonaHint:
-      "Setiap persona punya latar belakang, kekhawatiran, dan toleransi yang berbeda. Pilih yang sesuai tujuan latihanmu.",
+      "Setiap persona punya latar belakang, kebutuhan, dan toleransi yang berbeda. Pilih yang sesuai tujuan latihanmu.",
     challengeLabel: "Tingkat kesulitan",
     startSession: "Mulai roleplay",
 
@@ -405,7 +405,7 @@ export const t = {
     reportImprovements: "Area yang bisa diasah",
     reportNext: "Fokus sesi berikutnya",
     reportTurns: "giliran",
-    rapport: "Membangun rapport",
+    rapport: "Membangun relationship",
     discovery: "Menggali kebutuhan",
     product_knowledge: "Pengetahuan produk",
     objection_handling: "Menangani keberatan",

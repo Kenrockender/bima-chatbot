@@ -47,9 +47,19 @@ class CustomPersona(BaseModel):
     challenge: Optional[str] = None  # "Mudah" | "Sedang" | "Sulit"
 
 
+class ModuleBrief(BaseModel):
+    id: str
+    title: str
+    dimension: str
+    summary: str
+    objective: Optional[str] = None
+    gate: Optional[Dict[str, Any]] = None
+
+
 class StartRequest(BaseModel):
     persona_id: str
     drill_id: Optional[str] = None
+    module_id: Optional[str] = None
     custom: Optional[CustomPersona] = None
 
 
@@ -58,6 +68,7 @@ class StartResponse(BaseModel):
     persona: PersonaPublic
     opening_message: str
     drill: Optional[DrillPublic] = None
+    module: Optional[ModuleBrief] = None
 
 
 class ChatRequest(BaseModel):
@@ -104,6 +115,8 @@ class EndResponse(BaseModel):
     turn_count: int
     eval_failed: Optional[bool] = None
     drill_id: Optional[str] = None
+    module_id: Optional[str] = None
+    module: Optional[Dict[str, Any]] = None
     focus_dimension: Optional[str] = None
     progress: Optional[Dict[str, Any]] = None
     raw: Optional[str] = None
@@ -126,6 +139,7 @@ def start(req: StartRequest):
             req.persona_id,
             req.drill_id,
             req.custom.model_dump() if req.custom else None,
+            module_id=req.module_id,
         )
     except KeyError:
         raise HTTPException(status_code=404, detail="Unknown persona")
@@ -211,6 +225,11 @@ def get_history(user: dict = Depends(get_current_user)):
 def get_next(user: dict = Depends(get_current_user)):
     rec = progress.recommend_next(user["uid"])
     return rec or {}
+
+
+@router.get("/curriculum")
+def get_curriculum(user: dict = Depends(get_current_user)):
+    return progress.get_curriculum(user["uid"])
 
 
 @router.get("/leaderboard")

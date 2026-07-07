@@ -16,7 +16,7 @@ from typing import Dict, List, Optional
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from . import drills, personas, progress, rag, sessions
+from . import curriculum, drills, personas, progress, rag, sessions
 
 
 log = logging.getLogger("bima.training")
@@ -84,20 +84,29 @@ def start_session(
     persona_id: str,
     drill_id: Optional[str] = None,
     custom: Optional[Dict] = None,
+    module_id: Optional[str] = None,
 ) -> Dict:
-    drill = drills.get_drill_safe(drill_id)
-    if drill:
+    # A learning-path module behaves like a drill (fixed persona + focus note),
+    # plus it stamps module_id on the session so the attempt counts toward the
+    # curriculum. A module always wins over a raw drill/custom selection.
+    module = curriculum.get_module_safe(module_id)
+    drill = None if module else drills.get_drill_safe(drill_id)
+    if module:
+        persona_id = module["persona_id"]
+        custom = None
+    elif drill:
         persona_id = drill["persona_id"]
         custom = None  # drills always target a fixed persona
     if persona_id == "custom" and custom:
         persona = personas.build_custom(custom)
     else:
         persona = personas.get_persona(persona_id)
-    focus_dimension = drill["dimension"] if drill else None
+    focus_dimension = module["dimension"] if module else (drill["dimension"] if drill else None)
     sid = sessions.create(
         persona["id"], persona["opening"],
         drill_id=drill["id"] if drill else None,
         focus_dimension=focus_dimension,
+        module_id=module["id"] if module else None,
         # Persist the built persona so reply()/end_session() can recover its
         # prompt — a custom persona has no PERSONAS entry.
         persona=persona if persona["id"] == "custom" else None,
@@ -121,6 +130,14 @@ def start_session(
             "summary": drill["summary"],
             "objective": drill.get("objective"),
         } if drill else None,
+        "module": {
+            "id": module["id"],
+            "title": module["title"],
+            "dimension": module["dimension"],
+            "summary": module["summary"],
+            "objective": module.get("objective"),
+            "gate": module["gate"],
+        } if module else None,
     }
 
 
@@ -142,9 +159,15 @@ def _customer_system(persona: Dict, session: Dict) -> str:
     system = persona["persona_prompt"] + _CUSTOMER_RULES_FOOTER.format(
         product_facts=_product_facts_block(),
     )
-    drill = drills.get_drill_safe(session.get("drill_id"))
-    if drill and drill.get("focus_note"):
-        system += "\n\n" + drill["focus_note"]
+    # Either a drill or a learning-path module can pin a focus note; a session
+    # only ever carries one of them.
+    module = curriculum.get_module_safe(session.get("module_id"))
+    if module and module.get("focus_note"):
+        system += "\n\n" + module["focus_note"]
+    else:
+        drill = drills.get_drill_safe(session.get("drill_id"))
+        if drill and drill.get("focus_note"):
+            system += "\n\n" + drill["focus_note"]
     return system
 
 
@@ -447,6 +470,7 @@ def end_session(
     persona = _session_persona(session)
     history = session["history"]
     drill_id = session.get("drill_id")
+    module_id = session.get("module_id")
     focus_dimension = session.get("focus_dimension")
 
     if len(history) < 2:
@@ -525,7 +549,22 @@ Kasih evaluasi JSON sesuai format yang diminta."""
     }
     report["turn_count"] = sum(1 for h in history if h["role"] == "user")
     report["drill_id"] = drill_id
+    report["module_id"] = module_id
     report["focus_dimension"] = focus_dimension
+
+    # If this was a learning-path module, tell the UI whether the attempt just
+    # cleared its mastery gate so it can celebrate the moment.
+    module = curriculum.get_module_safe(module_id)
+    if module:
+        report["module"] = {
+            "id": module["id"],
+            "title": module["title"],
+            "dimension": module["dimension"],
+            "gate": module["gate"],
+            "passed": curriculum.attempt_clears_gate(
+                module, scores, int(report.get("overall_score", 0) or 0)
+            ),
+        }
 
     # Persist for progress tracking + gamification, then attach the deltas
     # (XP earned, streak, new badges) so the UI can celebrate them.

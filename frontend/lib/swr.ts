@@ -71,17 +71,23 @@ async function json<T>(url: string, fallback: T): Promise<T> {
 const PREFETCHERS: Record<string, () => Promise<void>> = {
   progress: () =>
     prefetchInto("progress", async () => {
-      const [stats, history, drills, next] = await Promise.all([
+      const [stats, history, drills, next, curriculum] = await Promise.all([
         json<unknown>("/api/training/progress", null),
         json<unknown[]>("/api/training/history", []),
         json<unknown[]>("/api/training/drills", []),
         json<unknown>("/api/training/next", null),
+        json<unknown>("/api/training/curriculum", null),
       ]);
-      return { stats, history, drills, next };
+      return { stats, history, drills, next, curriculum };
     }),
   leaderboard: () =>
     prefetchInto("leaderboard", async () => {
       const r = await authedFetch("/api/training/leaderboard");
+      return r.ok ? await r.json() : null;
+    }),
+  learn: () =>
+    prefetchInto("curriculum", async () => {
+      const r = await authedFetch("/api/training/curriculum");
       return r.ok ? await r.json() : null;
     }),
 };

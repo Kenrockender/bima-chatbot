@@ -101,6 +101,7 @@ def create(
     drill_id: Optional[str] = None,
     focus_dimension: Optional[str] = None,
     persona: Optional[Dict] = None,
+    module_id: Optional[str] = None,
 ) -> str:
     sid = uuid.uuid4().hex
     session = {
@@ -110,6 +111,9 @@ def create(
         # because they can't be looked up in PERSONAS later.
         "persona": persona,
         "drill_id": drill_id,
+        # Learning-path module this session belongs to, if any. Stamped onto the
+        # saved attempt so curriculum completion is exact.
+        "module_id": module_id,
         "focus_dimension": focus_dimension,
         "started_at": _now(),
         "touched_at": _now(),

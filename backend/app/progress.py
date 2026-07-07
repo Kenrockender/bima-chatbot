@@ -100,6 +100,7 @@ def save_attempt(
         "persona_id": report.get("persona", {}).get("id", "unknown"),
         "persona_name": report.get("persona", {}).get("name", "—"),
         "drill_id": report.get("drill_id"),
+        "module_id": report.get("module_id"),
         "focus_dimension": report.get("focus_dimension"),
         "rapport": int(scores.get("rapport", 0) or 0),
         "discovery": int(scores.get("discovery", 0) or 0),
@@ -193,6 +194,10 @@ def _earned_badges(fa_id: str) -> List[Dict]:
     best = {d: max(int(r[d]) for r in rows) for d in DIMENSIONS}
     best_overall = max(int(r["overall_score"]) for r in rows)
 
+    # Graduate = every learning-path module mastered. Derived from the same rows.
+    from . import curriculum
+    graduated = curriculum.build_path(rows)["completed"]
+
     catalog = [
         ("first_pitch", "First Pitch", "Completed your first roleplay", n >= 1),
         ("regular", "Regular", "Completed 10 roleplays", n >= 10),
@@ -204,6 +209,7 @@ def _earned_badges(fa_id: str) -> List[Dict]:
         ("closer", "Closer", "Scored 8+ on closing", best["closing"] >= 8),
         ("listener", "Deep Listener", "Scored 9+ on discovery", best["discovery"] >= 9),
         ("ace", "Ace", "Scored 9+ overall", best_overall >= 9),
+        ("graduate", "Graduate", "Mastered the full learning path", graduated),
     ]
     return [
         {"id": bid, "name": name, "description": desc}
@@ -289,6 +295,13 @@ def get_attempt(fa_id: str, attempt_id: str) -> Optional[Dict]:
         "transcript": d.get("transcript", []),
         "created_at": d.get("created_at", ""),
     }
+
+
+def get_curriculum(fa_id: str) -> Dict:
+    """Learning-path status for one FA: per-module lock/pass state derived from
+    their attempts. Imported here to avoid a circular import at module load."""
+    from . import curriculum
+    return curriculum.build_path(_rows(fa_id))
 
 
 def recommend_next(fa_id: str) -> Optional[Dict]:

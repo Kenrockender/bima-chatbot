@@ -224,8 +224,12 @@ export default function Home() {
     if (stage !== "pick" || sessionId) return;
     const params = new URLSearchParams(window.location.search);
     const drill = params.get("drill");
+    const moduleId = params.get("module");
     const personaId = params.get("persona");
-    if (drill) {
+    if (moduleId) {
+      startSession(null, undefined, undefined, moduleId);
+      window.history.replaceState(null, "", window.location.pathname);
+    } else if (drill) {
       startSession(null, drill);
       window.history.replaceState(null, "", window.location.pathname);
     } else if (personaId) {
@@ -266,6 +270,7 @@ export default function Home() {
     persona: Persona | null,
     drillId?: string,
     custom?: CustomConfig,
+    moduleId?: string,
   ) {
     if (starting) return;
     setStarting(true);
@@ -277,6 +282,7 @@ export default function Home() {
         body: JSON.stringify({
           persona_id: persona?.id ?? "",
           drill_id: drillId ?? null,
+          module_id: moduleId ?? null,
           custom: custom ?? null,
         }),
       });
@@ -284,7 +290,9 @@ export default function Home() {
       const data = await res.json();
       setSessionId(data.session_id);
       setActivePersona(data.persona);
-      setActiveDrill(data.drill ?? null);
+      // A learning-path module carries the same brief shape as a drill, so the
+      // DrillBriefing renders it identically (focus dimension + scenario).
+      setActiveDrill(data.drill ?? data.module ?? null);
       setSelectedId(data.persona.id);
       setMessages([
         {
@@ -301,7 +309,7 @@ export default function Home() {
         sessionStorage.setItem("bima.session", JSON.stringify({
           session_id: data.session_id,
           persona: data.persona,
-          drill: data.drill ?? null,
+          drill: data.drill ?? data.module ?? null,
           opening: data.opening_message,
           started: Date.now(),
         }));
@@ -634,9 +642,7 @@ export default function Home() {
         />
         <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 pt-7 pb-12 animate-riseIn">
           <div className="flex items-center gap-2.5 mb-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-white/90" />
-            <span className="h-1 w-10 rounded-full bg-white/70" />
-            <span className="ml-1 text-[11.5px] font-bold uppercase tracking-[0.13em] text-white/85">
+            <span className="text-[11.5px] font-bold uppercase tracking-[0.13em] text-white/85">
               {tr.brandLine}
             </span>
           </div>
@@ -831,6 +837,16 @@ export default function Home() {
                       copyReport: tr.copyReport,
                       downloadReport: tr.downloadReport,
                       reportCopied: tr.reportCopied,
+                      moduleMastered:
+                        lang === "id" ? "Modul Dikuasai!" : "Module mastered!",
+                      moduleUnlockedNext:
+                        lang === "id"
+                          ? "Modul berikutnya terbuka di Kelas."
+                          : "The next module is unlocked in Learn.",
+                      moduleKeepGoing:
+                        lang === "id" ? "Sedikit lagi!" : "Almost there!",
+                      modulePassNeed:
+                        lang === "id" ? "Target lulus" : "Passing bar",
                     }}
                   />
                 )}
