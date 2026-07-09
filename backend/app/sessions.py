@@ -18,7 +18,7 @@ import uuid
 from typing import Dict, List, Optional
 
 
-log = logging.getLogger("bima.sessions")
+log = logging.getLogger("sera.sessions")
 
 SESSION_TTL_SECONDS = 60 * 60 * 4  # 4 hours
 _COLLECTION = "training_sessions"

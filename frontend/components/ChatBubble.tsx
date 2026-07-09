@@ -67,7 +67,7 @@ export function ChatBubble({
   sources,
   sourcesLabel,
   youLabel,
-  bimaLabel,
+  seraLabel,
   timestamp,
 }: {
   role: "user" | "assistant";
@@ -75,7 +75,7 @@ export function ChatBubble({
   sources?: Source[];
   sourcesLabel?: string;
   youLabel?: string;
-  bimaLabel?: string;
+  seraLabel?: string;
   timestamp?: Date;
 }) {
   const ts = timestamp ?? new Date();
@@ -98,12 +98,12 @@ export function ChatBubble({
 
   return (
     <div className="flex items-start gap-3 mb-4 animate-riseIn">
-      <BimaBotAvatar />
+      <SeraBotAvatar />
       <div className="max-w-[78%] flex-1 min-w-0">
         <div className="text-[10.5px] font-semibold text-bca-ink/55 mb-1 pl-1 tracking-wide">
-          [{(bimaLabel || "BIMA").toUpperCase()} — {stamp}]
+          [{(seraLabel || "Sera").toUpperCase()} — {stamp}]
         </div>
-        <div className="bubble-bima">
+        <div className="bubble-sera">
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
             {content}
           </ReactMarkdown>
@@ -130,8 +130,8 @@ export function ChatBubble({
   );
 }
 
-// Friendly little robot/BIMA avatar used beside assistant bubbles
-function BimaBotAvatar() {
+// Friendly little robot/Sera avatar used beside assistant bubbles
+function SeraBotAvatar() {
   return (
     <div
       className="shrink-0 rounded-full flex items-center justify-center"
@@ -143,7 +143,7 @@ function BimaBotAvatar() {
         boxShadow:
           "inset 0 1px 0 rgba(255,255,255,0.25), 0 4px 10px -4px rgba(0,0,0,0.35)",
       }}
-      aria-label="BIMA"
+      aria-label="Sera"
     >
       <svg
         width="22"

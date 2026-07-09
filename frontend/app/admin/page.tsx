@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
-import { BimaAvatar } from "@/components/BimaAvatar";
+import { SeraAvatar } from "@/components/SeraAvatar";
 import { AppShell } from "@/components/AppShell";
 import { useConfirm } from "@/components/ConfirmModal";
 import { FetchError } from "@/components/FetchError";
@@ -192,7 +192,7 @@ export default function AdminPage() {
             style={{ background: "linear-gradient(90deg, #0a55ab, #19b8a6)" }}
           />
           <div className="flex items-center justify-center gap-3.5 mb-3">
-            <BimaAvatar size={44} />
+            <SeraAvatar size={44} />
             <span className="life-eyebrow">Console</span>
           </div>
           <h1 className="font-sans font-extrabold text-life-heading text-[22px]">
@@ -252,10 +252,10 @@ export default function AdminPage() {
             className="font-sans font-extrabold text-white text-[32px] sm:text-[42px] leading-[1.08] tracking-tight"
             style={{ letterSpacing: "-0.025em" }}
           >
-            Curate what BIMA knows.
+            Curate what Sera knows.
           </h2>
           <p className="mt-2.5 text-[14.5px] leading-[1.6] text-white/80 max-w-[620px]">
-            Upload approved BCA Life documents or link to internal pages. BIMA
+            Upload approved BCA Life documents or link to internal pages. Sera
             answers staff questions strictly from this collection — nothing
             else.
           </p>

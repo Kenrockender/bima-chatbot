@@ -97,7 +97,7 @@ export function FeedbackReport({
   function buildSummary(): string {
     const line = "──────────────────────────";
     const out: string[] = [];
-    out.push(`${labels.eyebrow} · BIMA`);
+    out.push(`${labels.eyebrow} · Sera`);
     out.push(line);
     out.push(`${labels.overall}: ${report.overall_score}/10`);
     out.push(
@@ -149,7 +149,7 @@ export function FeedbackReport({
     const a = document.createElement("a");
     const stamp = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `bima-report-${report.persona.name.replace(/\s+/g, "-").toLowerCase()}-${stamp}.txt`;
+    a.download = `sera-report-${report.persona.name.replace(/\s+/g, "-").toLowerCase()}-${stamp}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

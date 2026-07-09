@@ -14,7 +14,7 @@ from .routes_training import router as training_router
 from .seed import seed_from_dir
 
 
-log = logging.getLogger("bima.main")
+log = logging.getLogger("sera.main")
 
 
 def _load_existing_sources() -> None:
@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="BIMA API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Sera API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

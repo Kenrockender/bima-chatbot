@@ -1,4 +1,4 @@
-# Render Blueprint — deploys the BIMA FastAPI backend as a Docker web service.
+# Render Blueprint — deploys the Sera FastAPI backend as a Docker web service.
 # In Render: New + → Blueprint → pick this repo. Render reads this file, then
 # prompts for the secret env vars marked `sync: false`.
 #

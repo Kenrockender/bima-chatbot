@@ -1,11 +1,11 @@
-# BIMA — start everything from cold.
+# Sera — start everything from cold.
 # Usage:  .\scripts\start.ps1
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 
 Write-Host ""
-Write-Host "[BIMA] checking .env for OPENROUTER_API_KEY..." -ForegroundColor Cyan
+Write-Host "[Sera] checking .env for OPENROUTER_API_KEY..." -ForegroundColor Cyan
 $envFile = Join-Path $root ".env"
 if (-not (Test-Path $envFile)) {
     Write-Host "       .env not found. Copy .env.example to .env and set OPENROUTER_API_KEY." -ForegroundColor Red
@@ -19,7 +19,7 @@ if (-not $keyLine) {
 Write-Host "       OK" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "[BIMA] checking Docker..." -ForegroundColor Cyan
+Write-Host "[Sera] checking Docker..." -ForegroundColor Cyan
 $dockerUp = $false
 try {
     docker info 2>$null | Out-Null
@@ -52,7 +52,7 @@ if (-not $dockerUp) {
 }
 
 Write-Host ""
-Write-Host "[BIMA] starting containers..." -ForegroundColor Cyan
+Write-Host "[Sera] starting containers..." -ForegroundColor Cyan
 Push-Location $root
 try {
     docker compose -f docker-compose.local.yml up -d
@@ -61,7 +61,7 @@ try {
 }
 
 Write-Host ""
-Write-Host "[BIMA] ready." -ForegroundColor Green
+Write-Host "[Sera] ready." -ForegroundColor Green
 Write-Host "       Chat:  http://localhost:3000"
 Write-Host "       Admin: http://localhost:3000/admin   (password from .env)"
 Write-Host "       API:   http://localhost:8000/docs"

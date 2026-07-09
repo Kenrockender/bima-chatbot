@@ -86,7 +86,7 @@ export default function Home() {
   const [report, setReport] = useState<Report | null>(null);
   const [inputMode, setInputMode] = useState<"voice" | "text">(() => {
     if (typeof window === "undefined") return "text";
-    try { return (localStorage.getItem("bima.inputMode") as "voice" | "text") || "text"; } catch { return "text"; }
+    try { return (localStorage.getItem("sera.inputMode") as "voice" | "text") || "text"; } catch { return "text"; }
   });
   const [muted, setMuted] = useState(false);
   const [listenStart, setListenStart] = useState<number | null>(null);
@@ -169,7 +169,7 @@ export default function Home() {
   function loadPersonas() {
     setPersonaError(false);
     try {
-      const cached = sessionStorage.getItem("bima.personas");
+      const cached = sessionStorage.getItem("sera.personas");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -183,7 +183,7 @@ export default function Home() {
       .then(sortByDifficulty)
       .then((sorted) => {
         setPersonas(sorted);
-        try { sessionStorage.setItem("bima.personas", JSON.stringify(sorted)); } catch {}
+        try { sessionStorage.setItem("sera.personas", JSON.stringify(sorted)); } catch {}
       })
       .catch(() => { setPersonas([]); setPersonaError(true); });
   }
@@ -199,7 +199,7 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("drill") || params.get("persona")) return;
     try {
-      const raw = sessionStorage.getItem("bima.session");
+      const raw = sessionStorage.getItem("sera.session");
       if (raw) {
         const saved = JSON.parse(raw);
         if (saved.session_id && saved.persona) {
@@ -244,13 +244,13 @@ export default function Home() {
     if (!voiceInitRef.current && hasVoice) {
       voiceInitRef.current = true;
       try {
-        if (!localStorage.getItem("bima.inputMode")) setInputMode("voice");
+        if (!localStorage.getItem("sera.inputMode")) setInputMode("voice");
       } catch { setInputMode("voice"); }
     }
   }, [hasVoice]);
 
   useEffect(() => {
-    try { localStorage.setItem("bima.inputMode", inputMode); } catch {}
+    try { localStorage.setItem("sera.inputMode", inputMode); } catch {}
   }, [inputMode]);
 
   useEffect(() => {
@@ -306,7 +306,7 @@ export default function Home() {
       setTimeout(() => inputRef.current?.focus(), 100);
       setAiSubtitle(data.opening_message);
       try {
-        sessionStorage.setItem("bima.session", JSON.stringify({
+        sessionStorage.setItem("sera.session", JSON.stringify({
           session_id: data.session_id,
           persona: data.persona,
           drill: data.drill ?? data.module ?? null,
@@ -508,7 +508,7 @@ export default function Home() {
       const data = await res.json();
       setReport(data);
       setStage("report");
-      try { sessionStorage.removeItem("bima.session"); } catch {}
+      try { sessionStorage.removeItem("sera.session"); } catch {}
       // Stats just changed — drop cached dashboards so a visit to Progress/
       // Leaderboard reflects the new XP immediately instead of stale numbers.
       clearCache("progress");
@@ -529,7 +529,7 @@ export default function Home() {
     setMessages([]);
     setReport(null);
     setInput("");
-    try { sessionStorage.removeItem("bima.session"); } catch {}
+    try { sessionStorage.removeItem("sera.session"); } catch {}
     abortRef.current?.abort();
     if (stt.listening || stt.paused) stt.stop();
     if (voiceSpeaking) cancelSpeak();
@@ -924,7 +924,7 @@ export default function Home() {
                             m.streaming && m.content ? m.content + " ▍" : m.content
                           }
                           youLabel="USER"
-                          bimaLabel={activePersona.name.toUpperCase()}
+                          seraLabel={activePersona.name.toUpperCase()}
                           timestamp={m.timestamp}
                         />
                         {m.escalation && (

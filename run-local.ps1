@@ -1,4 +1,4 @@
-# BIMA local dev launcher (Windows / PowerShell)
+# Sera local dev launcher (Windows / PowerShell)
 # Prereqs: Python 3.11+, Node 20+, OPENROUTER_API_KEY set in env or .env.
 #
 # Usage:  .\run-local.ps1
@@ -19,7 +19,7 @@ if (-not $env:OPENROUTER_API_KEY) {
     }
 }
 if (-not $env:OPENROUTER_API_KEY) {
-    Write-Host "[BIMA] OPENROUTER_API_KEY is not set. Add it to .env or the environment first." -ForegroundColor Yellow
+    Write-Host "[Sera] OPENROUTER_API_KEY is not set. Add it to .env or the environment first." -ForegroundColor Yellow
     Write-Host "       Get a key at https://openrouter.ai/keys" -ForegroundColor Yellow
     exit 1
 }
@@ -28,7 +28,7 @@ if (-not $env:OPENROUTER_API_KEY) {
 $backendDir = Join-Path $root "backend"
 $venv = Join-Path $backendDir ".venv"
 if (-not (Test-Path $venv)) {
-    Write-Host "[BIMA] creating Python venv..."
+    Write-Host "[Sera] creating Python venv..."
     python -m venv $venv
     & "$venv\Scripts\python.exe" -m pip install --upgrade pip
     & "$venv\Scripts\pip.exe" install -r (Join-Path $backendDir "requirements.txt")
@@ -39,7 +39,7 @@ $env:SEED_DIR = Join-Path $backendDir "seed"
 $env:SQLITE_PATH = Join-Path $backendDir "data\bima.db"
 $env:UPLOAD_DIR = Join-Path $backendDir "data\uploads"
 
-Write-Host "[BIMA] starting backend on :8000..."
+Write-Host "[Sera] starting backend on :8000..."
 $backend = Start-Process -PassThru -NoNewWindow `
     -WorkingDirectory $backendDir `
     -FilePath "$venv\Scripts\python.exe" `
@@ -48,20 +48,20 @@ $backend = Start-Process -PassThru -NoNewWindow `
 # Frontend
 $frontendDir = Join-Path $root "frontend"
 if (-not (Test-Path (Join-Path $frontendDir "node_modules"))) {
-    Write-Host "[BIMA] installing frontend deps..."
+    Write-Host "[Sera] installing frontend deps..."
     Push-Location $frontendDir
     npm install --legacy-peer-deps
     Pop-Location
 }
 
-Write-Host "[BIMA] starting frontend on :3000..."
+Write-Host "[Sera] starting frontend on :3000..."
 $frontend = Start-Process -PassThru -NoNewWindow `
     -WorkingDirectory $frontendDir `
     -FilePath "npm" `
     -ArgumentList "run", "dev"
 
 Write-Host ""
-Write-Host "[BIMA] running."
+Write-Host "[Sera] running."
 Write-Host "  Chat:  http://localhost:3000"
 Write-Host "  Admin: http://localhost:3000/admin   (password: $($env:ADMIN_PASSWORD))"
 Write-Host "  API:   http://localhost:8000/docs"

@@ -14,7 +14,7 @@ from . import firebase
 from .config import settings
 
 
-log = logging.getLogger("bima.auth")
+log = logging.getLogger("sera.auth")
 
 
 def _bearer(authorization: str) -> str:

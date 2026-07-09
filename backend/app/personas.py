@@ -1,6 +1,6 @@
-"""Customer personas for BIMA sales-training roleplay.
+"""Customer personas for Sera sales-training roleplay.
 
-Each persona drives BIMA when in character as a prospective customer
+Each persona drives Sera when in character as a prospective customer
 the financial advisor (FA) is practicing on.
 
 System prompts are written in Indonesian — the FA practices selling in

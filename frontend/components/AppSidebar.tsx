@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AccountMenu } from "@/components/AuthGate";
-import { BimaAvatar } from "@/components/BimaAvatar";
+import { SeraAvatar } from "@/components/SeraAvatar";
 import { prefetchPage } from "@/lib/swr";
 import { type Lang } from "@/lib/i18n";
 
@@ -104,7 +104,7 @@ export function AppSidebar({
   // Restore collapsed preference after mount (avoids SSR/client mismatch).
   useEffect(() => {
     try {
-      setCollapsed(localStorage.getItem("bima.navCollapsed") === "1");
+      setCollapsed(localStorage.getItem("sera.navCollapsed") === "1");
     } catch {}
   }, []);
 
@@ -112,7 +112,7 @@ export function AppSidebar({
     setCollapsed((c) => {
       const next = !c;
       try {
-        localStorage.setItem("bima.navCollapsed", next ? "1" : "0");
+        localStorage.setItem("sera.navCollapsed", next ? "1" : "0");
       } catch {}
       return next;
     });
@@ -170,11 +170,11 @@ export function AppSidebar({
       >
         {/* Brand + collapse toggle */}
         <div className={`flex items-center gap-2.5 px-3 py-4 ${collapsed ? "justify-center" : ""}`}>
-          <BimaAvatar size={collapsed ? 34 : 38} />
+          <SeraAvatar size={collapsed ? 34 : 38} />
           {!collapsed && (
             <div className="leading-none min-w-0">
               <div className="text-life-heading font-extrabold tracking-tight text-[18px]">
-                BIMA
+                Sera
               </div>
               <div className="text-[9px] uppercase tracking-[0.13em] text-life-body mt-1 truncate">
                 Sales Companion
@@ -246,9 +246,9 @@ export function AppSidebar({
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-        <BimaAvatar size={32} />
+        <SeraAvatar size={32} />
         <span className="text-life-heading font-extrabold tracking-tight text-[17px]">
-          BIMA
+          Sera
         </span>
         <div className="flex-1" />
         {onLang && langSwitch}
@@ -263,9 +263,9 @@ export function AppSidebar({
           <aside className="absolute left-0 top-0 bottom-0 w-[270px] bg-life-white border-r border-life-blue/10 flex flex-col shadow-xl">
             <div className="flex items-center justify-between gap-2 px-4 py-4">
               <div className="flex items-center gap-2.5">
-                <BimaAvatar size={36} />
+                <SeraAvatar size={36} />
                 <span className="text-life-heading font-extrabold tracking-tight text-[18px]">
-                  BIMA
+                  Sera
                 </span>
               </div>
               <button

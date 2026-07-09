@@ -1,4 +1,4 @@
-"""BIMA chat pipeline — in-memory PDF store, DeepSeek via OpenRouter.
+"""Sera chat pipeline — in-memory PDF store, DeepSeek via OpenRouter.
 
 Design:
 - Dataset is small (3 PDFs, ~30k tokens total), so we stuff *all* documents
@@ -24,7 +24,7 @@ from langchain_openai import ChatOpenAI
 from .config import settings
 
 
-log = logging.getLogger("bima.rag")
+log = logging.getLogger("sera.rag")
 if not log.handlers:
     logging.basicConfig(
         level=logging.INFO,
@@ -164,7 +164,7 @@ def invoke_with_retry(llm, messages):
 # -----------------------------------------------------------------------------
 
 # Our own brand — documents tagged with this insurer are "our" products that
-# BIMA recommends; everything else is competitor reference for fair comparison.
+# Sera recommends; everything else is competitor reference for fair comparison.
 HOME_INSURER = "BCA Life"
 
 # source_id -> { name, type, insurer, text }
@@ -350,7 +350,7 @@ def read_txt_text(path: str) -> Tuple[str, int]:
 
 
 def extract_url_text(url: str) -> str:
-    resp = requests.get(url, timeout=30, headers={"User-Agent": "BIMA/1.0"})
+    resp = requests.get(url, timeout=30, headers={"User-Agent": "Sera/1.0"})
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
     for tag in soup(["script", "style", "nav", "footer", "header"]):
@@ -466,7 +466,7 @@ def rewrite_standalone(question: str, history: List[Dict[str, str]]) -> str:
 # Chat prompts
 # -----------------------------------------------------------------------------
 
-SYSTEM_EN = """You are BIMA (BCA Life Intelligent Mobile Assistant), a friendly, professional financial advisor assistant for BCA Life staff.
+SYSTEM_EN = """You are Sera, a friendly, professional financial advisor assistant for BCA Life staff.
 
 YOUR ROLE: You are a financial advisor who helps BCA Life staff recommend the best BCA products to customers. Analyse the customer's needs, risk profile, and financial goals, then suggest the most suitable BCA Life product(s) with clear reasoning.
 
@@ -487,7 +487,7 @@ ANSWERING RULES:
 10. Tone: warm, professional, and direct. Always use polite language — never use slang like "lu", "gw", "lo", "gue". Use "Anda", "saya", "Bapak/Ibu" instead.
 11. Always answer in English."""
 
-SYSTEM_ID = """Kamu adalah BIMA (BCA Life Intelligent Mobile Assistant), asisten financial advisor yang ramah dan profesional untuk staf BCA Life.
+SYSTEM_ID = """Kamu adalah Sera, asisten financial advisor yang ramah dan profesional untuk staf BCA Life.
 
 PERAN KAMU: Kamu adalah financial advisor yang membantu staf BCA Life merekomendasikan produk BCA terbaik kepada nasabah. Analisis kebutuhan nasabah, profil risiko, dan tujuan keuangan mereka, lalu sarankan produk BCA Life yang paling cocok dengan alasan yang jelas.
 

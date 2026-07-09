@@ -1,4 +1,4 @@
-# BIMA — quick smoke test: starts a session with Ibu Sari and sends one FA message.
+# Sera — quick smoke test: starts a session with Ibu Sari and sends one FA message.
 # Usage:  .\scripts\smoke-test.ps1
 
 $ErrorActionPreference = "Stop"

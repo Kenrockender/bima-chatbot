@@ -1,4 +1,4 @@
-# BIMA — deploy backend/ to the Hugging Face Space via git subtree.
+# Sera — deploy backend/ to the Hugging Face Space via git subtree.
 # backend/ is the single source of truth; this pushes its contents as the
 # Space repo's root. Only git-tracked files go up, so gitignored secrets
 # (.env, *firebase-adminsdk*.json, data/, .venv/) never leave your machine.

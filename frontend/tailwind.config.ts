@@ -62,7 +62,7 @@ const config: Config = {
           // Legacy aliases
           accent: "#0066B3",
           ink2: "#0F2238",
-          // ── BIMA dark shell ──
+          // ── Sera dark shell ──
           shellDeep: "#061330",      // outermost canvas
           shellMid: "#0B2451",       // window background
           shellEdge: "#F5C518",      // yellow side-glow
@@ -70,7 +70,7 @@ const config: Config = {
           panelStroke: "rgba(245,197,24,0.18)",
           chatLight: "#E9E5DA",      // chat panel light background
           chatLightTo: "#C8C2B4",
-          bimaBubble: "#F1EBDF",
+          seraBubble: "#F1EBDF",
           userBubble: "#1B3A6B",
           accentGold: "#F5C518",
           accentGoldDeep: "#E5B100",

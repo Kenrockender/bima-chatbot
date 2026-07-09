@@ -1,5 +1,5 @@
 ---
-title: BIMA Backend
+title: Sera Backend
 emoji: 🛡️
 colorFrom: blue
 colorTo: green
@@ -8,7 +8,7 @@ app_port: 8000
 pinned: false
 ---
 
-# BIMA Backend (FastAPI)
+# Sera Backend (FastAPI)
 
 This folder doubles as a **Hugging Face Space** (Docker SDK) so the backend can be
 hosted free, with no credit card. The metadata block above is what HF reads:

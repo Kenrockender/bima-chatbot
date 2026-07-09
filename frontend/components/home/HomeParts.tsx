@@ -127,7 +127,7 @@ export function Welcome({
         {tr.landingSubtitle}
       </p>
 
-      <div className="bubble-bima max-w-[460px]">
+      <div className="bubble-sera max-w-[460px]">
         <p className="text-[13.5px] leading-[1.6]">
           {selected
             ? isCustom
@@ -332,7 +332,7 @@ export function TypingIndicator({ label }: { label: string }) {
       >
         <span className="text-[10px] font-bold text-life-amber">B</span>
       </div>
-      <div className="bubble-bima inline-flex items-center gap-3" role="status" aria-label={label}>
+      <div className="bubble-sera inline-flex items-center gap-3" role="status" aria-label={label}>
         <span className="flex items-center gap-1.5" aria-hidden>
           <span className="w-2 h-2 rounded-full bg-life-blue animate-blink" />
           <span

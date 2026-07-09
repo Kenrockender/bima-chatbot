@@ -17,7 +17,7 @@ from . import db
 from .config import settings
 
 
-log = logging.getLogger("bima.recommender")
+log = logging.getLogger("sera.recommender")
 
 
 # -----------------------------------------------------------------------------

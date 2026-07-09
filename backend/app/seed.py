@@ -11,7 +11,7 @@ Layout expected (one subfolder per insurer):
       Manulife/
         ...
 
-The subfolder name becomes the document's `insurer` tag, which lets BIMA group
+The subfolder name becomes the document's `insurer` tag, which lets Sera group
 documents by issuer, compare across products, and stay biased toward BCA Life.
 
 For each product we prefer a curated `.txt` (committed, hand-reviewable, no

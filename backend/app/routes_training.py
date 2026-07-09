@@ -16,7 +16,7 @@ from .auth import get_current_user
 from .config import settings
 from .ratelimit import RateLimiter
 
-log = logging.getLogger("bima.routes_training")
+log = logging.getLogger("sera.routes_training")
 
 
 router = APIRouter(prefix="/api/training", tags=["training"])

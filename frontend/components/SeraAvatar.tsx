@@ -1,4 +1,4 @@
-export function BimaAvatar({
+export function SeraAvatar({
   size = 36,
   withPulse = false,
 }: {
@@ -9,7 +9,7 @@ export function BimaAvatar({
     <div
       style={{ width: size, height: size }}
       className="relative inline-flex items-center justify-center shrink-0"
-      aria-label="BIMA avatar"
+      aria-label="Sera avatar"
     >
       {withPulse && (
         <span
@@ -18,7 +18,7 @@ export function BimaAvatar({
         />
       )}
       <img
-        src="/bima-icon-192.png"
+        src="/sera-icon-192.png"
         alt=""
         width={size}
         height={size}

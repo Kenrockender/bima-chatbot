@@ -1,6 +1,6 @@
-# BIMA — BCA Life Onboarding Chatbot
+# Sera — BCA Life Onboarding Chatbot
 
-BIMA (BCA Life Intelligent Mobile Assistant) is a chatbot for new BCA Life staff onboarding. It answers questions exclusively from a curated set of product PDFs.
+Sera is a chatbot for new BCA Life staff onboarding. It answers questions exclusively from a curated set of product PDFs. (Formerly named BIMA.)
 
 See [docs/superpowers/specs/2026-05-25-bima-onboarding-chatbot-design.md](docs/superpowers/specs/2026-05-25-bima-onboarding-chatbot-design.md) for the original design (predates the cloud-only rewrite below).
 
@@ -35,7 +35,7 @@ backend/seed/         <- curated .txt, ingested at startup (SEED_DIR)
 ```
 
 `scripts/extract_dataset.py` turns `dataset/*/*.pdf` into `backend/seed/*/*.txt`.
-The **subfolder name becomes the document's `insurer` tag**. BIMA groups the DOCUMENTS block by issuer (`PENERBIT: BCA Life (PRODUK KAMI)` vs `… (KOMPETITOR)`), which is what lets it **compare products side by side while staying biased toward BCA Life** — competitor facts are described fairly, then the answer is steered back to the closest BCA Life product.
+The **subfolder name becomes the document's `insurer` tag**. Sera groups the DOCUMENTS block by issuer (`PENERBIT: BCA Life (PRODUK KAMI)` vs `… (KOMPETITOR)`), which is what lets it **compare products side by side while staying biased toward BCA Life** — competitor facts are described fairly, then the answer is steered back to the closest BCA Life product.
 
 ### Pre-extracted `.txt` (why, and how)
 
@@ -98,7 +98,7 @@ npm run dev
 1. IT opens `/admin`, signs in with the admin password.
 2. Upload PDFs (drag & drop) or add URLs. Each source goes `processing → ready` once its text has been loaded into the in-memory store.
 3. Staff visit `/`, toggle EN/ID, and ask questions.
-4. BIMA grounds answers in the loaded documents and cites them inline. If nothing matches, an escalation card with WhatsApp + email is shown.
+4. Sera grounds answers in the loaded documents and cites them inline. If nothing matches, an escalation card with WhatsApp + email is shown.
 
 ## API surface
 

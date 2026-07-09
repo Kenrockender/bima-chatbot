@@ -2,8 +2,8 @@
 
 Flow:
 - start_session(persona_id) → creates a session, returns the customer's opening line
-- reply(session_id, fa_message) → BIMA replies in-character as the customer
-- end_session(session_id) → BIMA exits role, returns structured feedback report
+- reply(session_id, fa_message) → Sera replies in-character as the customer
+- end_session(session_id) → Sera exits role, returns structured feedback report
 
 Product knowledge: full PDF text is appended to the persona/evaluator system
 prompt as a stable prefix so DeepSeek's prompt cache covers it across turns.
@@ -19,7 +19,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from . import curriculum, drills, personas, progress, rag, sessions
 
 
-log = logging.getLogger("bima.training")
+log = logging.getLogger("sera.training")
 
 
 # -----------------------------------------------------------------------------

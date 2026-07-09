@@ -18,7 +18,7 @@ from firebase_admin import credentials, firestore
 from .config import settings
 
 
-log = logging.getLogger("bima.firebase")
+log = logging.getLogger("sera.firebase")
 
 # Reentrant: fs() holds the lock and calls _ensure_app(), which takes it again.
 _lock = threading.RLock()

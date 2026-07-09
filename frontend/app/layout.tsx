@@ -11,20 +11,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "BIMA — BCA Life Intelligent Mobile Assistant",
+  title: "Sera — Asisten Cerdas BCA Life",
   description:
-    "Senantiasa Melindungi Anda. BIMA adalah asisten onboarding cerdas BCA Life — selalu siap menemani langkahmu memahami produk, kebijakan, dan proses kami.",
+    "Senantiasa Melindungi Anda. Sera adalah asisten cerdas BCA Life — selalu siap menemani langkahmu memahami produk, kebijakan, dan proses kami.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "BIMA",
+    title: "Sera",
   },
   icons: {
     icon: [
       { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/bima-icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/sera-icon-192.png", type: "image/png", sizes: "192x192" },
     ],
-    apple: "/bima-apple.png",
+    apple: "/sera-apple.png",
   },
 };
 
@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Apply the saved/system theme before first paint to avoid a flash.
             Mirrors the logic in components/ThemeToggle.tsx. */}
         <Script id="theme-init" strategy="beforeInteractive">
-          {`(function(){try{var t=localStorage.getItem("bima-theme");if(!t||t==="system")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";if(t==="dark")document.documentElement.classList.add("dark");}catch(e){}})()`}
+          {`(function(){try{var t=localStorage.getItem("sera-theme");if(!t||t==="system")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";if(t==="dark")document.documentElement.classList.add("dark");}catch(e){}})()`}
         </Script>
       </head>
       <body className="font-sans antialiased text-bca-ink">

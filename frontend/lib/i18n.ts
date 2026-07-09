@@ -2,8 +2,8 @@ export type Lang = "en" | "id";
 
 export const t = {
   en: {
-    appName: "BIMA",
-    wordmark: "BIMA",
+    appName: "Sera",
+    wordmark: "Sera",
     tagline: "BCA Life · Sales Training Companion",
     brandLine: "Senantiasa Melindungi Anda",
     eyebrow: "Roleplay Coach",
@@ -11,7 +11,7 @@ export const t = {
     // Landing
     landingHeadline: "Practice the conversation.",
     landingSubtitle:
-      "BIMA plays the customer. You bring the pitch. Pick a prospect, walk them through your offer, and get coached at the end.",
+      "Sera plays the customer. You bring the pitch. Pick a prospect, walk them through your offer, and get coached at the end.",
     pickPersona: "Pick a prospect",
     pickPersonaHint:
       "Each persona has its own background, concerns, and tolerance for pitches. Choose the one that matches your training goal.",
@@ -42,7 +42,7 @@ export const t = {
     inSessionLabel: "In session",
     endSession: "End & get feedback",
     endSessionConfirm:
-      "End the session now? BIMA will exit character and give you a coaching report.",
+      "End the session now? Sera will exit character and give you a coaching report.",
     placeholder: "Type your reply as the advisor…",
     send: "Send",
     sending: "Sending",
@@ -78,7 +78,7 @@ export const t = {
     voicePicker: "Voice",
     voicePickerHint: "Pick a voice that sounds natural",
     voiceTest: "Test voice",
-    voiceTestSample: "Hello, I'm BIMA. Nice to meet you.",
+    voiceTestSample: "Hello, I'm Sera. Nice to meet you.",
     voiceAuto: "Auto (best available)",
 
     // Voice-primary UI
@@ -185,7 +185,7 @@ export const t = {
     recoEyebrow: "Product Recommender",
     recoTitle: "Match a customer profile to the right product.",
     recoSubtitle:
-      "Fill in the customer profile and BIMA recommends the best product with suggested UP, monthly premium, and tenor — grounded in BCA Life's brochures.",
+      "Fill in the customer profile and Sera recommends the best product with suggested UP, monthly premium, and tenor — grounded in BCA Life's brochures.",
     recoFormTitle: "Customer profile",
     tabCompare: "Compare products",
     tabProfile: "By customer profile",
@@ -298,15 +298,15 @@ export const t = {
     competitorLoadError: "Could not load competitor documents.",
   },
   id: {
-    appName: "BIMA",
-    wordmark: "BIMA",
+    appName: "Sera",
+    wordmark: "Sera",
     tagline: "BCA Life · Mitra Latihan Sales",
     brandLine: "Senantiasa Melindungi Anda",
     eyebrow: "Pelatih Roleplay",
 
     landingHeadline: "Latih percakapan jualanmu.",
     landingSubtitle:
-      "BIMA berperan sebagai calon nasabah. Kamu berperan sebagai Financial Advisor. Pilih prospek, gali kebutuhan, pitch produkmu, dan dapatkan coaching report di akhir sesi.",
+      "Sera berperan sebagai calon nasabah. Kamu berperan sebagai Financial Advisor. Pilih prospek, gali kebutuhan, pitch produkmu, dan dapatkan coaching report di akhir sesi.",
     pickPersona: "Pilih calon nasabah",
     pickPersonaHint:
       "Setiap persona punya latar belakang, kebutuhan, dan toleransi yang berbeda. Pilih yang sesuai tujuan latihanmu.",
@@ -336,7 +336,7 @@ export const t = {
     inSessionLabel: "Sedang sesi",
     endSession: "Selesai & minta feedback",
     endSessionConfirm:
-      "Selesai sesi sekarang? BIMA akan keluar dari peran dan kasih coaching report.",
+      "Selesai sesi sekarang? Sera akan keluar dari peran dan kasih coaching report.",
     placeholder: "Ketik balasanmu sebagai advisor…",
     send: "Kirim",
     sending: "Mengirim",
@@ -372,7 +372,7 @@ export const t = {
     voicePicker: "Suara",
     voicePickerHint: "Pilih suara yang paling natural",
     voiceTest: "Tes suara",
-    voiceTestSample: "Halo, saya BIMA. Senang berkenalan dengan Anda.",
+    voiceTestSample: "Halo, saya Sera. Senang berkenalan dengan Anda.",
     voiceAuto: "Otomatis (terbaik tersedia)",
 
     // Voice-primary UI
@@ -480,7 +480,7 @@ export const t = {
     recoEyebrow: "Product Recommender",
     recoTitle: "Cocokkan profil nasabah dengan produk yang tepat.",
     recoSubtitle:
-      "Isi profil nasabah, BIMA akan rekomendasikan produk + UP, premi bulanan, dan tenor yang paling pas — berdasarkan brosur produk BCA Life.",
+      "Isi profil nasabah, Sera akan rekomendasikan produk + UP, premi bulanan, dan tenor yang paling pas — berdasarkan brosur produk BCA Life.",
     recoFormTitle: "Profil calon nasabah",
     tabCompare: "Bandingkan produk",
     tabProfile: "Lewat profil nasabah",

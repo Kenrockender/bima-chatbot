@@ -15,7 +15,7 @@ from typing import Dict, List, Optional
 from .config import settings
 from .firebase import fs
 
-log = logging.getLogger("bima.progress")
+log = logging.getLogger("sera.progress")
 
 
 DIMENSIONS = [

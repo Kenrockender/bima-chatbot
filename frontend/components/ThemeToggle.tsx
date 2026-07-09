@@ -20,7 +20,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("bima-theme") as ThemePref | null;
+      const saved = localStorage.getItem("sera-theme") as ThemePref | null;
       setPref(saved === "light" || saved === "dark" ? saved : "system");
     } catch {}
     setMounted(true);
@@ -41,7 +41,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     setPref(next);
     applyTheme(next);
     try {
-      localStorage.setItem("bima-theme", next);
+      localStorage.setItem("sera-theme", next);
     } catch {}
   }
 

@@ -15,7 +15,7 @@ import { authedFetch } from "./api";
  * gets server-truth and we never serve stale data across sign-ins.
  */
 
-const PREFIX = "bima.cache.";
+const PREFIX = "sera.cache.";
 
 export function readCache<T>(key: string): T | null {
   if (typeof window === "undefined") return null;
@@ -109,8 +109,8 @@ export function warmBackend(): void {
   if (typeof window === "undefined" || warmedThisSession) return;
   warmedThisSession = true;
   try {
-    if (sessionStorage.getItem("bima.warmed") === "1") return;
-    sessionStorage.setItem("bima.warmed", "1");
+    if (sessionStorage.getItem("sera.warmed") === "1") return;
+    sessionStorage.setItem("sera.warmed", "1");
   } catch {
     // sessionStorage unavailable — still worth one warm-up this page load.
   }

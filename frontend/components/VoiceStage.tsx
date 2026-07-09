@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AudioWaveform } from "./AudioWaveform";
-import { BimaAvatar } from "./BimaAvatar";
+import { SeraAvatar } from "./SeraAvatar";
 import { CoachChip, type Coach } from "./CoachChip";
 import { MicButton, type VoiceState } from "./MicButton";
 import { SubtitleDisplay } from "./SubtitleDisplay";
@@ -129,7 +129,7 @@ export function VoiceStage({
       </div>
 
       {/* Avatar */}
-      <BimaAvatar size={120} withPulse={voiceState === "speaking"} />
+      <SeraAvatar size={120} withPulse={voiceState === "speaking"} />
 
       {/* Subtitle area */}
       {subtitleContent}

@@ -195,7 +195,7 @@ export function useSTT(opts: { lang?: string } = {}) {
 // Speech synthesis (TTS)
 // -----------------------------------------------------------------------------
 
-const VOICE_PREF_KEY = "bima.tts.voice";
+const VOICE_PREF_KEY = "sera.tts.voice";
 
 /**
  * Strip Markdown so the synthesizer reads clean prose instead of literally

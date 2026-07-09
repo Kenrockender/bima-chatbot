@@ -1,18 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="BIMA mark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Sera mark">
   <defs>
-    <linearGradient id="bimaTealM" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="seraTealM" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#9FE3DE"/>
       <stop offset="55%" stop-color="#5FC5C0"/>
       <stop offset="100%" stop-color="#3FAFAA"/>
     </linearGradient>
-    <radialGradient id="bimaShineM" cx="35%" cy="25%" r="70%">
+    <radialGradient id="seraShineM" cx="35%" cy="25%" r="70%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
       <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
-  <rect x="0" y="0" width="200" height="200" rx="40" ry="40" fill="url(#bimaTealM)"/>
-  <rect x="0" y="0" width="200" height="200" rx="40" ry="40" fill="url(#bimaShineM)"/>
+  <rect x="0" y="0" width="200" height="200" rx="40" ry="40" fill="url(#seraTealM)"/>
+  <rect x="0" y="0" width="200" height="200" rx="40" ry="40" fill="url(#seraShineM)"/>
   <rect x="0" y="0" width="200" height="200" rx="40" ry="40" fill="none" stroke="#1B3F7A" stroke-width="2.5" stroke-opacity="0.18"/>
 
   <line x1="100" y1="38" x2="100" y2="26" stroke="#1B3F7A" stroke-width="3.5" stroke-linecap="round"/>

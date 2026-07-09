@@ -74,7 +74,7 @@ function SignIn({ onSignIn }: { onSignIn: () => Promise<void> }) {
           className="h-7 w-auto mx-auto mb-5"
         />
         <div className="text-3xl font-sans font-extrabold text-life-heading tracking-tight">
-          BIMA
+          Sera
         </div>
         <p className="mt-2 text-[13.5px] leading-relaxed text-life-body">
           Masuk untuk mulai latihan dan menyimpan progresmu.

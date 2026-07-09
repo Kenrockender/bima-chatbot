@@ -4,13 +4,13 @@ Salin-tempel ke chat http://localhost:3000 setelah pilih persona. Tujuannya buka
 
 > **Tip umum:** jangan langsung jualan. 2–3 turn pertama bangun rapport & gali kebutuhan dulu. Persona realistis akan kasih sinyal kapan boleh mulai pitch produk.
 
-> **Akurasi produk:** semua angka di skrip ini mengikuti fact sheet produk yang dimuat di app (lihat boks di bawah). Saat kamu menyebut nama produk, BIMA akan **uji** angkamu lewat FAKTA_PRODUK — jadi pakai angka yang benar, dan kalau ragu lebih baik bilang *"saya cek dulu ya"* daripada mengarang.
+> **Akurasi produk:** semua angka di skrip ini mengikuti fact sheet produk yang dimuat di app (lihat boks di bawah). Saat kamu menyebut nama produk, Sera akan **uji** angkamu lewat FAKTA_PRODUK — jadi pakai angka yang benar, dan kalau ragu lebih baik bilang *"saya cek dulu ya"* daripada mengarang.
 
 ---
 
 ## Produk BCA Life (in-branch) — ringkasan akurat
 
-Hanya tiga produk ini yang ada di katalog roleplay. Jangan menjanjikan produk lain (unit-link, asuransi rawat inap cashless, term life murni murah) — produk itu **tidak ada** di sini, dan BIMA akan menegur kalau kamu mengklaimnya.
+Hanya tiga produk ini yang ada di katalog roleplay. Jangan menjanjikan produk lain (unit-link, asuransi rawat inap cashless, term life murni murah) — produk itu **tidak ada** di sini, dan Sera akan menegur kalau kamu mengklaimnya.
 
 | Produk | Jenis | Untuk siapa | Premi & UP | Manfaat inti |
 |---|---|---|---|---|
@@ -479,7 +479,7 @@ Per sesi, target **8–15 turn**, lalu klik **Selesai & minta feedback** untuk d
 
 ## Cheat: kata-kata pemicu RAG
 
-Kalau kamu sebut salah satu kata ini dalam pesan, BIMA otomatis mengambil fakta dari PDF dan akan **uji** kamu:
+Kalau kamu sebut salah satu kata ini dalam pesan, Sera otomatis mengambil fakta dari PDF dan akan **uji** kamu:
 
 ```
 Heritage Platinum Protection
