@@ -405,7 +405,7 @@ export const t = {
     reportImprovements: "Area yang bisa diasah",
     reportNext: "Fokus sesi berikutnya",
     reportTurns: "giliran",
-    rapport: "Membangun relationship",
+    rapport: "Rapport",
     discovery: "Menggali kebutuhan",
     product_knowledge: "Pengetahuan produk",
     objection_handling: "Menangani keberatan",

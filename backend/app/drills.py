@@ -79,10 +79,10 @@ DRILLS: List[Dict] = [
     },
     {
         "id": "rapport_warmup",
-        "title": "Membangun Relationship",
+        "title": "Rapport",
         "dimension": "rapport",
         "persona_id": "cautious_mom",
-        "summary": "Ibu Sari hanya terbuka pada advisor yang membangun kepercayaan dulu. Pelan-pelan dan bangun relationship.",
+        "summary": "Ibu Sari hanya terbuka pada advisor yang membangun kepercayaan dulu. Pelan-pelan dan bangun rapport.",
         "objective": (
             "Bangun kepercayaan Ibu Sari dulu lewat obrolan yang hangat dan tulus "
             "sebelum masuk ke produk atau angka."

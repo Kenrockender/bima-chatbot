@@ -264,9 +264,15 @@ _tts_cache: "OrderedDict[str, bytes]" = OrderedDict()
 _tts_cache_lock = threading.Lock()
 
 
-def _tts_cache_key(voice_id: str, text: str) -> str:
-    raw = f"{settings.elevenlabs_model}\x00{voice_id}\x00{text}"
+def _tts_cache_key(voice_id: str, text: str, speed: float) -> str:
+    raw = f"{settings.elevenlabs_model}\x00{voice_id}\x00{speed}\x00{text}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+# ElevenLabs voice_settings.speed (0.7–1.2, 1.0 = normal). The female voice
+# reads noticeably rushed at 1.0, so we ease it down; male stays at real time.
+def _tts_speed_for(gender: str) -> float:
+    return 1.0 if (gender or "").lower().startswith("m") else 0.9
 
 
 def _tts_cache_get(key: str) -> Optional[bytes]:
@@ -311,8 +317,9 @@ async def tts(req: TTSRequest):
     text = text[:_TTS_MAX_CHARS]
 
     voice_id = settings.elevenlabs_voice_for(req.gender or "f")
+    speed = _tts_speed_for(req.gender or "f")
 
-    cache_key = _tts_cache_key(voice_id, text)
+    cache_key = _tts_cache_key(voice_id, text, speed)
     cached = _tts_cache_get(cache_key)
     if cached is not None:
         return Response(
@@ -334,7 +341,7 @@ async def tts(req: TTSRequest):
                 json={
                     "text": text,
                     "model_id": settings.elevenlabs_model,
-                    "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
+                    "voice_settings": {"stability": 0.5, "similarity_boost": 0.75, "speed": speed},
                 },
             )
         if resp.status_code != 200:
